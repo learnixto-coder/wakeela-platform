@@ -41,6 +41,7 @@ a{color:var(--brand-2)}
 .check{display:flex;gap:8px;align-items:center;justify-content:center;margin:12px 0 16px;color:var(--muted);font-size:14px}
 .btn{display:inline-block;text-decoration:none;border:0;border-radius:12px;padding:11px 16px;background:var(--brand);color:var(--brand-ink);font-weight:600;cursor:pointer}
 .btn.wide{width:100%}
+.btn:disabled{opacity:.5;cursor:not-allowed}
 .btn.ghost{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
 .btn.sm{padding:6px 12px;font-size:13px;border-radius:10px}
 .err{color:var(--none);font-size:14px;min-height:22px;margin-top:10px}
@@ -131,6 +132,18 @@ h2:first-child{margin-top:4px}
 .rank{display:grid;gap:2px;margin-top:8px}
 .rank .bar-row{grid-template-columns:minmax(120px,200px) 1fr 52px}
 @media (max-width:640px){.rank .bar-row{grid-template-columns:1fr 44px}}
+.note-in{display:block;width:100%;font:inherit;font-size:14px;line-height:1.7;resize:vertical;color:var(--ink)}
+.note-in:focus{outline:2px solid var(--brand-2);outline-offset:1px}
+.notes{display:grid;gap:8px}
+.note{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--card)}
+.note.new{border-color:var(--brand-2);box-shadow:inset 3px 0 0 var(--brand-2)}
+.note-h{display:flex;align-items:center;gap:8px;justify-content:space-between;color:var(--muted);font-size:12.5px;margin-bottom:4px}
+.note-b{white-space:pre-wrap;font-size:14px}
+.note-del{background:none;border:1px solid var(--line);border-radius:8px;color:var(--muted);cursor:pointer;font-size:12px;padding:2px 8px}
+.note-del.sure{color:var(--none);border-color:var(--none)}
+.inbox{margin-bottom:12px;border-color:var(--brand-2)}
+.inbox-h{display:flex;align-items:center;gap:8px;margin-bottom:10px;color:var(--brand-2)}
+.inbox-h b{color:var(--ink);font-size:15.5px}
 #tip{position:fixed;z-index:40;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12.5px;padding:6px 10px;border-radius:8px;white-space:nowrap;transform:translate(-50%,-100%)}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 .search{flex:1;min-width:180px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
@@ -248,25 +261,41 @@ const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 // teacher login: mobile number (Arabic digits, +966 / 00966 / 5xxxxxxxx accepted) -> 05xxxxxxxx
 const phoneOf = s => { const d = String(s).replace(/[٠-٩]/g, c => '٠١٢٣٤٥٦٧٨٩'.indexOf(c)).replace(/[\s\-+()]/g, '');
   if (!/^\d+$/.test(d)) return null; const p = d.replace(/^(00)?966/, '').replace(/^0?/, '0'); return /^05\d{8}$/.test(p) ? p : null; };
-async function teacherFile(phone) {   // same PBKDF2 as tools/export.js
-  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(phone), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: new TextEncoder().encode('wk-platform/t'), iterations: 100000, hash: 'SHA-256' }, base, 96);
-  return 'data/t/' + [...new Uint8Array(bits)].map(b => b.toString(16).padStart(2, '0')).join('') + '.json';
+const utf8 = new TextEncoder();
+const toB64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode(...u8.subarray(i, i + 0x8000)); return btoa(s); };
+const idCache = {};
+async function teacherId(phone) {   // same PBKDF2 as tools/export.js; names both data/t/<id> and data/n/<id>
+  if (idCache[phone]) return idCache[phone];
+  const base = await crypto.subtle.importKey('raw', utf8.encode(phone), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: utf8.encode('wk-platform/t'), iterations: 100000, hash: 'SHA-256' }, base, 96);
+  return idCache[phone] = [...new Uint8Array(bits)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
-async function load(code) {
-  const phone = phoneOf(code);
-  const r = await fetch((phone ? await teacherFile(phone) : 'data/w.json') + '?t=' + Date.now(), { cache: 'no-store' });
-  if (phone && r.status === 404) throw new Error('phone');
-  if (!r.ok) throw new Error('net');
-  if (phone) code = phone;
-  const e = await r.json();
-  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(code), 'PBKDF2', false, ['deriveKey']);
-  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64(e.salt), iterations: e.iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+async function aesKey(pass, salt, iter) {
+  const base = await crypto.subtle.importKey('raw', utf8.encode(pass), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function openBox(e, pass) {
+  const key = await aesKey(pass, b64(e.salt), e.iter);
   let plain;
   try { plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(e.iv) }, key, b64(e.ct)); }
   catch { throw new Error('code'); }
-  const txt = await new Response(new Blob([plain]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
-  return JSON.parse(txt);
+  return JSON.parse(await new Response(new Blob([plain]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
+}
+async function sealBox(obj, pass) {   // same format as encrypt() in tools/export.js
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const gz = new Uint8Array(await new Response(new Blob([JSON.stringify(obj)]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await aesKey(pass, salt, 250000), gz));
+  return { v: 1, iter: 250000, salt: toB64(salt), iv: toB64(iv), ct: toB64(ct) };
+}
+async function load(code) {
+  const phone = phoneOf(code), id = phone && await teacherId(phone);
+  const r = await fetch((phone ? `data/t/${id}.json` : 'data/w.json') + '?t=' + Date.now(), { cache: 'no-store' });
+  if (phone && r.status === 404) throw new Error('phone');
+  if (!r.ok) throw new Error('net');
+  const data = await openBox(await r.json(), phone || code);
+  if (phone) data.notes = await fetch(`data/n/${id}.json?t=${Date.now()}`, { cache: 'no-store' })
+    .then(n => n.ok ? n.json().then(e => openBox(e, phone)).then(x => x.items) : []).catch(() => []);
+  return data;
 }
 const store = { get() { try { return localStorage.getItem(KEY) } catch { return null } }, set(v) { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY) } catch {} } };
 
@@ -350,8 +379,11 @@ function bind(el) {
   el.querySelectorAll('[data-go]').forEach(x => x.addEventListener('click', () => go(x.dataset.go)));
   el.querySelectorAll('[data-open]').forEach(x => x.addEventListener('click', () => {
     const d = el.querySelector(`details[data-fi="${x.dataset.open}"]`); if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }));
-  el.querySelectorAll('[data-copy]').forEach(x => x.addEventListener('click', () => copy(document.getElementById(x.dataset.copy).innerText)));
-  el.querySelectorAll('[data-wa]').forEach(x => x.addEventListener('click', () => window.open('https://wa.me/?text=' + encodeURIComponent(document.getElementById(x.dataset.wa).innerText), '_blank')));
+  const txt = id => { const n = document.getElementById(id); return n.value ?? n.innerText; };
+  el.querySelectorAll('[data-copy]').forEach(x => x.addEventListener('click', () => copy(txt(x.dataset.copy))));
+  el.querySelectorAll('[data-wa]').forEach(x => x.addEventListener('click', () => window.open('https://wa.me/?text=' + encodeURIComponent(txt(x.dataset.wa)), '_blank')));
+  const sent = el.querySelector('#sent'); if (sent) renderSent(+sent.dataset.t);
+  const sn = el.querySelector('#sendNote'); if (sn) sn.addEventListener('click', () => sendNote(+sn.dataset.t));
   el.querySelectorAll('[data-cell]').forEach(x => x.addEventListener('click', () => { const [t, f] = x.dataset.cell.split(','); cellSheet(+t, +f); }));
   const q = el.querySelector('#q'); if (q) q.addEventListener('input', () => filterRows(q.value));
   el.querySelectorAll('[data-filter]').forEach(x => x.addEventListener('click', () => { state.fFilter = x.dataset.filter; route(); }));
@@ -518,10 +550,74 @@ function teacher(i) {
   return `<button class="back" data-go="teachers">→ المعلمات</button>
   <div class="head" style="margin:10px 0 14px">${ring(t.pct)}<div><h2>${esc(t.name)}</h2><div class="muted">${nf(t.done)} من ${nf(t.exist)} مجلدات مكتملة · ${nf(t.total)} ملف</div></div>
     <div style="flex:1"></div><a class="btn sm" href="${esc(t.url)}" target="_blank" rel="noopener">فتح مجلدها في OneDrive</a></div>
-  ${msg ? `<div class="card pad" style="margin-bottom:14px"><div style="font-weight:600;margin-bottom:8px">رسالة تذكير جاهزة</div><div class="msg" id="msg">${esc(msg)}</div>
-    <div class="toolbar" style="margin:10px 0 0"><button class="btn sm" data-copy="msg">نسخ</button><button class="btn sm ghost" data-wa="msg">إرسال عبر واتساب</button></div></div>` : `<div class="card pad" style="margin-bottom:14px;color:var(--ok);font-weight:600">جميع مجلداتها مكتملة حسب المعايير</div>`}
+  ${msg ? '' : `<div class="card pad" style="margin-bottom:14px;color:var(--ok);font-weight:600">جميع مجلداتها مكتملة حسب المعايير</div>`}
+  <div class="card pad" style="margin-bottom:14px"><div style="font-weight:600;margin-bottom:8px">تنبيه للمعلمة <span class="muted" style="font-weight:400;font-size:13px">· يمكنك تعديل النص قبل الإرسال</span></div>
+    <textarea class="msg note-in" id="msg" rows="${msg ? Math.min(12, msg.split('\n').length + 3) : 3}" placeholder="اكتبي التنبيه هنا…">${esc(msg)}</textarea>
+    <div class="toolbar" style="margin:10px 0 0"><button class="btn sm" id="sendNote" data-t="${i}" disabled>إرسال إلى حسابها في المنصة</button><button class="btn sm ghost" data-copy="msg">نسخ</button><button class="btn sm ghost" data-wa="msg">إرسال عبر واتساب</button></div>
+    <div id="sent" data-t="${i}"><div class="muted" style="font-size:13px;margin-top:10px">جارٍ تحميل التنبيهات المرسلة…</div></div></div>
   <div class="list">${folds}</div>`;
 }
+/* ---------- alerts: data/n/<teacherId>.json, encrypted with the teacher's phone ----------
+   The وكيلة writes through the GitHub contents API (token comes inside her encrypted data);
+   teachers read the published copy. Commit messages stay generic: the repo is public. */
+const ghApi = (p, opt = {}) => fetch(`https://api.github.com/repos/${D.gh.repo}/contents/${p}`, { cache: 'no-store', ...opt,
+  headers: { Authorization: 'Bearer ' + D.gh.token, Accept: 'application/vnd.github+json', ...(opt.headers || {}) } });
+async function notesFor(t) {
+  const phone = D.phones?.[t.name]; if (!phone) return null;
+  const path = `data/n/${await teacherId(phone)}.json`;
+  let box = null, sha;
+  if (D.gh) {
+    const r = await ghApi(`${path}?ref=${D.gh.branch}&t=${Date.now()}`);
+    if (r.ok) { const j = await r.json(); sha = j.sha; box = JSON.parse(new TextDecoder().decode(b64(j.content.replace(/\s/g, '')))); }
+    else if (r.status !== 404) throw new Error('gh' + r.status);
+  } else {
+    const r = await fetch(path + '?t=' + Date.now(), { cache: 'no-store' }); if (r.ok) box = await r.json();
+  }
+  return { path, phone, sha, items: box ? (await openBox(box, phone)).items : [] };
+}
+async function saveNotes(t, change) {   // read-modify-write; one retry if someone else wrote in between
+  for (let n = 0; ; n++) {
+    const cur = await notesFor(t); change(cur.items);
+    const body = { message: 'تحديث التنبيهات', branch: D.gh.branch, content: toB64(utf8.encode(JSON.stringify(await sealBox({ items: cur.items }, cur.phone)))), ...(cur.sha && { sha: cur.sha }) };
+    const r = await ghApi(cur.path, { method: 'PUT', body: JSON.stringify(body) });
+    if (r.ok) return cur.items;
+    if (n || (r.status !== 409 && r.status !== 422)) throw new Error('gh' + r.status);
+  }
+}
+const whenTxt = iso => { const d = new Date(iso); return `${d.toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn', { weekday: 'long', day: 'numeric', month: 'long' })} · ${d.toLocaleTimeString('ar-SA-u-nu-latn', { hour: 'numeric', minute: '2-digit' })}`; };
+function sentList(items, t) {
+  const mine = items.filter(x => x.to === t.name).sort((a, b) => b.at.localeCompare(a.at));
+  return mine.length ? `<div style="font-weight:600;margin:14px 0 6px">التنبيهات المرسلة (${nf(mine.length)})</div><div class="notes">${mine.map(x =>
+    `<div class="note"><div class="note-h"><span>${esc(whenTxt(x.at))}</span>${D.gh ? `<button class="note-del" data-del="${esc(x.id)}" title="حذف التنبيه" aria-label="حذف التنبيه">✕</button>` : ''}</div><div class="note-b">${esc(x.text)}</div></div>`).join('')}</div>`
+    : '<div class="muted" style="font-size:13px;margin-top:10px">لم يُرسل لها أي تنبيه بعد.</div>';
+}
+async function renderSent(i) {
+  const t = D.teachers[i], box = $('#sent'), btn = $('#sendNote'), here = () => $('#sent')?.dataset.t === String(i);
+  if (!D.phones?.[t.name]) { box.innerHTML = '<div class="warn" style="margin-top:10px">لا يوجد رقم جوال لهذه المعلمة في keys/teachers.csv، فلا يمكن إرسال تنبيه لحسابها.</div>'; return; }
+  try {
+    const n = await notesFor(t); if (!here()) return;
+    box.innerHTML = (D.gh ? '' : '<div class="warn" style="margin-top:10px">الإرسال من المنصة غير مفعّل بعد (يلزم ربطها بـ GitHub).</div>') + sentList(n.items, t);
+    btn.disabled = !D.gh;
+    box.querySelectorAll('[data-del]').forEach(x => x.addEventListener('click', async () => {
+      if (x.dataset.sure !== '1') { x.dataset.sure = '1'; x.textContent = 'تأكيد الحذف'; x.classList.add('sure'); return; }
+      x.disabled = true;
+      try { await saveNotes(t, items => { const k = items.findIndex(y => y.id === x.dataset.del); if (k >= 0) items.splice(k, 1); }); toast('حُذف التنبيه'); renderSent(i); }
+      catch { toast('تعذّر الحذف'); x.disabled = false; }
+    }));
+  } catch { if (here()) box.innerHTML = '<div class="warn" style="margin-top:10px">تعذّر تحميل التنبيهات المرسلة.</div>'; }
+}
+async function sendNote(i) {
+  const t = D.teachers[i], text = $('#msg').value.trim(), btn = $('#sendNote');
+  if (!text) { toast('اكتبي نص التنبيه أولًا'); return; }
+  btn.disabled = true; btn.textContent = 'جارٍ الإرسال…';
+  try {
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    await saveNotes(t, items => items.push({ id, to: t.name, at: new Date().toISOString(), text }));
+    toast('أُرسل التنبيه، ويظهر في صفحتها خلال دقيقة تقريبًا'); renderSent(i);
+  } catch (e) { toast(e.message === 'gh401' || e.message === 'gh403' ? 'رمز GitHub غير صالح أو منتهي' : 'تعذّر الإرسال، حاولي مرة أخرى'); }
+  finally { btn.textContent = 'إرسال إلى حسابها في المنصة'; btn.disabled = !D.gh; }
+}
+
 /* ---------- dashboards ---------- */
 // school weeks, same calendar as tools/export.js schoolWeek()
 const WEEK_STARTS = [...Array(13)].map((_, i) => new Date(2026, 7, 23 + 7 * i)).concat([...Array(6)].map((_, i) => new Date(2026, 10, 29 + 7 * i)));
@@ -539,6 +635,17 @@ function weekChart(c) {   // one series; value shown on the current and the busi
     `<div class="wk-col${i === cur ? ' cur' : ''}" data-tip="الأسبوع ${nf(i + 1)}${i === cur ? ' (الحالي)' : ''}: ${nf(v)} ملف"><div class="wk-b"><span class="wk-v">${(i === cur || i === top) && v ? nf(v) : ''}</span><i style="height:${v / max * 85}%"></i></div><span class="wk-l">${nf(i + 1)}</span></div>`).join('')}</div>`;
 }
 const agoTxt = iso => { const a = daysSince(iso); return a == null ? '—' : a <= 0 ? 'اليوم' : a === 1 ? 'أمس' : `قبل ${nf(a)} يوم`; };
+
+function inbox(t) {   // alerts from the وكيلة; "جديد" until seen once on this device
+  const mine = (D.notes || []).filter(x => x.to === t.name).sort((a, b) => b.at.localeCompare(a.at));
+  if (!mine.length) return '';
+  let seen = []; try { seen = JSON.parse(localStorage.getItem('wk-seen') || '[]'); } catch {}
+  try { localStorage.setItem('wk-seen', JSON.stringify([...new Set([...seen, ...mine.map(x => x.id)])].slice(-200))); } catch {}
+  const fresh = mine.filter(x => !seen.includes(x.id)).length;
+  return `<div class="card pad inbox"><div class="inbox-h"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+    <b>تنبيهات من الوكيلة</b>${fresh ? `<span class="chip s-none">${nf(fresh)} جديد</span>` : ''}</div>
+    <div class="notes">${mine.slice(0, 5).map(x => `<div class="note${seen.includes(x.id) ? '' : ' new'}"><div class="note-h"><span>${esc(whenTxt(x.at))}</span></div><div class="note-b">${esc(x.text)}</div></div>`).join('')}</div></div>`;
+}
 
 function teacherDash(t, folds) {
   const miss = t.cells.filter(c => c.s === 'none' || c.s === 'part');
@@ -560,6 +667,7 @@ function teacherDash(t, folds) {
       <div class="cmp-r"><span class="muted">متوسط المدرسة</span><span class="track"><i style="width:${avg}%;background:var(--na)"></i></span><span class="pct muted">${nf(avg)}%</span></div>
       <span class="muted" style="font-size:12.5px">${diff > 0 ? `أعلى من متوسط المدرسة بفارق <span dir="ltr">${nf(diff)}%</span>` : diff < 0 ? `أقل من متوسط المدرسة بفارق <span dir="ltr">${nf(-diff)}%</span>` : 'مساوٍ لمتوسط المدرسة'}</span></div>` : ''}</div>
     <a class="btn sm" href="${esc(t.url)}" target="_blank" rel="noopener">فتح مجلدي في OneDrive</a></div>
+  ${inbox(t)}
   <div class="kpis">
     <div class="card kpi"><b>${nf(t.done)} / ${nf(t.exist)}</b><span>مجلدات مكتملة</span></div>
     <div class="card kpi"><b>${nf(t.total)}</b><span>ملفًا مرفوعًا</span></div>
