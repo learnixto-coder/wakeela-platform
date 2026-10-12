@@ -52,6 +52,10 @@ header.top{position:sticky;top:0;z-index:5;background:var(--brand);color:var(--b
 .top small{display:block;opacity:.85;font-size:12.5px;font-weight:400}
 .top .sp{flex:1}
 .icon-btn{background:rgba(255,255,255,.14);border:0;color:inherit;width:38px;height:38px;border-radius:10px;display:grid;place-items:center;cursor:pointer}
+.ref-btn{background:#fff;color:var(--brand);border:0;height:38px;padding:0 14px;border-radius:10px;display:flex;align-items:center;gap:7px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
+.ref-btn:disabled{opacity:.75;cursor:wait}
+.ref-btn.busy svg{animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 nav.tabs{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:calc(env(safe-area-inset-top,0px) + 62px);z-index:4}
 .tabs-in{max-width:1100px;margin:0 auto;display:flex;overflow-x:auto;padding:0 8px;scrollbar-width:none}
 .tabs button{flex:0 0 auto;background:none;border:0;padding:12px 14px;color:var(--muted);font-weight:500;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
@@ -177,7 +181,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
   <header class="top"><div class="top-in">
     <div><h1>منصة وكيلة المدرسة</h1><small id="meta"></small></div>
     <div class="sp"></div>
-    <button class="icon-btn" id="reload" title="تحديث البيانات" aria-label="تحديث البيانات"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg></button>
+    <button class="ref-btn" id="reload" title="جلب أحدث البيانات"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg><span>تحديث</span></button>
     <button class="icon-btn" id="logout" title="خروج" aria-label="خروج"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17 5 12l5-5"/><path d="M5 12h12"/></svg></button>
   </div></header>
   <nav class="tabs"><div class="tabs-in" id="tabs">
@@ -232,7 +236,17 @@ async function unlock(code, remember) {
 let sessionCode = null;
 $('#lockForm').addEventListener('submit', e => { e.preventDefault(); if ($('#code').value.trim()) unlock($('#code').value, $('#remember').checked); });
 $('#logout').onclick = () => { store.set(null); sessionCode = null; D = null; $('#app').hidden = true; $('#lock').hidden = false; $('#code').value = ''; location.hash = ''; };
-$('#reload').onclick = async () => { try { D = await load(sessionCode); prep(); route(); toast('تم تحديث البيانات'); } catch { toast('تعذّر التحديث'); } };
+$('#reload').onclick = async () => {
+  const b = $('#reload'), lbl = b.querySelector('span'), before = D && D.generated;
+  b.disabled = true; b.classList.add('busy'); lbl.textContent = 'جارٍ التحديث…';
+  try {
+    D = await load(sessionCode); prep(); route();
+    toast(D.generated !== before ? 'تم جلب بيانات أحدث' : 'البيانات محدّثة — لا جديد منذ آخر تحديث');
+  } catch { toast('تعذّر التحديث، تحققي من الاتصال'); }
+  finally { b.disabled = false; b.classList.remove('busy'); lbl.textContent = 'تحديث'; }
+};
+
+new ResizeObserver(([e]) => { $('nav.tabs').style.top = e.target.offsetHeight + 'px'; }).observe($('header.top'));
 
 /* ---------- model ---------- */
 function status(info, min) {
