@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0f5c4d">
-<title>منصة متابعة الإنجاز</title>
+<title>منصة وكيلة المدرسة</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -123,6 +123,23 @@ select.search{flex:0 1 auto}
 /* reminder box */
 .msg{white-space:pre-wrap;background:var(--soft);border:1px dashed var(--line);border-radius:12px;padding:12px 14px;font-size:14px}
 
+/* وكيلة sections */
+.secs{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.sec{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:16px;cursor:pointer;text-align:start;border:1px solid var(--line)}
+.sec:hover{border-color:var(--brand-2)}
+.sec .track{width:100%;margin-top:4px}
+.sec-ic{width:42px;height:42px;border-radius:12px;background:var(--ok-bg);color:var(--brand-2);display:grid;place-items:center;flex:0 0 auto}
+.sec-t{font-weight:700;font-size:16px}
+.sec-s{color:var(--muted);font-size:13px}
+.sec-l{font-size:12px;color:var(--brand-2);font-weight:600}
+@media (max-width:640px){.secs{grid-template-columns:1fr 1fr}.sec{padding:12px}.sec-t{font-size:14.5px}}
+.sub-row{display:flex;gap:10px;align-items:center;padding:12px 14px}
+.sub-row .t{font-weight:600}.sub-row .g{color:var(--muted);font-size:12.5px}
+.link-row{display:flex;gap:10px;align-items:center;width:100%;padding:9px 14px;background:var(--soft);border:0;border-top:1px solid var(--line);cursor:pointer;font-size:13.5px;text-align:start;flex-wrap:wrap}
+.link-row .track{background:var(--line)}
+.link-row.card{border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.crumbs{font-size:13.5px}.crumbs a{text-decoration:none;font-weight:600}
+
 /* matrix */
 .mx-wrap{overflow:auto;max-height:75vh;border:1px solid var(--line);border-radius:var(--r);background:var(--card)}
 table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%}
@@ -147,7 +164,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 <section class="lock" id="lock">
   <form class="lock-box" id="lockForm">
     <div class="logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="m9 13 2 2 4-4"/></svg></div>
-    <h1>منصة متابعة إنجاز المعلمات</h1>
+    <h1>منصة وكيلة المدرسة</h1>
     <p>المتوسطة الحادية والعشرون · 1448هـ</p>
     <input class="field" id="code" autocomplete="current-password" placeholder="رمز الدخول" autocapitalize="characters" spellcheck="false">
     <label class="check"><input type="checkbox" id="remember" checked> تذكّر الرمز على هذا الجهاز</label>
@@ -158,13 +175,14 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 
 <div id="app" hidden>
   <header class="top"><div class="top-in">
-    <div><h1>متابعة إنجاز المعلمات</h1><small id="meta"></small></div>
+    <div><h1>منصة وكيلة المدرسة</h1><small id="meta"></small></div>
     <div class="sp"></div>
     <button class="icon-btn" id="reload" title="تحديث البيانات" aria-label="تحديث البيانات"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg></button>
     <button class="icon-btn" id="logout" title="خروج" aria-label="خروج"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17 5 12l5-5"/><path d="M5 12h12"/></svg></button>
   </div></header>
   <nav class="tabs"><div class="tabs-in" id="tabs">
-    <button data-v="home">الرئيسية</button>
+    <button data-v="me">ملفات الوكيلة</button>
+    <button data-v="home">متابعة المعلمات</button>
     <button data-v="teachers">المعلمات</button>
     <button data-v="folders">المجلدات</button>
     <button data-v="board">لوحة التتبع</button>
@@ -249,10 +267,10 @@ window.addEventListener('hashchange', route);
 function go(h) { location.hash = h; }
 function route() {
   if (!D) return;
-  const [v, a] = (location.hash.slice(1) || 'home').split('/');
-  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === (v === 't' ? 'teachers' : v === 'f' ? 'folders' : v)));
+  const [v, a] = (location.hash.slice(1) || 'me').split('/');
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === (v === 't' ? 'teachers' : v === 'f' ? 'folders' : v === 'w' ? 'me' : v)));
   const el = $('#view');
-  el.innerHTML = ({ home, teachers, folders, board, alerts, admins, t: () => teacher(+a), f: () => folder(+a) }[v] || home)();
+  el.innerHTML = ({ me, w: () => wNode(a || ''), home, teachers, folders, board, alerts, admins, t: () => teacher(+a), f: () => folder(+a) }[v] || me)();
   bind(el); window.scrollTo(0, 0);
 }
 document.querySelector('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.v); });
@@ -274,6 +292,80 @@ async function copy(t) {
   catch { const a = document.createElement('textarea'); a.value = t; document.body.append(a); a.select(); document.execCommand('copy'); a.remove(); toast('تم النسخ'); }
 }
 function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.append(d); setTimeout(() => d.remove(), 1800); }
+
+/* ---------- ملفات الوكيلة ---------- */
+const SEC_ICON = {
+  'الخطط': '<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/>',
+  'المبادرات': '<path d="M12 3v3M5.6 5.6l2.1 2.1M3 12h3M18.4 5.6l-2.1 2.1M21 12h-3"/><path d="M9 18h6M10 21h4"/><path d="M12 8a4 4 0 0 0-2.5 7.1V18h5v-2.9A4 4 0 0 0 12 8z"/>',
+  'مجتمعات التعلم المهنية': '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M14.5 20a4.5 4.5 0 0 1 7-3.7"/>',
+  'بيانات المدرسة': '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>',
+  'بطاقة نافس': '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  'التقويم': '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M8 15l2 2 4-4"/>',
+};
+const secIcon = n => `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${SEC_ICON[Object.keys(SEC_ICON).find(k => n.startsWith(k))] || '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'}</svg>`;
+function nodeAt(p) { let n = D.wakeela; for (const i of p ? p.split('.') : []) n = n?.subs[+i]; return n; }
+// folders that should hold files: a section's sub-folders (or the section itself); deeper levels (e.g. one per student) count with their parent
+function leaves(n, d = 0) { return n.subs.length && d < 2 ? n.subs.flatMap(s => leaves(s, d + 1)) : [n]; }
+// teachers' progress for a linked folder: {ok, n, go}
+function linkStat(link) {
+  if (link === '@admins') { const A = D.admins || []; return { ok: A.filter(a => status(a, D.adminMin) === 'ok').length, n: A.length, go: 'admins', who: 'الإداريات' }; }
+  const f = D.folders.find(x => x.key === link); if (!f) return null;
+  const cs = D.teachers.map(t => t.cells[f.i]).filter(c => c.s !== 'na');
+  return { ok: cs.filter(c => c.s === 'ok').length, n: cs.length, go: 'f/' + f.i, who: 'المعلمات' };
+}
+
+function me() {
+  const W = D.wakeela; if (!W) return '<div class="empty">مجلد الوكيلة غير متاح</div>';
+  const all = leaves(W).filter(n => !n.link), filled = all.filter(n => n.total).length;
+  const secs = W.subs.map((s, i) => {
+    const lv = leaves(s, 1).filter(n => !n.link), f = lv.filter(n => n.total).length, p = lv.length ? Math.round(f / lv.length * 100) : 0;
+    const linked = leaves(s, 1).filter(n => n.link).length;
+    return `<button class="sec card" data-go="w/${i}"><span class="sec-ic">${secIcon(s.name)}</span>
+      <span class="sec-t">${esc(s.name)}</span>
+      <span class="sec-s">${!lv.length ? 'تُجمع من مجلدات المعلمات' : s.subs.length ? `${nf(f)} من ${nf(lv.length)} مجلد فيه ملفات` : (s.total ? `${nf(s.total)} ملف` : 'فارغ')}</span>
+      ${lv.length ? `<span class="track"><i class="o" style="width:${p}%"></i></span>` : ""}
+      ${linked ? `<span class="sec-l">${nf(linked)} مرتبط بمجلدات المعلمات</span>` : ''}</button>`;
+  }).join('');
+  const recent = (function walk(n, path) { return n.files.map(x => ({ x, path })).concat(n.subs.flatMap(s => walk(s, path ? path + ' / ' + s.name : s.name))); })(W, '')
+    .sort((a, b) => b.x.d.localeCompare(a.x.d)).slice(0, 6);
+  return `
+  <div class="head" style="margin-bottom:6px"><h2 style="margin:4px 0">ملفات وكيلة المدرسة 1448هـ</h2><div style="flex:1"></div>
+    <a class="btn sm ghost" href="${esc(W.url)}" target="_blank" rel="noopener">فتح في OneDrive</a></div>
+  <div class="kpis" style="margin-top:10px">
+    <div class="card kpi"><b>${nf(W.subs.length)}</b><span>أقسام رئيسية</span></div>
+    <div class="card kpi"><b>${nf(W.total)}</b><span>ملفًا في مجلدات الوكيلة</span></div>
+    <div class="card kpi"><b style="color:${pctColor(Math.round(filled / all.length * 100))}">${nf(filled)} / ${nf(all.length)}</b><span>مجلدات فيها ملفات</span></div>
+    <div class="card kpi"><b style="color:${all.length - filled ? 'var(--none)' : 'inherit'}">${nf(all.length - filled)}</b><span>مجلدات تحتاج ملفات</span></div>
+  </div>
+  <h2>الأقسام</h2>
+  <div class="secs">${secs}</div>
+  ${recent.length ? `<h2>آخر ما أُضيف</h2><div class="card"><ul class="files">${recent.map(r => `<li><span class="ext">${esc(r.x.x || '—')}</span><span class="n">${esc(r.x.n)}<br><span class="muted">${esc(r.path)}</span></span><span class="d">${esc(r.x.d)}</span></li>`).join('')}</ul></div>` : ''}
+  <p class="foot">ملفات الفاحص ولوحة المتابعة المولَّدة تلقائيًا لا تُحسب ضمن ملفات الوكيلة</p>`;
+}
+
+function wNode(p) {
+  const n = nodeAt(p); if (!n) return me();
+  const parts = p.split('.'), crumbs = [`<a href="#me">ملفات الوكيلة</a>`];
+  parts.slice(0, -1).forEach((_, k) => { const q = parts.slice(0, k + 1).join('.'); crumbs.push(`<a href="#w/${q}">${esc(nodeAt(q).name)}</a>`); });
+  const subs = n.subs.map((s, i) => {
+    const ls = s.link && linkStat(s.link);
+    return `<div class="fold"><div class="sub-row">
+      <button class="grow" data-go="w/${p}.${i}" style="all:unset;cursor:pointer;flex:1;min-width:0">
+        <div class="t">${esc(s.name)}</div>
+        <div class="g">${s.total ? `${nf(s.total)} ملف` : 'لا توجد ملفات بعد'}${s.subs.length ? ` · ${nf(s.subs.length)} مجلد فرعي` : ''}${s.files[0] ? ' · آخر إضافة ' + esc(s.files[0].d) : ''}</div></button>
+      ${s.total ? chip('ok').replace('مكتمل', 'فيه ملفات') : ls ? '<span class="chip s-na">مرتبط</span>' : chip('none').replace('لم ترفع', 'فارغ')}</div>
+      ${ls ? `<button class="link-row" data-go="${ls.go}"><span>${ls.who}: <b>${nf(ls.ok)} من ${nf(ls.n)}</b> مكتمل</span><span class="track" style="flex:1;max-width:160px"><i class="o" style="width:${ls.n ? ls.ok / ls.n * 100 : 0}%"></i></span><span class="muted">عرض ←</span></button>` : ''}
+    </div>`;
+  }).join('');
+  const ls = n.link && linkStat(n.link);
+  return `<div class="crumbs">${crumbs.join(' <span class="muted">/</span> ')}</div>
+  <div class="head" style="margin:8px 0 14px"><span class="sec-ic">${secIcon(nodeAt(parts[0]).name)}</span><h2 style="margin:0">${esc(n.name)}</h2><div style="flex:1"></div>
+    <a class="btn sm" href="${esc(n.url)}" target="_blank" rel="noopener">فتح في OneDrive</a></div>
+  ${ls ? `<button class="link-row card" data-go="${ls.go}" style="margin-bottom:14px"><span>يجمع ملفات ${ls.who}: <b>${nf(ls.ok)} من ${nf(ls.n)}</b> مكتمل</span><span class="track" style="flex:1;max-width:200px"><i class="o" style="width:${ls.n ? ls.ok / ls.n * 100 : 0}%"></i></span><span class="muted">عرض ←</span></button>` : ''}
+  ${subs ? `<div class="list">${subs}</div>` : ''}
+  ${n.files.length ? `<h2>الملفات (${nf(n.files.length)})</h2><div class="card"><ul class="files">${n.files.map(fileLi).join('')}</ul></div>`
+    : (!n.subs.length ? '<div class="card empty">لا توجد ملفات في هذا المجلد بعد — افتحيه في OneDrive لإضافة الملفات</div>' : '')}`;
+}
 
 /* ---------- views ---------- */
 function home() {
