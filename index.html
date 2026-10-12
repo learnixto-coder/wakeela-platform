@@ -106,6 +106,8 @@ select.search{flex:0 1 auto}
 .seg button.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:var(--shadow)}
 
 /* teacher detail */
+body.tmode nav.tabs{display:none}
+.lock .hint{font-size:13px;margin:-12px 0 16px}
 .back{background:none;border:0;color:var(--brand-2);cursor:pointer;padding:4px 0;font-weight:600}
 .head{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .head h2{margin:0}
@@ -170,7 +172,8 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
     <div class="logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="m9 13 2 2 4-4"/></svg></div>
     <h1>منصة وكيلة المدرسة</h1>
     <p>المتوسطة الحادية والعشرون · 1448هـ</p>
-    <input class="field" id="code" autocomplete="current-password" placeholder="رمز الدخول" autocapitalize="characters" spellcheck="false">
+    <p class="hint">المعلمة: أدخلي رقم جوالك (05xxxxxxxx)</p>
+    <input class="field" id="code" autocomplete="current-password" placeholder="رقم الجوال أو رمز الدخول" autocapitalize="characters" spellcheck="false">
     <label class="check"><input type="checkbox" id="remember" checked> تذكّر الرمز على هذا الجهاز</label>
     <button class="btn wide" id="go">دخول</button>
     <div class="err" id="err"></div>
@@ -179,7 +182,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 
 <div id="app" hidden>
   <header class="top"><div class="top-in">
-    <div><h1>منصة وكيلة المدرسة</h1><small id="meta"></small></div>
+    <div><h1 id="title">منصة وكيلة المدرسة</h1><small id="meta"></small></div>
     <div class="sp"></div>
     <button class="ref-btn" id="reload" title="جلب أحدث البيانات"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg><span>تحديث</span></button>
     <button class="icon-btn" id="logout" title="خروج" aria-label="خروج"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17 5 12l5-5"/><path d="M5 12h12"/></svg></button>
@@ -207,9 +210,20 @@ let state = { fFilter: 'all', fSort: 'pct' };
 
 /* ---------- decrypt ---------- */
 const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+// teacher login: mobile number (Arabic digits, +966 / 00966 / 5xxxxxxxx accepted) -> 05xxxxxxxx
+const phoneOf = s => { const d = String(s).replace(/[٠-٩]/g, c => '٠١٢٣٤٥٦٧٨٩'.indexOf(c)).replace(/[\s\-+()]/g, '');
+  if (!/^\d+$/.test(d)) return null; const p = d.replace(/^(00)?966/, '').replace(/^0?/, '0'); return /^05\d{8}$/.test(p) ? p : null; };
+async function teacherFile(phone) {   // same PBKDF2 as tools/export.js
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(phone), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: new TextEncoder().encode('wk-platform/t'), iterations: 100000, hash: 'SHA-256' }, base, 96);
+  return 'data/t/' + [...new Uint8Array(bits)].map(b => b.toString(16).padStart(2, '0')).join('') + '.json';
+}
 async function load(code) {
-  const r = await fetch('data/w.json?t=' + Date.now(), { cache: 'no-store' });
+  const phone = phoneOf(code);
+  const r = await fetch((phone ? await teacherFile(phone) : 'data/w.json') + '?t=' + Date.now(), { cache: 'no-store' });
+  if (phone && r.status === 404) throw new Error('phone');
   if (!r.ok) throw new Error('net');
+  if (phone) code = phone;
   const e = await r.json();
   const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(code), 'PBKDF2', false, ['deriveKey']);
   const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64(e.salt), iterations: e.iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
@@ -224,18 +238,19 @@ const store = { get() { try { return localStorage.getItem(KEY) } catch { return 
 async function unlock(code, remember) {
   $('#err').textContent = ''; $('#go').disabled = true; $('#go').textContent = 'جارٍ الفتح…';
   try {
-    D = await load(code.trim().toUpperCase());
-    if (remember) store.set(code.trim().toUpperCase());
-    sessionCode = code.trim().toUpperCase();
+    const c = phoneOf(code) || code.trim().toUpperCase();
+    D = await load(c);
+    if (remember) store.set(c);
+    sessionCode = c;
     prep(); $('#lock').hidden = true; $('#app').hidden = false; route();
   } catch (e) {
-    $('#err').textContent = e.message === 'code' ? 'الرمز غير صحيح' : 'تعذّر تحميل البيانات، تحققي من الاتصال';
+    $('#err').textContent = { code: 'الرمز غير صحيح', phone: 'الرقم غير مسجّل في المنصة، راجعي الوكيلة' }[e.message] || 'تعذّر تحميل البيانات، تحققي من الاتصال';
     store.set(null);
   } finally { $('#go').disabled = false; $('#go').textContent = 'دخول'; }
 }
 let sessionCode = null;
 $('#lockForm').addEventListener('submit', e => { e.preventDefault(); if ($('#code').value.trim()) unlock($('#code').value, $('#remember').checked); });
-$('#logout').onclick = () => { store.set(null); sessionCode = null; D = null; $('#app').hidden = true; $('#lock').hidden = false; $('#code').value = ''; location.hash = ''; };
+$('#logout').onclick = () => { store.set(null); sessionCode = null; D = null; $('#app').hidden = true; $('#lock').hidden = false; $('#code').value = ''; document.body.classList.remove('tmode'); location.hash = ''; };
 $('#reload').onclick = async () => {
   const b = $('#reload'), lbl = b.querySelector('span'), before = D && D.generated;
   b.disabled = true; b.classList.add('busy'); lbl.textContent = 'جارٍ التحديث…';
@@ -269,6 +284,9 @@ function prep() {
     t.pct = t.exist ? Math.round(t.done / t.exist * 100) : 0;
     t.last = exist.map(c => c.info.last).filter(Boolean).sort().pop() || '';
   });
+  const tm = D.kind === 'teacher';
+  document.body.classList.toggle('tmode', tm);
+  $('#title').textContent = tm ? (D.teachers.length === 1 ? D.teachers[0].name : 'متابعة إنجازي') : 'منصة وكيلة المدرسة';
   const d = new Date(D.generated);
   $('#meta').textContent = `${D.week} · آخر تحديث ${d.toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'long' })} ${d.toLocaleTimeString('ar-SA-u-nu-latn', { hour: 'numeric', minute: '2-digit' })}`;
 }
@@ -282,6 +300,11 @@ function go(h) { location.hash = h; }
 function route() {
   if (!D) return;
   const [v, a] = (location.hash.slice(1) || 'me').split('/');
+  if (D.kind === 'teacher') {   // a teacher sees only her own page(s)
+    const one = D.teachers.length === 1, i = one ? 0 : v === 't' && D.teachers[+a] ? +a : -1;
+    $('#view').innerHTML = i >= 0 ? teacher(i) : `<h2 style="margin:6px 0 12px">اختاري اسمك</h2><div class="list">${D.teachers.map(teacherRow).join('')}</div>`;
+    bind($('#view')); window.scrollTo(0, 0); return;
+  }
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === (v === 't' ? 'teachers' : v === 'f' ? 'folders' : v === 'w' ? 'me' : v)));
   const el = $('#view');
   el.innerHTML = ({ me, w: () => wNode(a || ''), home, teachers, folders, board, alerts, admins, t: () => teacher(+a), f: () => folder(+a) }[v] || me)();
@@ -454,6 +477,16 @@ function teacher(i) {
       ${c.info.files.length ? `<ul class="files">${c.info.files.map(fileLi).join('')}</ul>` : '<div class="empty">المجلد فارغ</div>'}
       <div class="acts"><a class="btn sm ghost" href="${esc(c.info.url)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a></div></details>`;
   }).join('');
+  if (D.kind === 'teacher') {
+    const miss = t.cells.filter(c => c.s === 'none' || c.s === 'part');
+    return `${D.teachers.length > 1 ? '<button class="back" data-go="">→ اختيار الاسم</button>' : ''}
+  <div class="head" style="margin:10px 0 14px">${ring(t.pct)}<div><h2>${esc(t.name)}</h2><div class="muted">${nf(t.done)} من ${nf(t.exist)} مجلدات مكتملة · ${nf(t.total)} ملف</div></div>
+    <div style="flex:1"></div><a class="btn sm" href="${esc(t.url)}" target="_blank" rel="noopener">فتح مجلدي في OneDrive</a></div>
+  ${miss.length ? `<div class="card pad" style="margin-bottom:14px"><div style="font-weight:600;margin-bottom:8px">المطلوب استكماله</div>
+    <ul style="margin:0;padding-inline-start:20px;line-height:1.9">${miss.map(c => `<li>${c.f.group ? esc(c.f.group) + ' / ' : ''}${esc(c.f.label)} — المطلوب ${nf(c.f.min)}، الموجود ${nf(c.info.count)}</li>`).join('')}</ul></div>`
+    : `<div class="card pad" style="margin-bottom:14px;color:var(--ok);font-weight:600">جميع مجلداتك مكتملة حسب المعايير، شكرًا لك</div>`}
+  <div class="list">${folds}</div>`;
+  }
   return `<button class="back" data-go="teachers">→ المعلمات</button>
   <div class="head" style="margin:10px 0 14px">${ring(t.pct)}<div><h2>${esc(t.name)}</h2><div class="muted">${nf(t.done)} من ${nf(t.exist)} مجلدات مكتملة · ${nf(t.total)} ملف</div></div>
     <div style="flex:1"></div><a class="btn sm" href="${esc(t.url)}" target="_blank" rel="noopener">فتح مجلدها في OneDrive</a></div>
