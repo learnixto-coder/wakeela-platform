@@ -144,6 +144,20 @@ h2:first-child{margin-top:4px}
 .inbox{margin-bottom:12px;border-color:var(--brand-2)}
 .inbox-h{display:flex;align-items:center;gap:8px;margin-bottom:10px;color:var(--brand-2)}
 .inbox-h b{color:var(--ink);font-size:15.5px}
+.up{margin-bottom:12px}
+.up-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;color:var(--brand-2)}
+.up-h b{color:var(--ink);font-size:15.5px}
+.up-h .muted{font-size:12.5px;flex-basis:100%}
+.up-l{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+.up select{width:100%;margin-bottom:10px}
+.up-drop{display:flex;align-items:center;justify-content:center;text-align:center;border:2px dashed var(--line);border-radius:12px;padding:18px 12px;cursor:pointer;background:var(--soft)}
+.up-drop:hover{border-color:var(--brand-2)}
+.up-drop .muted{font-size:12.5px}
+.up-list{display:grid;gap:6px;margin:10px 0}
+.up-list:empty{display:none}
+.up-f{display:flex;align-items:center;gap:8px;font-size:13.5px}
+.up-f .n{flex:1;min-width:0;overflow-wrap:anywhere}
+.up-pend{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--soft);font-size:13px;display:grid;gap:4px}
 #tip{position:fixed;z-index:40;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12.5px;padding:6px 10px;border-radius:8px;white-space:nowrap;transform:translate(-50%,-100%)}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 .search{flex:1;min-width:180px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
@@ -383,6 +397,9 @@ function bind(el) {
   el.querySelectorAll('[data-copy]').forEach(x => x.addEventListener('click', () => copy(txt(x.dataset.copy))));
   el.querySelectorAll('[data-wa]').forEach(x => x.addEventListener('click', () => window.open('https://wa.me/?text=' + encodeURIComponent(txt(x.dataset.wa)), '_blank')));
   const sent = el.querySelector('#sent'); if (sent) renderSent(+sent.dataset.t);
+  const up = el.querySelector('#up'); if (up) bindUpload(up, D.teachers[+up.dataset.t]);
+  el.querySelectorAll('[data-attach]').forEach(x => x.addEventListener('click', () => {
+    $('#upF').value = x.dataset.attach; $('#up').scrollIntoView({ behavior: 'smooth', block: 'start' }); $('#upI').click(); }));
   const sn = el.querySelector('#sendNote'); if (sn) sn.addEventListener('click', () => sendNote(+sn.dataset.t));
   el.querySelectorAll('[data-cell]').forEach(x => x.addEventListener('click', () => { const [t, f] = x.dataset.cell.split(','); cellSheet(+t, +f); }));
   const q = el.querySelector('#q'); if (q) q.addEventListener('input', () => filterRows(q.value));
@@ -544,7 +561,7 @@ function teacher(i) {
       <div class="g">${c.f.group ? esc(c.f.group) + ' · ' : ''}${nf(c.info.count)} من ${nf(c.f.min)} مطلوب${c.info.last ? ' · آخر رفع ' + esc(c.info.last) : ''}${flagged ? ` · <span class="warn">${nf(flagged)} ملاحظة</span>` : ''}</div></div>${chip(c.s)}</summary>
       ${c.info.parentLoose ? `<div class="pad warn" style="padding-bottom:0">${nf(c.info.parentLoose)} ملف في «${esc(c.f.group)}» غير موزّع على المجلدات الفرعية</div>` : ''}
       ${c.info.files.length ? `<ul class="files">${c.info.files.map(fileLi).join('')}</ul>` : '<div class="empty">المجلد فارغ</div>'}
-      <div class="acts"><a class="btn sm ghost" href="${esc(c.info.url)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a></div></details>`;
+      <div class="acts">${D.kind === 'teacher' && D.inbox ? `<button class="btn sm" data-attach="${c.f.i}">إرفاق شاهد هنا</button>` : ''}<a class="btn sm ghost" href="${esc(c.info.url)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a></div></details>`;
   }).join('');
   if (D.kind === 'teacher') return teacherDash(t, folds);
   return `<button class="back" data-go="teachers">→ المعلمات</button>
@@ -647,6 +664,99 @@ function inbox(t) {   // alerts from the وكيلة; "جديد" until seen once 
     <div class="notes">${mine.slice(0, 5).map(x => `<div class="note${seen.includes(x.id) ? '' : ' new'}"><div class="note-h"><span>${esc(whenTxt(x.at))}</span></div><div class="note-b">${esc(x.text)}</div></div>`).join('')}</div></div>`;
 }
 
+/* ---------- evidence upload (teacher) ----------
+   The file is encrypted in the browser (AES-GCM, key wrapped with the PC's RSA-OAEP public key) and committed
+   to the private inbox repo; tools/inbox.js on the وكيلة's PC moves it into the right OneDrive folder. */
+const UP_MAX = 20 * 1024 * 1024;
+const UP_ACCEPT = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.heic,.webp,.gif,.txt,.mp4,.mov,.m4a,.mp3,.zip,image/*';
+const UP_EXT = /\.(pdf|docx?|xlsx?|pptx?|jpe?g|png|heic|webp|gif|txt|mp4|mov|m4a|mp3|zip)$/i;
+const kb = n => n < 1048576 ? `${nf(Math.max(1, Math.round(n / 1024)))} ك.ب` : `${(n / 1048576).toFixed(1)} م.ب`;
+const pendKey = 'wk-up';
+const pendGet = () => { try { return JSON.parse(localStorage.getItem(pendKey) || '[]'); } catch { return []; } };
+const pendSet = v => { try { localStorage.setItem(pendKey, JSON.stringify(v.slice(-100))); } catch {} };
+
+function uploadCard(t) {
+  if (!D.inbox) return '';
+  const cs = t.cells.filter(c => c.s !== 'na');
+  const pick = (t.cells.find(c => c.s === 'none' || c.s === 'part') || cs[0])?.f.i;
+  return `<div class="card pad up" id="up" data-t="${t.i}">
+    <div class="up-h"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
+      <b>إرفاق شاهد</b><span class="muted">يصل إلى مجلدك في OneDrive خلال 15 – 30 دقيقة أثناء الدوام</span></div>
+    <label class="up-l">المجلد</label>
+    <select class="search" id="upF">${cs.map(c => `<option value="${c.f.i}"${c.f.i === pick ? ' selected' : ''}>${c.f.group ? esc(c.f.group) + ' / ' : ''}${esc(c.f.label)}${c.s === 'ok' ? '' : ' — ' + S_LABEL[c.s]}</option>`).join('')}</select>
+    <label class="up-drop" id="upDrop"><input type="file" id="upI" multiple accept="${UP_ACCEPT}" hidden>
+      <span><b>اختاري الملفات أو صوّري الشاهد</b><br><span class="muted">PDF، Word، صور… حتى 20 م.ب للملف</span></span></label>
+    <div id="upList" class="up-list"></div>
+    <button class="btn wide" id="upGo" hidden>رفع</button>
+    <div id="upPend"></div></div>`;
+}
+async function sealUpload(file, folderKey, t) {
+  const ib = D.inbox, tid = await teacherId(sessionCode);
+  const pub = await crypto.subtle.importKey('spki', b64(ib.pub), { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt']);
+  const raw = crypto.getRandomValues(new Uint8Array(32)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const meta = utf8.encode(JSON.stringify({ tid, name: t.name, folder: folderKey, file: file.name, type: file.type, size: file.size, at: new Date().toISOString() }));
+  const body = new Uint8Array(4 + meta.length + file.size);
+  new DataView(body.buffer).setUint32(0, meta.length); body.set(meta, 4); body.set(new Uint8Array(await file.arrayBuffer()), 4 + meta.length);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['encrypt']), body));
+  const wk = new Uint8Array(await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, pub, raw));
+  const blob = new Uint8Array(18 + wk.length + ct.length);   // 'WKI1' | u16 len | wrapped key | iv | ciphertext
+  blob.set(utf8.encode('WKI1')); new DataView(blob.buffer).setUint16(4, wk.length); blob.set(wk, 6); blob.set(iv, 6 + wk.length); blob.set(ct, 18 + wk.length);
+  const p = `in/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.bin`;
+  const r = await fetch(`https://api.github.com/repos/${ib.repo}/contents/${p}`, { method: 'PUT',
+    headers: { Authorization: 'Bearer ' + ib.token, Accept: 'application/vnd.github+json' },
+    body: JSON.stringify({ message: 'upload', branch: ib.branch, content: toB64(blob) }) });
+  if (!r.ok) throw new Error('gh' + r.status);
+}
+function renderPending(t) {
+  const box = $('#upPend'); if (!box) return;
+  // inbox.js may lowercase the extension or add " (2)", so compare loosely
+  const loose = n => n.toLowerCase().replace(/ \(\d+\)(?=\.[^.]+$)/, '').replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim();
+  const have = new Set(filesOf(t).map(x => loose(x.n.split(' / ').pop())));
+  const all = pendGet(), now = Date.now();
+  // drop entries that reached OneDrive (same name now listed) or are older than 3 days
+  const keep = all.filter(p => p.to !== t.name || (!have.has(loose(p.n)) && now - p.at < 3 * 864e5));
+  if (keep.length !== all.length) pendSet(keep);
+  const mine = keep.filter(p => p.to === t.name);
+  box.innerHTML = mine.length ? `<div class="up-pend"><b>بانتظار النقل إلى OneDrive (${nf(mine.length)})</b>${mine.map(p =>
+    `<div><span class="ext">${esc((p.n.split('.').pop() || '').slice(0, 4))}</span> ${esc(p.n)} <span class="muted">· ${esc(p.f)}</span></div>`).join('')}
+    <div class="muted" style="font-size:12px;margin-top:4px">تختفي من هنا عندما تظهر في مجلدك بعد التحديث.</div></div>` : '';
+}
+function bindUpload(box, t) {
+  let files = [];
+  const list = box.querySelector('#upList'), go = box.querySelector('#upGo'), inp = box.querySelector('#upI');
+  const draw = () => {
+    list.innerHTML = files.map((f, k) => `<div class="up-f" data-k="${k}"><span class="ext">${esc((f.name.split('.').pop() || '').slice(0, 4))}</span>
+      <span class="n">${esc(f.name)} <span class="muted">· ${kb(f.size)}</span>${f.err ? ` <span class="warn">${esc(f.err)}</span>` : ''}</span>
+      <span class="st">${f.st === 'ok' ? '<span class="chip s-ok">✓ تم</span>' : f.st === 'up' ? '<span class="chip s-na">جارٍ الرفع…</span>' : f.st === 'fail' ? '<span class="chip s-none">لم يُرفع</span>' : `<button class="note-del" data-rm="${k}">إزالة</button>`}</span></div>`).join('');
+    list.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => { files.splice(+b.dataset.rm, 1); draw(); }));
+    const ready = files.filter(f => !f.st && !f.err).length;
+    go.hidden = !files.some(f => !f.st); go.disabled = !ready; go.textContent = ready > 1 ? `رفع ${nf(ready)} ملفات` : 'رفع';
+  };
+  inp.addEventListener('change', () => {
+    for (const f of inp.files) {
+      f.err = !UP_EXT.test(f.name) ? 'نوع غير مدعوم' : f.size > UP_MAX ? 'أكبر من 20 م.ب' : !f.size ? 'ملف فارغ' : '';
+      files.push(f);
+    }
+    inp.value = ''; draw();
+  });
+  go.addEventListener('click', async () => {
+    const c = D.folders[+box.querySelector('#upF').value];
+    go.disabled = true; box.querySelector('#upF').disabled = true;
+    let ok = 0;
+    for (const f of files.filter(f => !f.st && !f.err)) {
+      f.st = 'up'; draw();
+      try {
+        await sealUpload(f, c.key, t); f.st = 'ok'; ok++;
+        pendSet([...pendGet(), { to: t.name, n: f.name, f: c.label, at: Date.now() }]);
+      } catch (e) { f.st = 'fail'; f.err = e.message === 'gh401' || e.message === 'gh403' ? 'الرفع غير متاح حاليًا' : 'تحقّقي من الاتصال'; }
+      draw();
+    }
+    box.querySelector('#upF').disabled = false;
+    if (ok) { toast(`تم استلام ${ok > 1 ? nf(ok) + ' ملفات' : 'الملف'}، وسيُنقل إلى مجلدك قريبًا`); renderPending(t); files = files.filter(f => f.st !== 'ok'); setTimeout(draw, 1500); }
+  });
+  renderPending(t);
+}
+
 function teacherDash(t, folds) {
   const miss = t.cells.filter(c => c.s === 'none' || c.s === 'part');
   const flagged = filesOf(t).filter(x => x.f).length, wk = weekly(filesOf(t));
@@ -668,6 +778,7 @@ function teacherDash(t, folds) {
       <span class="muted" style="font-size:12.5px">${diff > 0 ? `أعلى من متوسط المدرسة بفارق <span dir="ltr">${nf(diff)}%</span>` : diff < 0 ? `أقل من متوسط المدرسة بفارق <span dir="ltr">${nf(-diff)}%</span>` : 'مساوٍ لمتوسط المدرسة'}</span></div>` : ''}</div>
     <a class="btn sm" href="${esc(t.url)}" target="_blank" rel="noopener">فتح مجلدي في OneDrive</a></div>
   ${inbox(t)}
+  ${uploadCard(t)}
   <div class="kpis">
     <div class="card kpi"><b>${nf(t.done)} / ${nf(t.exist)}</b><span>مجلدات مكتملة</span></div>
     <div class="card kpi"><b>${nf(t.total)}</b><span>ملفًا مرفوعًا</span></div>
