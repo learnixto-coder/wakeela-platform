@@ -713,7 +713,7 @@ function uploadCard(t) {
   const pick = (t.cells.find(c => c.s === 'none' || c.s === 'part') || cs[0])?.f.i;
   return `<div class="card pad up" id="up" data-t="${t.i}">
     <div class="up-h"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
-      <b>إرفاق شاهد</b><span class="muted">يصل إلى مجلدك في OneDrive خلال 15 – 30 دقيقة أثناء الدوام</span></div>
+      <b>إرفاق شاهد</b><span class="muted">يصل إلى مجلدك في OneDrive خلال 5 – 10 دقائق أثناء الدوام (اضغطي «تحديث» بعدها)</span></div>
     <label class="up-l">المجلد</label>
     <select class="search" id="upF">${cs.map(c => `<option value="f:${c.f.i}"${c.f.i === pick ? ' selected' : ''}>${c.f.group ? esc(c.f.group) + ' / ' : ''}${esc(c.f.label)}${c.s === 'ok' ? '' : ' — ' + S_LABEL[c.s]}</option>`).join('')}</select>
     <label class="up-drop" id="upDrop"><input type="file" id="upI" multiple accept="${UP_ACCEPT}" hidden>
@@ -859,7 +859,7 @@ function planUploadCard(k) {   // the upload card for one program (its page)
   const t = D.teachers.find(x => p.people.some(y => y.t === x.name)) || D.teachers[0];
   return `<div class="card pad up" id="up" data-t="${t.i}">
     <div class="up-h"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
-      <b>إرفاق الشواهد</b><span class="muted">تصل إلى مجلد «الشواهد» للبرنامج في OneDrive خلال 15 – 30 دقيقة أثناء الدوام</span></div>
+      <b>إرفاق الشواهد</b><span class="muted">تصل إلى مجلد «الشواهد» للبرنامج في OneDrive خلال 5 – 10 دقائق أثناء الدوام (اضغطي «تحديث» بعدها)</span></div>
     <select id="upF" hidden><option value="p:${p.k}" selected></option></select>
     <label class="up-drop" id="upDrop"><input type="file" id="upI" multiple accept="${UP_ACCEPT}" hidden>
       <span><b>اختاري الملفات أو صوّري الشاهد</b><br><span class="muted">صور، فيديو، PDF، Word… حتى 20 م.ب للملف</span></span></label>
