@@ -396,7 +396,7 @@ function route() {
   const [v, a] = (location.hash.slice(1) || 'me').split('/');
   if (D.kind === 'teacher') {   // a teacher sees only her own page(s)
     const one = D.teachers.length === 1, i = one ? 0 : v === 't' && D.teachers[+a] ? +a : -1;
-    $('#view').innerHTML = v === 'plan' ? (a !== undefined && a !== '' ? teacherProgram(+a) : teacherPlan())
+    $('#view').innerHTML = v === 'plan' || D.planOnly ? (v === 'plan' && a !== undefined && a !== '' ? teacherProgram(+a) : teacherPlan())
       : i >= 0 ? teacher(i) : `<h2 style="margin:6px 0 12px">اختاري اسمك</h2><div class="list">${D.teachers.map(teacherRow).join('')}</div>`;
     bind($('#view')); window.scrollTo(0, 0); return;
   }
@@ -879,7 +879,7 @@ function teacherPlan() {
       <span class="sec-t">${esc(p.name)}</span>
       <span class="sec-s">${p.n ? `${nf(p.n)} شاهد${p.ev.last ? ' · آخر إضافة ' + esc(p.ev.last) : ''}` : 'لا توجد شواهد بعد'}</span>
       ${pchip(p.s)}<span class="sec-l">فتح البرنامج وإرفاق الشواهد ←</span></button>`).join('');
-  return `<button class="back" data-go="">→ صفحتي</button>
+  return `${D.planOnly ? '' : '<button class="back" data-go="">→ صفحتي</button>'}
   <div class="card hero" style="margin-top:8px">${ring(pct).replace('class="ring"', 'class="ring lg"')}
     <div class="grow"><h2>برامج الخطة التشغيلية لعام 1448هـ</h2>
     <p>${P.length ? `${nf(done)} من ${nf(P.length)} ${P.length > 1 ? 'برامج أُرفقت شواهدها' : 'برنامج أُرفقت شواهده'}` : 'لا توجد برامج مسندة إليك في الخطة التشغيلية.'}</p>
