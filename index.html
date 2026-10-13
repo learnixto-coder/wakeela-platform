@@ -895,9 +895,9 @@ function teacherProgram(k) {
   <div class="card hero" style="margin-top:8px"><span class="sec-ic">${planIcon}</span>
     <div class="grow"><h2>${esc(p.name)}</h2>
     <p>${p.n ? `${nf(p.n)} شاهد${p.ev.last ? ' · آخر إضافة ' + esc(p.ev.last) : ''}` : 'لم تُرفق شواهد بعد'}</p>${people(p)}</div>${pchip(p.s)}</div>
-  ${D.planShare ? `<div class="card pad" style="margin-bottom:12px">
-    <a class="btn wide" href="${esc(D.planShare)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a>
-    <div class="muted" style="font-size:13px;margin-top:8px">يفتح من أي حساب دون تسجيل دخول. بعد فتحه اضغطي مجلد «${esc(p.name)}» ثم «الشواهد» للإضافة، أو «قياس الأثر والتقرير» للاطلاع.</div></div>` : ''}
+  ${p.share || D.planShare ? `<div class="card pad" style="margin-bottom:12px">
+    <a class="btn wide" href="${esc(p.share || D.planShare)}" target="_blank" rel="noopener">${p.share ? 'فتح مجلد البرنامج في OneDrive' : 'فتح المجلد في OneDrive'}</a>
+    <div class="muted" style="font-size:13px;margin-top:8px">يفتح من أي حساب دون تسجيل دخول. ${p.share ? '' : `بعد فتحه اضغطي مجلد «${esc(p.name)}»، ثم `}اضغطي «الشواهد» للإضافة، أو «قياس الأثر والتقرير» للاطلاع.</div></div>` : ''}
   ${planUploadCard(k)}
   <h2>الشواهد المرفوعة${p.n ? ` (${nf(p.n)})` : ''}</h2>
   <div class="card">${p.ev?.files.length ? `<ul class="files">${p.ev.files.map(fileLi).join('')}</ul>` : '<div class="empty">لا توجد شواهد بعد — أرفقيها من الأعلى أو من OneDrive</div>'}</div>`;
