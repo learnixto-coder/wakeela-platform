@@ -381,7 +381,7 @@ function prep() {
   D.plan.forEach((p, k) => { p.k = k; p.n = p.ev?.count || 0; p.s = !p.ev ? 'na' : p.n ? 'ok' : 'none'; });
   const tm = D.kind === 'teacher';
   document.body.classList.toggle('tmode', tm);
-  $('#title').textContent = tm ? (D.teachers.length === 1 ? D.teachers[0].name : 'متابعة إنجازي') : 'منصة وكيلة المدرسة';
+  $('#title').textContent = tm ? (D.teachers.length === 1 ? D.teachers[0].name : D.planOnly ? D.teachers.map(t => t.name).join(' · ') : 'متابعة إنجازي') : 'منصة وكيلة المدرسة';
   const d = new Date(D.generated);
   $('#meta').textContent = `${D.week} · آخر تحديث ${d.toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'long' })} ${d.toLocaleTimeString('ar-SA-u-nu-latn', { hour: 'numeric', minute: '2-digit' })}`;
 }
@@ -877,7 +877,7 @@ function teacherPlan() {
   const P = D.plan, done = P.filter(p => p.s === 'ok').length, pct = P.length ? Math.round(done / P.length * 100) : 0;
   const one = D.teachers.length === 1 && D.teachers[0];
   const btns = P.map(p => `<button class="sec card" data-go="plan/${p.k}"><span class="sec-ic">${planIcon}</span>
-      <span class="sec-t">${esc(p.name)}</span>
+      <span class="sec-t">${esc(p.name)}</span>${D.teachers.length > 1 ? people(p) : ''}
       <span class="sec-s">${p.n ? `${nf(p.n)} شاهد${p.ev.last ? ' · آخر إضافة ' + esc(p.ev.last) : ''}` : 'لا توجد شواهد بعد'}</span>
       ${pchip(p.s)}<span class="sec-l">فتح البرنامج وإرفاق الشواهد ←</span></button>`).join('');
   return `<div class="card hero">${ring(pct).replace('class="ring"', 'class="ring lg"')}
