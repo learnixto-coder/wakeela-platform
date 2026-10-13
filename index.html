@@ -883,6 +883,9 @@ function teacherPlan() {
     <div class="grow"><h2>برامج الخطة التشغيلية لعام 1448هـ</h2>
     <p>${P.length ? `${nf(done)} من ${nf(P.length)} ${P.length > 1 ? 'برامج أُرفقت شواهدها' : 'برنامج أُرفقت شواهده'}` : 'لا توجد برامج مسندة إليك في الخطة التشغيلية.'}</p>
     <p class="muted" style="font-size:13px;margin-top:4px">المطلوب: إرفاق شواهد التنفيذ (صور، فيديوهات، أو أي ملفات) في مجلد «الشواهد» لكل برنامج.</p></div></div>
+  ${D.planShare && P.length ? `<div class="card pad" style="margin-bottom:12px;border-color:var(--brand-2)"><div style="font-weight:600">🔑 أول مرة؟ فعّلي دخولك إلى المجلدات</div>
+    <div class="muted" style="font-size:13px;margin:4px 0 10px">إن ظهرت لك رسالة «تحتاجين إذن وصول» عند فتح مجلد برنامج، افتحي هذا الرابط مرة واحدة ثم ارجعي إلى برنامجك.</div>
+    <a class="btn sm" href="${esc(D.planShare)}" target="_blank" rel="noopener">تفعيل الدخول إلى المجلدات</a></div>` : ''}
   ${one ? inbox(one) : ''}
   ${planUploadCard()}
   <h2>برامجي</h2>
