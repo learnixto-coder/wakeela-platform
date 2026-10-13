@@ -867,10 +867,6 @@ function planUploadCard(k) {   // the upload card for one program (its page)
     <button class="btn wide" id="upGo" hidden>رفع</button>
     <div id="upPend"></div></div>`;
 }
-const shareCard = () => D.planShare ? `<div class="card pad" style="margin-bottom:12px;border-color:var(--brand-2)"><div style="font-weight:600">🔑 أول مرة؟ فعّلي دخولك إلى المجلدات</div>
-    <div class="muted" style="font-size:13px;margin:4px 0 10px">إن ظهرت لك رسالة «تحتاجين إذن وصول» عند فتح OneDrive، افتحي هذا الرابط مرة واحدة ثم ارجعي.</div>
-    <a class="btn sm" href="${esc(D.planShare)}" target="_blank" rel="noopener">تفعيل الدخول إلى المجلدات</a></div>` : '';
-
 // her programs as buttons; each opens the program's own page (#plan/<k>)
 function teacherPlan() {
   const P = D.plan, done = P.filter(p => p.s === 'ok').length, pct = P.length ? Math.round(done / P.length * 100) : 0;
@@ -895,11 +891,10 @@ function teacherProgram(k) {
   <div class="card hero" style="margin-top:8px"><span class="sec-ic">${planIcon}</span>
     <div class="grow"><h2>${esc(p.name)}</h2>
     <p>${p.n ? `${nf(p.n)} شاهد${p.ev.last ? ' · آخر إضافة ' + esc(p.ev.last) : ''}` : 'لم تُرفق شواهد بعد'}</p>${people(p)}</div>${pchip(p.s)}</div>
-  <div class="toolbar" style="margin:0 0 12px">
-    ${p.ev ? `<a class="btn" href="${esc(p.ev.url)}" target="_blank" rel="noopener">فتح مجلد الشواهد في OneDrive</a>` : ''}
-    ${p.rep ? `<a class="btn ghost" href="${esc(p.rep.url)}" target="_blank" rel="noopener">التقرير وقياس الأثر${p.rep.count ? ` (${nf(p.rep.count)})` : ''}</a>` : ''}</div>
+  ${D.planShare ? `<div class="card pad" style="margin-bottom:12px">
+    <a class="btn wide" href="${esc(D.planShare)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a>
+    <div class="muted" style="font-size:13px;margin-top:8px">يفتح من أي حساب دون تسجيل دخول. بعد فتحه اضغطي مجلد «${esc(p.name)}» ثم «الشواهد» للإضافة، أو «قياس الأثر والتقرير» للاطلاع.</div></div>` : ''}
   ${planUploadCard(k)}
-  ${shareCard()}
   <h2>الشواهد المرفوعة${p.n ? ` (${nf(p.n)})` : ''}</h2>
   <div class="card">${p.ev?.files.length ? `<ul class="files">${p.ev.files.map(fileLi).join('')}</ul>` : '<div class="empty">لا توجد شواهد بعد — أرفقيها من الأعلى أو من OneDrive</div>'}</div>`;
 }
