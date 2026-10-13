@@ -223,6 +223,18 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 @media (min-width:700px){.sheet-bg{align-items:center}.sheet{border-radius:18px}}
 .toast{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:12px;font-size:14px;z-index:30}
 .empty{padding:28px;text-align:center;color:var(--muted)}
+/* برامج الخطة التشغيلية */
+.ppl{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.ppl span{font-size:12px;padding:1px 9px;border-radius:999px;background:var(--soft);border:1px solid var(--line)}
+.ppl span.nolog{color:var(--muted);border-style:dashed}
+.plan-link{display:flex;align-items:center;gap:12px;width:100%;margin-top:12px;padding:14px 16px;cursor:pointer;text-align:start;font:inherit;color:inherit}
+.plan-link:hover{border-color:var(--brand-2)}
+.ck{display:flex;gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--line);cursor:pointer;font-size:13.5px}
+.ck input{width:18px;height:18px;flex:0 0 auto}
+.ck .n{flex:1;min-width:0;overflow-wrap:anywhere}
+.ck.pend{opacity:.55;cursor:default}
+.note-close{margin-inline-start:auto}
+.btn.danger{background:var(--none);border-color:var(--none)}
 .foot{margin-top:28px;color:var(--muted);font-size:12.5px;text-align:center}
 </style>
 </head>
@@ -257,6 +269,8 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
     <button data-v="board">لوحة التتبع</button>
     <button data-v="alerts">التنبيهات</button>
     <button data-v="admins">الإداريات</button>
+    <button data-v="plan">برامج الخطة 1448هـ</button>
+    <button data-v="pdel">حذف الشواهد</button>
   </div></nav>
   <main id="view"></main>
 </div>
@@ -268,7 +282,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const nf = n => Number(n).toLocaleString('en-US');
 const KEY = 'wk-platform-code';
 let D = null;           // decrypted data
-let state = { fFilter: 'all', fSort: 'pct' };
+let state = { fFilter: 'all', fSort: 'pct', pFilter: 'all' };
 
 /* ---------- decrypt ---------- */
 const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -362,6 +376,8 @@ function prep() {
     t.pct = t.exist ? Math.round(t.done / t.exist * 100) : 0;
     t.last = exist.map(c => c.info.last).filter(Boolean).sort().pop() || '';
   });
+  D.plan = D.plan || [];
+  D.plan.forEach((p, k) => { p.k = k; p.n = p.ev?.count || 0; p.s = !p.ev ? 'na' : p.n ? 'ok' : 'none'; });
   const tm = D.kind === 'teacher';
   document.body.classList.toggle('tmode', tm);
   $('#title').textContent = tm ? (D.teachers.length === 1 ? D.teachers[0].name : 'متابعة إنجازي') : 'منصة وكيلة المدرسة';
@@ -380,12 +396,14 @@ function route() {
   const [v, a] = (location.hash.slice(1) || 'me').split('/');
   if (D.kind === 'teacher') {   // a teacher sees only her own page(s)
     const one = D.teachers.length === 1, i = one ? 0 : v === 't' && D.teachers[+a] ? +a : -1;
-    $('#view').innerHTML = i >= 0 ? teacher(i) : `<h2 style="margin:6px 0 12px">اختاري اسمك</h2><div class="list">${D.teachers.map(teacherRow).join('')}</div>`;
+    $('#view').innerHTML = v === 'plan' ? teacherPlan()
+      : i >= 0 ? teacher(i) : `<h2 style="margin:6px 0 12px">اختاري اسمك</h2><div class="list">${D.teachers.map(teacherRow).join('')}</div>`;
     bind($('#view')); window.scrollTo(0, 0); return;
   }
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === (v === 't' ? 'teachers' : v === 'f' ? 'folders' : v === 'w' ? 'me' : v)));
   const el = $('#view');
-  el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board, alerts, admins, t: () => teacher(+a), f: () => folder(+a) }[v] || me)();
+  el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board, alerts, admins, t: () => teacher(+a), f: () => folder(+a),
+    plan: planW, pdel: () => planDel(a) }[v] || me)();
   bind(el); window.scrollTo(0, 0);
 }
 document.querySelector('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.v); });
@@ -400,6 +418,9 @@ function bind(el) {
   const up = el.querySelector('#up'); if (up) bindUpload(up, D.teachers[+up.dataset.t]);
   el.querySelectorAll('[data-attach]').forEach(x => x.addEventListener('click', () => {
     $('#upF').value = x.dataset.attach; $('#up').scrollIntoView({ behavior: 'smooth', block: 'start' }); $('#upI').click(); }));
+  el.querySelectorAll('[data-close]').forEach(x => x.addEventListener('click', () => closeNote(x.dataset.close, +x.dataset.t)));
+  const pd = el.querySelector('#pdel'); if (pd) bindPlanDel(pd);
+  el.querySelectorAll('[data-pf]').forEach(x => x.addEventListener('click', () => { state.pFilter = x.dataset.pf; route(); }));
   const sn = el.querySelector('#sendNote'); if (sn) sn.addEventListener('click', () => sendNote(+sn.dataset.t));
   el.querySelectorAll('[data-cell]').forEach(x => x.addEventListener('click', () => { const [t, f] = x.dataset.cell.split(','); cellSheet(+t, +f); }));
   const q = el.querySelector('#q'); if (q) q.addEventListener('input', () => filterRows(q.value));
@@ -561,7 +582,7 @@ function teacher(i) {
       <div class="g">${c.f.group ? esc(c.f.group) + ' · ' : ''}${nf(c.info.count)} من ${nf(c.f.min)} مطلوب${c.info.last ? ' · آخر رفع ' + esc(c.info.last) : ''}${flagged ? ` · <span class="warn">${nf(flagged)} ملاحظة</span>` : ''}</div></div>${chip(c.s)}</summary>
       ${c.info.parentLoose ? `<div class="pad warn" style="padding-bottom:0">${nf(c.info.parentLoose)} ملف في «${esc(c.f.group)}» غير موزّع على المجلدات الفرعية</div>` : ''}
       ${c.info.files.length ? `<ul class="files">${c.info.files.map(fileLi).join('')}</ul>` : '<div class="empty">المجلد فارغ</div>'}
-      <div class="acts">${D.kind === 'teacher' && D.inbox ? `<button class="btn sm" data-attach="${c.f.i}">إرفاق شاهد هنا</button>` : ''}<a class="btn sm ghost" href="${esc(c.info.url)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a></div></details>`;
+      <div class="acts">${D.kind === 'teacher' && D.inbox ? `<button class="btn sm" data-attach="f:${c.f.i}">إرفاق شاهد هنا</button>` : ''}<a class="btn sm ghost" href="${esc(c.info.url)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a></div></details>`;
   }).join('');
   if (D.kind === 'teacher') return teacherDash(t, folds);
   return `<button class="back" data-go="teachers">→ المعلمات</button>
@@ -653,15 +674,26 @@ function weekChart(c) {   // one series; value shown on the current and the busi
 }
 const agoTxt = iso => { const a = daysSince(iso); return a == null ? '—' : a <= 0 ? 'اليوم' : a === 1 ? 'أمس' : `قبل ${nf(a)} يوم`; };
 
+// alerts the teacher closed: hidden at once on this device, and (when uploads are set up) sent to the PC,
+// which removes them from data/n for good so they don't pile up
+const closedGet = () => { try { return JSON.parse(localStorage.getItem('wk-closed') || '[]'); } catch { return []; } };
 function inbox(t) {   // alerts from the وكيلة; "جديد" until seen once on this device
-  const mine = (D.notes || []).filter(x => x.to === t.name).sort((a, b) => b.at.localeCompare(a.at));
+  const closed = closedGet();
+  const mine = (D.notes || []).filter(x => x.to === t.name && !closed.includes(x.id)).sort((a, b) => b.at.localeCompare(a.at));
   if (!mine.length) return '';
   let seen = []; try { seen = JSON.parse(localStorage.getItem('wk-seen') || '[]'); } catch {}
   try { localStorage.setItem('wk-seen', JSON.stringify([...new Set([...seen, ...mine.map(x => x.id)])].slice(-200))); } catch {}
   const fresh = mine.filter(x => !seen.includes(x.id)).length;
   return `<div class="card pad inbox"><div class="inbox-h"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-    <b>تنبيهات من الوكيلة</b>${fresh ? `<span class="chip s-none">${nf(fresh)} جديد</span>` : ''}</div>
-    <div class="notes">${mine.slice(0, 5).map(x => `<div class="note${seen.includes(x.id) ? '' : ' new'}"><div class="note-h"><span>${esc(whenTxt(x.at))}</span></div><div class="note-b">${esc(x.text)}</div></div>`).join('')}</div></div>`;
+    <b>تنبيهات من الوكيلة</b>${fresh ? `<span class="chip s-none">${nf(fresh)} جديد</span>` : ''}<span class="muted" style="font-size:12px;margin-inline-start:auto">اضغطي «تم الاطلاع» لإغلاق التنبيه</span></div>
+    <div class="notes">${mine.slice(0, 8).map(x => `<div class="note${seen.includes(x.id) ? '' : ' new'}"><div class="note-h"><span>${esc(whenTxt(x.at))}</span>
+      <button class="note-del note-close" data-close="${esc(x.id)}" data-t="${t.i}">تم الاطلاع ✕</button></div><div class="note-b">${esc(x.text)}</div></div>`).join('')}</div></div>`;
+}
+async function closeNote(id, ti) {
+  try { localStorage.setItem('wk-closed', JSON.stringify([...new Set([...closedGet(), id])].slice(-300))); } catch {}
+  route();
+  if (!D.inbox) return;   // the PC inbox isn't set up yet: closed on this device only
+  try { await sealSend({ name: D.teachers[ti].name, kind: 'dismiss', ids: [id] }, new Uint8Array(0)); } catch {}
 }
 
 /* ---------- evidence upload (teacher) ----------
@@ -683,7 +715,7 @@ function uploadCard(t) {
     <div class="up-h"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
       <b>إرفاق شاهد</b><span class="muted">يصل إلى مجلدك في OneDrive خلال 15 – 30 دقيقة أثناء الدوام</span></div>
     <label class="up-l">المجلد</label>
-    <select class="search" id="upF">${cs.map(c => `<option value="${c.f.i}"${c.f.i === pick ? ' selected' : ''}>${c.f.group ? esc(c.f.group) + ' / ' : ''}${esc(c.f.label)}${c.s === 'ok' ? '' : ' — ' + S_LABEL[c.s]}</option>`).join('')}</select>
+    <select class="search" id="upF">${cs.map(c => `<option value="f:${c.f.i}"${c.f.i === pick ? ' selected' : ''}>${c.f.group ? esc(c.f.group) + ' / ' : ''}${esc(c.f.label)}${c.s === 'ok' ? '' : ' — ' + S_LABEL[c.s]}</option>`).join('')}</select>
     <label class="up-drop" id="upDrop"><input type="file" id="upI" multiple accept="${UP_ACCEPT}" hidden>
       <span><b>اختاري الملفات أو صوّري الشاهد</b><br><span class="muted">PDF، Word، صور… حتى 20 م.ب للملف</span></span></label>
     <div id="upList" class="up-list"></div>
@@ -691,12 +723,16 @@ function uploadCard(t) {
     <div id="upPend"></div></div>`;
 }
 async function sealUpload(file, folderKey, t) {
+  await sealSend({ name: t.name, folder: folderKey, file: file.name, type: file.type, size: file.size }, new Uint8Array(await file.arrayBuffer()));
+}
+// one encrypted message to the PC inbox: an upload, or {kind:'dismiss', ids} when she closes alerts
+async function sealSend(fields, bytes) {
   const ib = D.inbox, tid = await teacherId(sessionCode);
   const pub = await crypto.subtle.importKey('spki', b64(ib.pub), { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt']);
   const raw = crypto.getRandomValues(new Uint8Array(32)), iv = crypto.getRandomValues(new Uint8Array(12));
-  const meta = utf8.encode(JSON.stringify({ tid, name: t.name, folder: folderKey, file: file.name, type: file.type, size: file.size, at: new Date().toISOString() }));
-  const body = new Uint8Array(4 + meta.length + file.size);
-  new DataView(body.buffer).setUint32(0, meta.length); body.set(meta, 4); body.set(new Uint8Array(await file.arrayBuffer()), 4 + meta.length);
+  const meta = utf8.encode(JSON.stringify({ tid, ...fields, at: new Date().toISOString() }));
+  const body = new Uint8Array(4 + meta.length + bytes.length);
+  new DataView(body.buffer).setUint32(0, meta.length); body.set(meta, 4); body.set(bytes, 4 + meta.length);
   const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['encrypt']), body));
   const wk = new Uint8Array(await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, pub, raw));
   const blob = new Uint8Array(18 + wk.length + ct.length);   // 'WKI1' | u16 len | wrapped key | iv | ciphertext
@@ -711,7 +747,7 @@ function renderPending(t) {
   const box = $('#upPend'); if (!box) return;
   // inbox.js may lowercase the extension or add " (2)", so compare loosely
   const loose = n => n.toLowerCase().replace(/ \(\d+\)(?=\.[^.]+$)/, '').replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim();
-  const have = new Set(filesOf(t).map(x => loose(x.n.split(' / ').pop())));
+  const have = new Set(filesOf(t).concat(D.plan.flatMap(p => p.ev?.files || [])).map(x => loose(x.n.split(' / ').pop())));
   const all = pendGet(), now = Date.now();
   // drop entries that reached OneDrive (same name now listed) or are older than 3 days
   const keep = all.filter(p => p.to !== t.name || (!have.has(loose(p.n)) && now - p.at < 3 * 864e5));
@@ -740,19 +776,23 @@ function bindUpload(box, t) {
     inp.value = ''; draw();
   });
   go.addEventListener('click', async () => {
-    const c = D.folders[+box.querySelector('#upF').value];
+    // "f:<folder index>" = one of her folders, "p:<program index>" = a program's «الشواهد» (sent as the teacher assigned to it)
+    const [kind, ix] = box.querySelector('#upF').value.split(':');
+    const p = kind === 'p' && D.plan[+ix], c = !p && D.folders[+ix];
+    const who = p ? D.teachers.find(x => p.people.some(y => y.t === x.name)) || t : t;
+    const key = p ? 'plan:' + p.name : c.key, label = p ? 'برنامج ' + p.name : c.label;
     go.disabled = true; box.querySelector('#upF').disabled = true;
     let ok = 0;
     for (const f of files.filter(f => !f.st && !f.err)) {
       f.st = 'up'; draw();
       try {
-        await sealUpload(f, c.key, t); f.st = 'ok'; ok++;
-        pendSet([...pendGet(), { to: t.name, n: f.name, f: c.label, at: Date.now() }]);
+        await sealUpload(f, key, who); f.st = 'ok'; ok++;
+        pendSet([...pendGet(), { to: t.name, n: f.name, f: label, at: Date.now() }]);
       } catch (e) { f.st = 'fail'; f.err = e.message === 'gh401' || e.message === 'gh403' ? 'الرفع غير متاح حاليًا' : 'تحقّقي من الاتصال'; }
       draw();
     }
     box.querySelector('#upF').disabled = false;
-    if (ok) { toast(`تم استلام ${ok > 1 ? nf(ok) + ' ملفات' : 'الملف'}، وسيُنقل إلى مجلدك قريبًا`); renderPending(t); files = files.filter(f => f.st !== 'ok'); setTimeout(draw, 1500); }
+    if (ok) { toast(`تم استلام ${ok > 1 ? nf(ok) + ' ملفات' : 'الملف'}، وسيُنقل إلى ${p ? 'مجلد الشواهد' : 'مجلدك'} قريبًا`); renderPending(t); files = files.filter(f => f.st !== 'ok'); setTimeout(draw, 1500); }
   });
   renderPending(t);
 }
@@ -778,6 +818,7 @@ function teacherDash(t, folds) {
       <span class="muted" style="font-size:12.5px">${diff > 0 ? `أعلى من متوسط المدرسة بفارق <span dir="ltr">${nf(diff)}%</span>` : diff < 0 ? `أقل من متوسط المدرسة بفارق <span dir="ltr">${nf(-diff)}%</span>` : 'مساوٍ لمتوسط المدرسة'}</span></div>` : ''}</div>
     <a class="btn sm" href="${esc(t.url)}" target="_blank" rel="noopener">فتح مجلدي في OneDrive</a></div>
   ${inbox(t)}
+  ${planLink()}
   ${uploadCard(t)}
   <div class="kpis">
     <div class="card kpi"><b>${nf(t.done)} / ${nf(t.exist)}</b><span>مجلدات مكتملة</span></div>
@@ -793,6 +834,173 @@ function teacherDash(t, folds) {
   </div>
   <h2>تفاصيل المجلدات</h2>
   <div class="list">${folds}</div>`;
+}
+
+/* ---------- برامج الخطة التشغيلية لعام 1448هـ ----------
+   D.plan: [{name, owner, people:[{label, t?}], url, ev:{count, files, url}, rep}] — a teacher's file holds only her programs.
+   Evidence counts as attached when «الشواهد» has at least one file. */
+const P_LABEL = { ok: 'أُرفقت الشواهد', none: 'لم تُرفق بعد', na: 'لا يوجد مجلد' };
+const pchip = s => `<span class="chip s-${s}">${P_LABEL[s]}</span>`;
+const people = p => `<div class="ppl">${p.people.map(x => `<span class="${x.t ? '' : 'nolog'}" title="${x.t ? '' : 'لا يوجد لها حساب في المنصة'}">${esc(x.label)}</span>`).join('') || '<span class="nolog">لم تُحدَّد</span>'}</div>`;
+const planIcon = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/></svg>';
+
+function planLink() {   // card on the teacher's home page
+  if (!D.plan.length) return '';
+  const done = D.plan.filter(p => p.s === 'ok').length;
+  return `<button class="card plan-link" data-go="plan"><span class="sec-ic">${planIcon}</span>
+    <span class="grow"><b style="font-size:15.5px">برامج الخطة التشغيلية لعام 1448هـ</b><br>
+    <span class="muted">${nf(done)} من ${nf(D.plan.length)} ${D.plan.length > 1 ? 'برامج أُرفقت شواهدها' : 'برنامج أُرفقت شواهده'}</span></span>
+    ${done === D.plan.length ? chip('ok') : `<span class="chip s-none">${nf(D.plan.length - done)} بلا شواهد</span>`}
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--muted)"><path d="m15 18-6-6 6-6"/></svg></button>`;
+}
+
+function planUploadCard() {
+  if (!D.inbox || !D.plan.length) return '';
+  const t = D.teachers[0], pick = (D.plan.find(p => p.s !== 'ok') || D.plan[0]).k;
+  return `<div class="card pad up" id="up" data-t="${t.i}">
+    <div class="up-h"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
+      <b>إرفاق شواهد البرنامج</b><span class="muted">تصل إلى مجلد «الشواهد» للبرنامج خلال 15 – 30 دقيقة أثناء الدوام</span></div>
+    <label class="up-l">البرنامج</label>
+    <select class="search" id="upF">${D.plan.map(p => `<option value="p:${p.k}"${p.k === pick ? ' selected' : ''}>${esc(p.name)}${p.s === 'ok' ? ` — ${nf(p.n)} شاهد` : ' — لم تُرفق بعد'}</option>`).join('')}</select>
+    <label class="up-drop" id="upDrop"><input type="file" id="upI" multiple accept="${UP_ACCEPT}" hidden>
+      <span><b>اختاري الملفات أو صوّري الشاهد</b><br><span class="muted">صور، فيديو، PDF، Word… حتى 20 م.ب للملف</span></span></label>
+    <div id="upList" class="up-list"></div>
+    <button class="btn wide" id="upGo" hidden>رفع</button>
+    <div id="upPend"></div></div>`;
+}
+
+function teacherPlan() {
+  const P = D.plan, done = P.filter(p => p.s === 'ok').length, pct = P.length ? Math.round(done / P.length * 100) : 0;
+  const one = D.teachers.length === 1 && D.teachers[0];
+  const cards = P.map(p => `<details class="fold" data-fi="p${p.k}"${p.s !== 'ok' ? ' open' : ''}><summary><div class="grow"><div class="t">${esc(p.name)}</div>
+      <div class="g">${p.ev ? `${nf(p.n)} شاهد${p.ev.last ? ' · آخر إضافة ' + esc(p.ev.last) : ''}` : 'مجلد الشواهد غير موجود'}</div>${people(p)}</div>${pchip(p.s)}</summary>
+    ${p.ev?.files.length ? `<ul class="files">${p.ev.files.map(fileLi).join('')}</ul>` : '<div class="empty">لا توجد شواهد بعد — أرفقي صور التنفيذ أو الفيديو أو أي ملف</div>'}
+    <div class="acts">${D.inbox ? `<button class="btn sm" data-attach="p:${p.k}">إرفاق شاهد لهذا البرنامج</button>` : ''}
+      ${p.ev ? `<a class="btn sm ghost" href="${esc(p.ev.url)}" target="_blank" rel="noopener">فتح مجلد الشواهد</a>` : ''}
+      ${p.rep ? `<a class="btn sm ghost" href="${esc(p.rep.url)}" target="_blank" rel="noopener">التقرير وقياس الأثر${p.rep.count ? ` (${nf(p.rep.count)})` : ''}</a>` : ''}</div></details>`).join('');
+  return `<button class="back" data-go="">→ صفحتي</button>
+  <div class="card hero" style="margin-top:8px">${ring(pct).replace('class="ring"', 'class="ring lg"')}
+    <div class="grow"><h2>برامج الخطة التشغيلية لعام 1448هـ</h2>
+    <p>${P.length ? `${nf(done)} من ${nf(P.length)} ${P.length > 1 ? 'برامج أُرفقت شواهدها' : 'برنامج أُرفقت شواهده'}` : 'لا توجد برامج مسندة إليك في الخطة التشغيلية.'}</p>
+    <p class="muted" style="font-size:13px;margin-top:4px">المطلوب: إرفاق شواهد التنفيذ (صور، فيديوهات، أو أي ملفات) في مجلد «الشواهد» لكل برنامج.</p></div></div>
+  ${one ? inbox(one) : ''}
+  ${planUploadCard()}
+  <h2>برامجي</h2>
+  <div class="list">${cards || '<div class="empty card">لا توجد برامج</div>'}</div>`;
+}
+
+// --- the وكيلة: results
+function planW() {
+  const P = D.plan; if (!P.length) return '<div class="empty">لا توجد بيانات لبرامج الخطة التشغيلية</div>';
+  const done = P.filter(p => p.s === 'ok').length, files = P.reduce((s, p) => s + p.n, 0), pct = Math.round(done / P.length * 100);
+  const flt = state.pFilter, shown = P.filter(p => flt === 'all' || (flt === 'ok' ? p.s === 'ok' : p.s !== 'ok'));
+  // per teacher (accounts only): her programs and how many have evidence
+  const byT = {}; P.forEach(p => p.people.filter(x => x.t).forEach(x => (byT[x.t] ||= []).push(p)));
+  const trows = Object.entries(byT).map(([name, ps]) => ({ name, ps, ok: ps.filter(p => p.s === 'ok').length }))
+    .sort((a, b) => a.ok / a.ps.length - b.ok / b.ps.length || a.name.localeCompare(b.name, 'ar'));
+  const miss = P.filter(p => p.s !== 'ok');
+  const group = miss.length ? `السلام عليكم ورحمة الله وبركاته\nنأمل إرفاق شواهد تنفيذ برامج الخطة التشغيلية لعام 1448هـ في مجلد «الشواهد» لكل برنامج (من المنصة أو OneDrive):\n`
+    + miss.map(p => `• «${p.name}»: ${p.people.map(x => x.label).join('، ') || '—'}`).join('\n') + '\nجزاكن الله خيرًا' : '';
+  return `<div class="card hero">${ring(pct).replace('class="ring"', 'class="ring lg"')}
+    <div class="grow"><h2>برامج الخطة التشغيلية لعام 1448هـ</h2>
+    <p>${nf(done)} من ${nf(P.length)} برنامجًا أُرفقت شواهدها · ${nf(files)} شاهدًا</p></div>
+    ${D.planUrl ? `<a class="btn sm" href="${esc(D.planUrl)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a>` : ''}</div>
+  <div class="kpis">
+    <div class="card kpi"><b style="color:${pctColor(pct)}">${nf(done)} / ${nf(P.length)}</b><span>برامج أُرفقت شواهدها</span></div>
+    <div class="card kpi"><b style="color:${miss.length ? 'var(--none)' : 'inherit'}">${nf(miss.length)}</b><span>برامج بلا شواهد</span></div>
+    <div class="card kpi"><b>${nf(files)}</b><span>شاهدًا مرفوعًا</span></div>
+    <div class="card kpi"><b>${nf(trows.filter(r => r.ok === r.ps.length).length)} / ${nf(trows.length)}</b><span>معلمات أكملن كل برامجهن</span></div>
+  </div>
+  <h2>البرامج</h2>
+  <div class="toolbar"><div class="seg">${[['all', 'الكل', P.length], ['ok', 'أُرفقت', done], ['miss', 'بلا شواهد', miss.length]]
+    .map(([k, l, n]) => `<button data-pf="${k}" class="${flt === k ? 'on' : ''}">${l} (${nf(n)})</button>`).join('')}</div></div>
+  <div class="list">${shown.map(p => `<details class="fold"><summary><div class="grow"><div class="t">${esc(p.name)}</div>
+      <div class="g">${esc(p.owner)} · ${p.ev ? `${nf(p.n)} شاهد${p.ev.last ? ' · آخر إضافة ' + esc(p.ev.last) : ''}` : 'مجلد الشواهد غير موجود'}</div>${people(p)}</div>${pchip(p.s)}</summary>
+    ${p.ev?.files.length ? `<ul class="files">${p.ev.files.map(fileLi).join('')}</ul>` : '<div class="empty">لا توجد شواهد بعد</div>'}
+    <div class="acts">${p.ev ? `<a class="btn sm ghost" href="${esc(p.ev.url)}" target="_blank" rel="noopener">مجلد الشواهد</a>` : ''}
+      ${p.rep ? `<a class="btn sm ghost" href="${esc(p.rep.url)}" target="_blank" rel="noopener">التقرير وقياس الأثر${p.rep.count ? ` (${nf(p.rep.count)})` : ''}</a>` : ''}
+      ${p.n ? `<button class="btn sm ghost" data-go="pdel/${p.k}">حذف شواهد</button>` : ''}</div></details>`).join('') || '<div class="empty card">لا يوجد</div>'}</div>
+  <h2>حسب المعلمة</h2>
+  <div class="list">${trows.map(r => { const ti = D.teachers.findIndex(t => t.name === r.name), p = Math.round(r.ok / r.ps.length * 100);
+    return `<button class="row"${ti >= 0 ? ` data-go="t/${ti}"` : ''}>${ring(p)}<div class="grow"><div class="name">${esc(r.name)}</div>
+      <div class="sub">${nf(r.ok)} من ${nf(r.ps.length)} · ${r.ps.map(p => `${esc(p.name)} ${p.s === 'ok' ? '✓' : '✗'}`).join(' · ')}</div></div></button>`; }).join('')}</div>
+  ${group ? `<h2>رسالة جماعية للبرامج بلا شواهد</h2><div class="card pad"><div class="msg" id="pmsg">${esc(group)}</div>
+    <div class="toolbar" style="margin:10px 0 0"><button class="btn sm" data-copy="pmsg">نسخ</button><button class="btn sm ghost" data-wa="pmsg">إرسال عبر واتساب</button></div></div>` : ''}
+  <p class="foot">البرنامج «أُرفقت شواهده» عند وجود ملف واحد على الأقل في مجلد «الشواهد» · الأسماء المنقطة بلا حساب في المنصة</p>`;
+}
+
+// --- the وكيلة: delete evidence. The request (encrypted with her passcode) goes to data/del/; the PC moves the file
+// to «محذوفات» and alerts the program's teachers (tools/inbox.js), at the next run.
+const DEL_REASONS = ['شاهد مكرر', 'غير مرتبط بالبرنامج', 'غير واضح أو تالف', 'أُرفق في برنامج خاطئ', 'أخرى'];
+let delReqs = null;   // pending requests [{sha, path, req}] (null = not loaded yet)
+async function loadDelReqs() {
+  const r = await ghApi(`data/del?ref=${D.gh.branch}&t=${Date.now()}`);
+  if (r.status === 404) return [];
+  if (!r.ok) throw new Error('gh' + r.status);
+  const out = [];
+  for (const it of (await r.json()).filter(x => x.type === 'file' && x.name.endsWith('.json'))) {
+    const f = await ghApi(`${it.path}?ref=${D.gh.branch}`); if (!f.ok) continue;
+    try { out.push({ sha: it.sha, path: it.path, req: await openBox(JSON.parse(new TextDecoder().decode(b64((await f.json()).content.replace(/\s/g, '')))), sessionCode) }); } catch {}
+  }
+  return out.sort((a, b) => b.req.at.localeCompare(a.req.at));
+}
+function planDel(a) {
+  const P = D.plan.filter(p => p.n);
+  if (!D.gh) return '<div class="empty card">الحذف من المنصة يحتاج ربطها بـ GitHub (keys/github.token)</div>';
+  const k = a !== undefined && a !== '' && D.plan[+a]?.n ? +a : P[0]?.k;
+  const p = D.plan[k];
+  return `<h2>حذف شواهد برامج الخطة التشغيلية</h2>
+  <p class="muted" style="margin-top:-4px">يُنقل الملف إلى مجلد «محذوفات» (يمكن استرجاعه)، وتصل معلمات البرنامج رسالة بالحذف وسببه. يُنفَّذ الطلب عند التحديث التالي في جهاز المدرسة.</p>
+  ${P.length ? `<div class="card pad" id="pdel" data-k="${k}">
+    <label class="up-l">البرنامج</label>
+    <select class="search" id="pdP">${P.map(x => `<option value="${x.k}"${x.k === k ? ' selected' : ''}>${esc(x.name)} — ${nf(x.n)} شاهد</option>`).join('')}</select>
+    <div style="font-weight:600;margin:14px 0 4px">اختاري الشواهد المراد حذفها</div>${people(p)}
+    <div class="card" style="margin-top:8px" id="pdFiles">${p.ev.files.map((x, j) => `<label class="ck" data-n="${esc(x.n)}"><input type="checkbox" value="${j}"><span class="ext">${esc(x.x || '—')}</span><span class="n">${esc(x.n)}</span><span class="d muted" style="direction:ltr">${esc(x.d)}</span></label>`).join('')}</div>
+    <label class="up-l" style="margin-top:14px">سبب الحذف (يظهر للمعلمة)</label>
+    <select class="search" id="pdR"><option value="">— اختاري السبب —</option>${DEL_REASONS.map(r => `<option>${r}</option>`).join('')}</select>
+    <textarea class="msg note-in" id="pdT" rows="2" placeholder="توضيح للمعلمة (مطلوب عند اختيار «أخرى»)" style="width:100%;margin-top:8px"></textarea>
+    <button class="btn wide" id="pdGo" style="margin-top:12px" disabled>حذف المحدد وإرسال تنبيه للمعلمة</button></div>`
+    : '<div class="empty card">لا توجد شواهد مرفوعة في أي برنامج بعد</div>'}
+  <h2>طلبات بانتظار التنفيذ</h2><div id="pdReqs"><div class="muted">جارٍ التحميل…</div></div>`;
+}
+function bindPlanDel(box) {
+  const p = D.plan[+box.dataset.k], btn = box.querySelector('#pdGo'), R = box.querySelector('#pdR'), T = box.querySelector('#pdT');
+  box.querySelector('#pdP').addEventListener('change', e => go('pdel/' + e.target.value));
+  const picked = () => [...box.querySelectorAll('#pdFiles input:checked')].map(x => p.ev.files[+x.value].n);
+  const reason = () => R.value === 'أخرى' ? T.value.trim() : [R.value, T.value.trim()].filter(Boolean).join(' — ');
+  const check = () => { btn.disabled = !picked().length || !R.value || (R.value === 'أخرى' && !T.value.trim()); delete btn.dataset.sure;
+    btn.textContent = picked().length > 1 ? `حذف ${nf(picked().length)} شواهد وإرسال تنبيه` : 'حذف المحدد وإرسال تنبيه للمعلمة'; };
+  box.addEventListener('change', check); T.addEventListener('input', check);
+  btn.addEventListener('click', async () => {
+    if (btn.dataset.sure !== '1') { btn.dataset.sure = '1'; btn.textContent = `تأكيد: نقل ${nf(picked().length)} ملف إلى «محذوفات»`; btn.classList.add('danger'); return; }
+    btn.disabled = true; btn.textContent = 'جارٍ الإرسال…';
+    try {
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const req = { id, at: new Date().toISOString(), program: p.name, files: picked(), reason: reason() };
+      const r = await ghApi(`data/del/${id}.json`, { method: 'PUT', body: JSON.stringify({ message: 'طلب', branch: D.gh.branch,
+        content: toB64(utf8.encode(JSON.stringify(await sealBox(req, sessionCode)))) }) });
+      if (!r.ok) throw new Error('gh' + r.status);
+      toast('سُجّل طلب الحذف، ويُنفَّذ عند التحديث التالي'); delReqs = null; route();
+    } catch (e) { toast(e.message === 'gh401' || e.message === 'gh403' ? 'رمز GitHub غير صالح أو منتهي' : 'تعذّر الإرسال، حاولي مرة أخرى'); check(); }
+  });
+  showDelReqs();
+}
+async function showDelReqs() {
+  const box = $('#pdReqs'); if (!box) return;
+  try { delReqs = await loadDelReqs(); } catch { box.innerHTML = '<div class="warn">تعذّر تحميل الطلبات.</div>'; return; }
+  if (!$('#pdReqs')) return;
+  // files already requested can't be picked again
+  const pend = new Set(delReqs.flatMap(x => x.req.files.map(n => x.req.program + '|' + n))), k = $('#pdel')?.dataset.k;
+  document.querySelectorAll('#pdFiles .ck').forEach(l => { if (pend.has(D.plan[+k].name + '|' + l.dataset.n)) { l.classList.add('pend'); l.querySelector('input').disabled = true; l.querySelector('.n').insertAdjacentHTML('beforeend', ' <span class="warn">بانتظار الحذف</span>'); } });
+  box.innerHTML = delReqs.length ? `<div class="notes">${delReqs.map((x, j) => `<div class="note"><div class="note-h"><span>${esc(whenTxt(x.req.at))} · «${esc(x.req.program)}»</span>
+      <button class="note-del" data-cancel="${j}">إلغاء الطلب</button></div><div class="note-b">${x.req.files.map(n => '• ' + esc(n)).join('<br>')}<br><span class="muted">السبب: ${esc(x.req.reason)}</span></div></div>`).join('')}</div>`
+    : '<div class="muted">لا توجد طلبات معلّقة.</div>';
+  box.querySelectorAll('[data-cancel]').forEach(b => b.addEventListener('click', async () => {
+    if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = 'تأكيد الإلغاء'; b.classList.add('sure'); return; }
+    b.disabled = true; const x = delReqs[+b.dataset.cancel];
+    const r = await ghApi(x.path, { method: 'DELETE', body: JSON.stringify({ message: 'إلغاء', branch: D.gh.branch, sha: x.sha }) });
+    toast(r.ok ? 'أُلغي الطلب' : 'تعذّر الإلغاء (ربما نُفّذ)'); route();
+  }));
 }
 
 function dash() {
