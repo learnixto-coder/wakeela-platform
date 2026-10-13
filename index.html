@@ -234,6 +234,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .ck .n{flex:1;min-width:0;overflow-wrap:anywhere}
 .ck.pend{opacity:.55;cursor:default}
 .note-close{margin-inline-start:auto}
+.ttabs{display:flex;margin:0 0 14px}.ttabs button{flex:1;padding:10px 8px;font-size:14.5px}
 .btn.danger{background:var(--none);border-color:var(--none)}
 .foot{margin-top:28px;color:var(--muted);font-size:12.5px;text-align:center}
 </style>
@@ -396,8 +397,10 @@ function route() {
   const [v, a] = (location.hash.slice(1) || 'me').split('/');
   if (D.kind === 'teacher') {   // a teacher sees only her own page(s)
     const one = D.teachers.length === 1, i = one ? 0 : v === 't' && D.teachers[+a] ? +a : -1;
-    $('#view').innerHTML = v === 'plan' || D.planOnly ? (v === 'plan' && a !== undefined && a !== '' ? teacherProgram(+a) : teacherPlan())
-      : i >= 0 ? teacher(i) : `<h2 style="margin:6px 0 12px">اختاري اسمك</h2><div class="list">${D.teachers.map(teacherRow).join('')}</div>`;
+    // programs first: the programs page is the landing page; «ملفاتي» (#mine) is her folders page
+    const mine = !D.planOnly && (v === 'mine' || v === 't' || !D.plan.length);
+    $('#view').innerHTML = !mine ? (v === 'plan' && a !== undefined && a !== '' ? teacherProgram(+a) : tTabs('plan') + teacherPlan())
+      : tTabs('mine') + (i >= 0 ? teacher(i) : `<h2 style="margin:6px 0 12px">اختاري اسمك</h2><div class="list">${D.teachers.map(teacherRow).join('')}</div>`);
     bind($('#view')); window.scrollTo(0, 0); return;
   }
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === (v === 't' ? 'teachers' : v === 'f' ? 'folders' : v === 'w' ? 'me' : v)));
@@ -809,7 +812,7 @@ function teacherDash(t, folds) {
   const tiles = t.cells.map(c => `<button class="ftile s-${c.s}" ${c.s !== 'na' ? `data-open="${c.f.i}"` : 'disabled style="cursor:default"'}>
       <b>${esc(c.f.label)}</b>${c.f.group ? `<small>${esc(c.f.group)}</small>` : ''}
       <span class="n">${c.info ? `${nf(c.info.count)} <small>ملف</small>` : '—'}</span><small>${c.info ? `المطلوب ${nf(c.f.min)} · ` : ''}${S_LABEL[c.s]}</small></button>`).join('');
-  return `${D.teachers.length > 1 ? '<button class="back" data-go="">→ اختيار الاسم</button>' : ''}
+  return `${D.teachers.length > 1 ? '<button class="back" data-go="mine">→ اختيار الاسم</button>' : ''}
   <div class="card hero">${ring(t.pct).replace('class="ring"', 'class="ring lg"')}
     <div class="grow"><h2>مرحبًا أ. ${esc(first)}</h2><p>${msg}</p>
     ${avg != null ? `<div class="cmp">
@@ -867,6 +870,8 @@ function planUploadCard(k) {   // the upload card for one program (its page)
     <button class="btn wide" id="upGo" hidden>رفع</button>
     <div id="upPend"></div></div>`;
 }
+// teacher top tabs: «برامج الخطة التشغيلية» (landing) and «ملفاتي»
+const tTabs = cur => D.planOnly || !D.plan.length ? '' : `<div class="seg ttabs"><button data-go="plan" class="${cur === 'plan' ? 'on' : ''}">برامج الخطة التشغيلية</button><button data-go="mine" class="${cur === 'mine' ? 'on' : ''}">ملفاتي (سجلات الإنجاز)</button></div>`;
 // her programs as buttons; each opens the program's own page (#plan/<k>)
 function teacherPlan() {
   const P = D.plan, done = P.filter(p => p.s === 'ok').length, pct = P.length ? Math.round(done / P.length * 100) : 0;
@@ -875,8 +880,7 @@ function teacherPlan() {
       <span class="sec-t">${esc(p.name)}</span>
       <span class="sec-s">${p.n ? `${nf(p.n)} شاهد${p.ev.last ? ' · آخر إضافة ' + esc(p.ev.last) : ''}` : 'لا توجد شواهد بعد'}</span>
       ${pchip(p.s)}<span class="sec-l">فتح البرنامج وإرفاق الشواهد ←</span></button>`).join('');
-  return `${D.planOnly ? '' : '<button class="back" data-go="">→ صفحتي</button>'}
-  <div class="card hero" style="margin-top:8px">${ring(pct).replace('class="ring"', 'class="ring lg"')}
+  return `<div class="card hero">${ring(pct).replace('class="ring"', 'class="ring lg"')}
     <div class="grow"><h2>برامج الخطة التشغيلية لعام 1448هـ</h2>
     <p>${P.length ? `${nf(done)} من ${nf(P.length)} ${P.length > 1 ? 'برامج أُرفقت شواهدها' : 'برنامج أُرفقت شواهده'}` : 'لا توجد برامج مسندة إليك في الخطة التشغيلية.'}</p>
     <p class="muted" style="font-size:13px;margin-top:4px">اضغطي اسم البرنامج لإرفاق الشواهد (صور، فيديوهات، أو أي ملفات) أو فتحه في OneDrive.</p></div></div>
