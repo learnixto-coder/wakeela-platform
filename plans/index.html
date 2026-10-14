@@ -243,6 +243,9 @@ dialog::backdrop{background:rgba(6,20,16,.55)}
 .steps{margin:0;padding-inline-start:22px;display:grid;gap:3px;font-size:14.5px}
 .btns{display:flex;flex-wrap:wrap;gap:10px}
 .foot{margin-top:28px;color:var(--faint);font-size:12.5px;text-align:center}
+/* inside the school platform (plans/?embed=1): the platform's own header is above */
+body.embed header.top{display:none}
+body.embed main{padding-top:14px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -425,6 +428,8 @@ const ss = { get(k){ try{ return sessionStorage.getItem(k) }catch(e){ return nul
 
 /* ---------- data access: embedded (artifact) or encrypted files (platform) ---------- */
 const EMB = document.getElementById('data');
+const EMBED = new URLSearchParams(location.search).has('embed');
+if (EMBED) document.body.classList.add('embed');
 let D, CK = null; const pageCache = {};
 const utf8 = new TextEncoder();
 const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));

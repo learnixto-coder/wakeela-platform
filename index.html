@@ -168,6 +168,10 @@ select.search{flex:0 1 auto}
 
 /* teacher detail */
 body.tmode nav.tabs{display:none}
+body.pmode nav.tabs,body.pmode #reload{display:none}
+.plans-frame{display:block;width:100%;border:0;border-radius:var(--r);background:var(--bg);min-height:420px}
+@media (max-width:640px){.plans-frame{width:calc(100% + 32px);margin-inline:-16px;border-radius:0}}
+.plans-bar{display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:13px}
 .lock .hint{font-size:13px;margin:-12px 0 16px}
 .back{background:none;border:0;color:var(--brand-2);cursor:pointer;padding:4px 0;font-weight:600}
 .head{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
@@ -331,7 +335,7 @@ async function unlock(code, remember) {
   $('#err').textContent = ''; $('#go').disabled = true; $('#go').textContent = 'جارٍ الفتح…';
   try {
     const c = phoneOf(code) || code.trim().toUpperCase();
-    D = await load(c);
+    D = await load(c).catch(async e => { if (e.message === 'code' && await isPlansCode(c)) return { kind: 'plans' }; throw e; });
     if (remember) store.set(c);
     sessionCode = c;
     prep(); $('#lock').hidden = true; $('#app').hidden = false; route();
@@ -342,7 +346,8 @@ async function unlock(code, remember) {
 }
 let sessionCode = null;
 $('#lockForm').addEventListener('submit', e => { e.preventDefault(); if ($('#code').value.trim()) unlock($('#code').value, $('#remember').checked); });
-$('#logout').onclick = () => { store.set(null); sessionCode = null; D = null; $('#app').hidden = true; $('#lock').hidden = false; $('#code').value = ''; document.body.classList.remove('tmode'); location.hash = ''; };
+$('#logout').onclick = () => { store.set(null); sessionCode = null; D = null; $('#app').hidden = true; $('#lock').hidden = false; $('#code').value = ''; document.body.classList.remove('tmode', 'pmode');
+  try { sessionStorage.removeItem('wk-plans-code'); localStorage.removeItem('wk-plans-code'); } catch {} location.hash = ''; };
 $('#reload').onclick = async () => {
   const b = $('#reload'), lbl = b.querySelector('span'), before = D && D.generated;
   b.disabled = true; b.classList.add('busy'); lbl.textContent = 'جارٍ التحديث…';
@@ -367,6 +372,8 @@ const short = n => n.replace(/^أ\.\s*/, '').replace(/\s+/g, ' ');
 const folderTitle = f => f.group ? `${f.label}` : f.label;
 
 function prep() {
+  document.body.classList.toggle('pmode', D.kind === 'plans');
+  if (D.kind === 'plans') { $('#title').textContent = 'لوحة الخطة التشغيلية وخطة التحسين 1448هـ'; $('#meta').textContent = 'المتوسطة الحادية والعشرون'; return; }
   D.folders.forEach((f, i) => f.i = i);
   D.teachers.forEach((t, i) => {
     t.i = i; t.short = short(t.name);
@@ -393,6 +400,7 @@ window.addEventListener('hashchange', route);
 function go(h) { location.hash = h; }
 function route() {
   if (!D) return;
+  if (D.kind === 'plans') { const el = $('#view'); el.innerHTML = plansW(); bind(el); return; }
   const [v, a] = (location.hash.slice(1) || 'me').split('/');
   if (D.kind === 'teacher') {   // a teacher sees only her own page(s)
     const one = D.teachers.length === 1, i = one ? 0 : v === 't' && D.teachers[+a] ? +a : -1;
@@ -423,7 +431,8 @@ function bind(el) {
     $('#upF').value = x.dataset.attach; $('#up').scrollIntoView({ behavior: 'smooth', block: 'start' }); $('#upI').click(); }));
   el.querySelectorAll('[data-close]').forEach(x => x.addEventListener('click', () => closeNote(x.dataset.close, +x.dataset.t)));
   const pd = el.querySelector('#pdel'); if (pd) bindPlanDel(pd);
-  const op = el.querySelector('#openPlans'); if (op) op.addEventListener('click', openPlans);
+  if (el.querySelector('#plansFrame')) { el.querySelector('#plansFrame').hidden = false; requestAnimationFrame(sizePlansFrame); }
+  if (el.querySelector('[data-tdel], #tdelAll')) bindTDel(el);
   el.querySelectorAll('[data-pf]').forEach(x => x.addEventListener('click', () => { state.pFilter = x.dataset.pf; route(); }));
   const sn = el.querySelector('#sendNote'); if (sn) sn.addEventListener('click', () => sendNote(+sn.dataset.t));
   el.querySelectorAll('[data-cell]').forEach(x => x.addEventListener('click', () => { const [t, f] = x.dataset.cell.split(','); cellSheet(+t, +f); }));
@@ -932,18 +941,24 @@ function teacherProgram(k) {
 // --- the وكيلة: results
 /* ---------- لوحة الخطط (site/plans, built by «لوحة الخطط 1448/build_dashboard.py») ---------- */
 function plansW() {
-  return `<h2>لوحة الخطة التشغيلية وخطة التحسين 1448هـ</h2>
-  <div class="card pad" style="display:grid;gap:12px;max-width:720px">
-    <p>لوحة واحدة تعرض مؤشرات الأداء وأولويات المعالجة، وبرامج الخطة التشغيلية التسعة والعشرين مع نسب التحقق ومجلدات الشواهد، وخطة التحسين بمجالاتها وتوصياتها، وجميع صفحات الملفين الأصليين.</p>
-    <p class="muted" style="font-size:13.5px">تفتح من حسابك مباشرة. المُقيِّمة تفتحها من الرابط نفسه برمز اطلاع خاص بها لا يتيح الدخول إلى بقية المنصة.</p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="openPlans">فتح لوحة الخطط</button><button class="btn ghost" data-copy="plansUrl">نسخ رابط اللوحة</button></div>
-    <input id="plansUrl" class="search" readonly dir="ltr" value="${esc(new URL('plans/', location.href.split('#')[0]).href)}" aria-label="رابط لوحة الخطط">
-  </div>`;
+  try { sessionStorage.setItem('wk-plans-code', sessionCode || ''); } catch {}   // the frame opens with the same login
+  const bar = D.kind === 'plans' ? '' : `<div class="plans-bar muted"><span>المُقيِّمة تدخل من رابط المنصة نفسه برمز اطلاع خاص بها يعرض هذه اللوحة فقط.</span>
+    <button class="btn sm ghost" data-copy="plansUrl">نسخ رابط المنصة</button><input id="plansUrl" type="hidden" value="${esc(location.href.split('#')[0])}"></div>`;
+  return `${bar}<iframe class="plans-frame" id="plansFrame" src="plans/?embed=1" title="لوحة الخطة التشغيلية وخطة التحسين"></iframe>`;
 }
-function openPlans() {
-  try { sessionStorage.setItem('wk-plans-code', sessionCode || ''); sessionStorage.setItem('wk-plans-from', '1'); } catch {}
-  location.href = 'plans/';
+async function isPlansCode(code) {   // the evaluator's code unwraps the plans content key (plans/lock.json), nothing else
+  try {
+    const L = await (await fetch('plans/lock.json?t=' + Date.now(), { cache: 'no-store' })).json();
+    for (const l of L.locks) {
+      try { await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(l.iv) }, await aesKey(code, b64(l.salt), L.iter), b64(l.ct)); return true; } catch {}
+    }
+  } catch {}
+  return false;
 }
+function sizePlansFrame() {
+  const f = $('#plansFrame'); if (f) f.style.height = Math.max(420, innerHeight - f.getBoundingClientRect().top - 12) + 'px';
+}
+addEventListener('resize', sizePlansFrame);
 function planW() {
   const P = D.plan; if (!P.length) return '<div class="empty">لا توجد بيانات لبرامج الخطة التشغيلية</div>';
   const done = P.filter(p => p.s === 'ok').length, files = P.reduce((s, p) => s + p.n, 0), pct = Math.round(done / P.length * 100);
@@ -1145,25 +1160,69 @@ function cellSheet(ti, fi) {
   bind(bg); document.body.append(bg);
 }
 
+// --- the وكيلة: move duplicate / empty teacher files to «محذوفات المنصة» (same encrypted data/del channel; tools/inbox.js kind 'tfile')
+let tdelFlags = [];
+const tdelKey = (teacher, folder, n) => teacher + '|' + folder + '|' + n;
+async function sendTDel(rows, btn) {
+  const groups = {};
+  rows.forEach(r => { const g = groups[r.t.name + '|' + r.c.f.key] ??= { teacher: r.t.name, folder: r.c.f.key, files: [], reason: [] };
+    g.files.push(r.x.n); r.x.f.forEach(f => g.reason.includes(f) || g.reason.push(f)); });
+  btn.disabled = true; btn.textContent = 'جارٍ الإرسال…';
+  let ok = 0;
+  for (const g of Object.values(groups)) {
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const req = { id, at: new Date().toISOString(), kind: 'tfile', teacher: g.teacher, folder: g.folder, files: g.files, reason: g.reason.join('، ') };
+    const r = await ghApi(`data/del/${id}.json`, { method: 'PUT', body: JSON.stringify({ message: 'طلب', branch: D.gh.branch,
+      content: toB64(utf8.encode(JSON.stringify(await sealBox(req, sessionCode)))) }) }).catch(() => null);
+    if (r && r.ok) ok += g.files.length; else break;
+  }
+  toast(ok === rows.length ? `سُجّل حذف ${nf(ok)} ملف، ويُنفَّذ خلال دقائق` : ok ? `سُجّل ${nf(ok)} من ${nf(rows.length)}، أعيدي المحاولة للباقي` : 'تعذّر الإرسال، حاولي مرة أخرى');
+  delReqs = null; route();
+}
+async function markTDel() {   // rows already requested show «بانتظار الحذف»
+  try { delReqs = delReqs || await loadDelReqs(); } catch { return; }
+  const pend = new Set(delReqs.filter(x => x.req.kind === 'tfile').flatMap(x => x.req.files.map(n => tdelKey(x.req.teacher, x.req.folder, n))));
+  document.querySelectorAll('li[data-tk]').forEach(li => { if (!pend.has(li.dataset.tk)) return;
+    const b = li.querySelector('[data-tdel]'); if (b) b.replaceWith(Object.assign(document.createElement('span'), { className: 'warn', textContent: 'بانتظار الحذف' })); });
+  const left = tdelFlags.filter(r => !pend.has(tdelKey(r.t.name, r.c.f.key, r.x.n))), all = $('#tdelAll');
+  if (all) { if (!left.length) all.remove(); else all.textContent = `حذف كل المكرر والفارغ (${nf(left.length)})`; }
+  return left;
+}
+function bindTDel(el) {
+  el.querySelectorAll('[data-tdel]').forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = 'تأكيد الحذف'; b.classList.add('sure'); return; }
+    sendTDel([tdelFlags.find(r => r.k === +b.dataset.tdel)], b);
+  }));
+  const all = el.querySelector('#tdelAll');
+  if (all) all.addEventListener('click', async () => {
+    const left = (await markTDel()) || tdelFlags;
+    if (all.dataset.sure !== '1') { all.dataset.sure = '1'; all.textContent = `تأكيد: نقل ${nf(left.length)} ملف إلى «محذوفات المنصة»`; return; }
+    sendTDel(left, all);
+  });
+  if (el.querySelector('li[data-tk]')) markTDel();
+}
 function alerts() {
   const flags = [], idle = [];
   D.teachers.forEach(t => {
     t.cells.forEach(c => {
       if (!c.info) return;
-      c.info.files.filter(x => x.f).forEach(x => flags.push({ t, c, x }));
+      c.info.files.filter(x => x.f).forEach(x => flags.push({ t, c, x, k: flags.length }));
       if (c.info.parentLoose && c.f.key.endsWith('\\الحلقات التنشيطية')) flags.push({ t, c, loose: c.info.parentLoose });
     });
     const d = daysSince(t.last);
     if (d === null || d >= 14) idle.push({ t, d });
   });
   idle.sort((a, b) => (b.d ?? 1e9) - (a.d ?? 1e9));
+  tdelFlags = flags.filter(r => !r.loose);
   const msgs = D.teachers.filter(t => reminderFor(t));
   return `<h2>لم يرفعن منذ أسبوعين أو أكثر</h2>
   <div class="list">${idle.map(({ t, d }) => `<button class="row" data-go="t/${t.i}"><div class="grow"><div class="name">${esc(t.name)}</div><div class="sub">${d === null ? 'لم ترفع أي ملف' : `آخر رفع قبل ${nf(d)} يوم (${esc(t.last)})`}</div></div>${chip(d === null ? 'none' : 'part')}</button>`).join('') || '<div class="empty card">لا يوجد — الجميع نشط</div>'}</div>
-  <h2>ملاحظات على الملفات</h2>
+  <div class="head" style="margin:22px 0 10px"><h2 style="margin:0">ملاحظات على الملفات</h2><div style="flex:1"></div>
+    ${D.gh && tdelFlags.length ? `<button class="btn sm danger" id="tdelAll">حذف كل المكرر والفارغ (${nf(tdelFlags.length)})</button>` : ''}</div>
+  ${D.gh && tdelFlags.length ? `<p class="muted" style="margin:-4px 0 10px;font-size:13px">«حذف» ينقل الملف إلى مجلد «محذوفات المنصة» في OneDrive (يمكن استرجاعه)، ويبقى الأصل في مكانه. يُنفَّذ خلال دقائق على جهاز المدرسة.</p>` : ''}
   <div class="card">${flags.length ? `<ul class="files">${flags.map(r => r.loose
     ? `<li><span class="ext">!</span><span class="n"><b>${esc(r.t.short)}</b> · ${nf(r.loose)} ملف في «المجتمع المهني» غير موزّع على المجلدات الفرعية</span></li>`
-    : `<li><span class="ext">${esc(r.x.x)}</span><span class="n"><b>${esc(r.t.short)}</b> · ${esc(r.c.f.label)} · ${esc(r.x.n)} <span class="warn">(${esc(r.x.f.join('، '))})</span></span></li>`).join('')}</ul>` : '<div class="empty">لا توجد ملاحظات</div>'}</div>
+    : `<li data-tk="${esc(tdelKey(r.t.name, r.c.f.key, r.x.n))}"><span class="ext">${esc(r.x.x)}</span><span class="n"><b>${esc(r.t.short)}</b> · ${esc(r.c.f.label)} · ${esc(r.x.n)} <span class="warn">(${esc(r.x.f.join('، '))})</span></span>${D.gh ? `<button class="note-del" data-tdel="${r.k}">حذف</button>` : ''}</li>`).join('')}</ul>` : '<div class="empty">لا توجد ملاحظات</div>'}</div>
   <h2>رسائل التذكير (${nf(msgs.length)})</h2>
   <p class="muted" style="margin-top:-4px">رسالة جاهزة لكل معلمة لديها مجلدات ناقصة — افتحي صفحتها للنسخ أو الإرسال.</p>
   <div class="list">${msgs.map(teacherRow).join('')}</div>`;
