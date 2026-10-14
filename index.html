@@ -267,7 +267,6 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
     <button data-v="home">متابعة المعلمات</button>
     <button data-v="teachers">المعلمات</button>
     <button data-v="folders">المجلدات</button>
-    <button data-v="board">لوحة التتبع</button>
     <button data-v="alerts">التنبيهات</button>
     <button data-v="admins">الإداريات</button>
     <button data-v="plan">برامج الخطة 1448هـ</button>
@@ -404,9 +403,9 @@ function route() {
       : tTabs('mine') + (i >= 0 ? teacher(i) : `<h2 style="margin:6px 0 12px">اختاري اسمك</h2><div class="list">${D.teachers.map(teacherRow).join('')}</div>`);
     bind($('#view')); window.scrollTo(0, 0); return;
   }
-  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === (v === 't' ? 'teachers' : v === 'f' ? 'folders' : v === 'w' ? 'me' : v)));
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === (v === 't' ? 'teachers' : v === 'f' ? 'folders' : v === 'w' ? 'me' : v === 'board' ? 'home' : v)));
   const el = $('#view');
-  el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board, alerts, admins, t: () => teacher(+a), f: () => folder(+a),
+  el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folder(+a),
     plan: planW, plans: plansW }[v] || me)();
   bind(el); window.scrollTo(0, 0);
 }
@@ -544,6 +543,8 @@ function home() {
   <div class="card pad"><div class="bars">${bars}</div>
     <div class="legend"><span><i style="background:var(--ok)"></i>مكتمل</span><span><i style="background:#e0a526"></i>ناقص</span><span><i style="background:var(--none);opacity:.55"></i>لم ترفع</span><span class="muted">· اضغطي المجلد لعرض المعلمات</span></div>
   </div>
+  <h2>لوحة التتبع · كل معلمة وكل مجلد</h2>
+  ${board()}
   <h2>الأقل إنجازًا</h2>
   <div class="list">${low.map(teacherRow).join('')}</div>
   <h2>آخر ما رُفع</h2>
