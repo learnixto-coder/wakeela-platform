@@ -6,6 +6,7 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0f5c4d">
 <title>لوحة الخطط ١٤٤٨هـ</title>
+<script>document.documentElement.lang = 'ar'; document.documentElement.dir = 'rtl';</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
@@ -32,7 +33,7 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:15px/1.7 var(--font);-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.7 var(--font);-webkit-text-size-adjust:100%;direction:rtl;text-align:right}
 h1,h2,h3{margin:0;line-height:1.45;text-wrap:balance}
 h2{font-size:18px;font-weight:700}
 h3{font-size:15.5px;font-weight:700}
@@ -79,7 +80,7 @@ nav.tabs{background:var(--card);border-bottom:1px solid var(--line);position:sti
 
 main{padding-block:18px calc(env(safe-area-inset-bottom,0px) + 48px)}
 section.view{display:grid;gap:24px}
-.block{display:grid;gap:12px;min-width:0}
+.block{display:grid;gap:12px;min-width:0;align-content:start}
 .block-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 16px}
 .sub{color:var(--muted);font-size:13.5px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);min-width:0}
@@ -631,7 +632,7 @@ function openProgram(name){
       </div>
     </div>
     <div style="display:grid;gap:12px">
-      <div class="small">بطاقة البرنامج ولوحة مؤشر الأداء ٣٦٠° كما وردتا في الخطة التشغيلية (ص ${ar(p.pages[0])}–${ar(p.pages[1])})</div>
+      <div class="small">بطاقة البرنامج ولوحة مؤشر الأداء الشاملة كما وردتا في الخطة التشغيلية (ص ${ar(p.pages[0])}–${ar(p.pages[1])})</div>
       ${p.pages.map(n => `<img class="page" data-pg="${n}" alt="صفحة ${ar(n)} من الخطة التشغيلية">`).join('')}
     </div>`;
   $('#dlgBody').querySelectorAll('img[data-pg]').forEach(img => setImg(img, 'op', +img.dataset.pg));
