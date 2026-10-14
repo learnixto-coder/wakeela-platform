@@ -271,7 +271,6 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
     <button data-v="alerts">التنبيهات</button>
     <button data-v="admins">الإداريات</button>
     <button data-v="plan">برامج الخطة 1448هـ</button>
-    <button data-v="pdel">حذف الشواهد</button>
     <button data-v="plans">لوحة الخطط</button>
   </div></nav>
   <main id="view"></main>
@@ -408,7 +407,7 @@ function route() {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === (v === 't' ? 'teachers' : v === 'f' ? 'folders' : v === 'w' ? 'me' : v)));
   const el = $('#view');
   el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board, alerts, admins, t: () => teacher(+a), f: () => folder(+a),
-    plan: planW, pdel: () => planDel(a), plans: plansW }[v] || me)();
+    plan: planW, plans: plansW }[v] || me)();
   bind(el); window.scrollTo(0, 0);
 }
 document.querySelector('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.v); });
@@ -973,7 +972,7 @@ function planW() {
     ${p.ev?.files.length ? `<ul class="files">${p.ev.files.map(fileLi).join('')}</ul>` : '<div class="empty">لا توجد شواهد بعد</div>'}
     <div class="acts">${p.ev ? `<a class="btn sm ghost" href="${esc(p.ev.url)}" target="_blank" rel="noopener">مجلد الشواهد</a>` : ''}
       ${p.rep ? `<a class="btn sm ghost" href="${esc(p.rep.url)}" target="_blank" rel="noopener">التقرير وقياس الأثر${p.rep.count ? ` (${nf(p.rep.count)})` : ''}</a>` : ''}
-      ${p.n ? `<button class="btn sm ghost" data-go="pdel/${p.k}">حذف شواهد</button>` : ''}</div></details>`).join('') || '<div class="empty card">لا يوجد</div>'}</div>
+      </div></details>`).join('') || '<div class="empty card">لا يوجد</div>'}</div>
   <h2>حسب المعلمة</h2>
   <div class="list">${trows.map(r => { const ti = D.teachers.findIndex(t => t.name === r.name), p = Math.round(r.ok / r.ps.length * 100);
     return `<button class="row"${ti >= 0 ? ` data-go="t/${ti}"` : ''}>${ring(p)}<div class="grow"><div class="name">${esc(r.name)}</div>
