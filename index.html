@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0f5c4d">
-<title>منصة وكيلة المدرسة</title>
+<title>منصة مدرسة المتوسطة الحادية والعشرون</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -244,8 +244,8 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 <section class="lock" id="lock">
   <form class="lock-box" id="lockForm">
     <div class="logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="m9 13 2 2 4-4"/></svg></div>
-    <h1>منصة وكيلة المدرسة</h1>
-    <p>المتوسطة الحادية والعشرون · 1448هـ</p>
+    <h1>منصة مدرسة المتوسطة الحادية والعشرون</h1>
+    <p>متابعة الإنجاز والخطط · 1448هـ</p>
     <p class="hint">المعلمة: أدخلي رقم جوالك (05xxxxxxxx)</p>
     <input class="field" id="code" autocomplete="current-password" placeholder="رقم الجوال أو رمز الدخول" autocapitalize="characters" spellcheck="false">
     <label class="check"><input type="checkbox" id="remember" checked> تذكّر الرمز على هذا الجهاز</label>
@@ -256,7 +256,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 
 <div id="app" hidden>
   <header class="top"><div class="top-in">
-    <div><h1 id="title">منصة وكيلة المدرسة</h1><small id="meta"></small></div>
+    <div><h1 id="title">منصة مدرسة المتوسطة الحادية والعشرون</h1><small id="meta"></small></div>
     <div class="sp"></div>
     <button class="ref-btn" id="reload" title="جلب أحدث البيانات"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg><span>تحديث</span></button>
     <button class="icon-btn" id="logout" title="خروج" aria-label="خروج"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17 5 12l5-5"/><path d="M5 12h12"/></svg></button>
@@ -272,6 +272,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
     <button data-v="admins">الإداريات</button>
     <button data-v="plan">برامج الخطة 1448هـ</button>
     <button data-v="pdel">حذف الشواهد</button>
+    <button data-v="plans">لوحة الخطط</button>
   </div></nav>
   <main id="view"></main>
 </div>
@@ -381,7 +382,7 @@ function prep() {
   D.plan.forEach((p, k) => { p.k = k; p.n = p.ev?.count || 0; p.s = !p.ev ? 'na' : p.n ? 'ok' : 'none'; });
   const tm = D.kind === 'teacher';
   document.body.classList.toggle('tmode', tm);
-  $('#title').textContent = tm ? (D.teachers.length === 1 ? D.teachers[0].name : D.planOnly ? D.teachers.map(t => t.name).join(' · ') : 'متابعة إنجازي') : 'منصة وكيلة المدرسة';
+  $('#title').textContent = tm ? (D.teachers.length === 1 ? D.teachers[0].name : D.planOnly ? D.teachers.map(t => t.name).join(' · ') : 'متابعة إنجازي') : 'منصة مدرسة المتوسطة الحادية والعشرون';
   const d = new Date(D.generated);
   $('#meta').textContent = `${D.week} · آخر تحديث ${d.toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'long' })} ${d.toLocaleTimeString('ar-SA-u-nu-latn', { hour: 'numeric', minute: '2-digit' })}`;
 }
@@ -407,7 +408,7 @@ function route() {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === (v === 't' ? 'teachers' : v === 'f' ? 'folders' : v === 'w' ? 'me' : v)));
   const el = $('#view');
   el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board, alerts, admins, t: () => teacher(+a), f: () => folder(+a),
-    plan: planW, pdel: () => planDel(a) }[v] || me)();
+    plan: planW, pdel: () => planDel(a), plans: plansW }[v] || me)();
   bind(el); window.scrollTo(0, 0);
 }
 document.querySelector('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.v); });
@@ -424,6 +425,7 @@ function bind(el) {
     $('#upF').value = x.dataset.attach; $('#up').scrollIntoView({ behavior: 'smooth', block: 'start' }); $('#upI').click(); }));
   el.querySelectorAll('[data-close]').forEach(x => x.addEventListener('click', () => closeNote(x.dataset.close, +x.dataset.t)));
   const pd = el.querySelector('#pdel'); if (pd) bindPlanDel(pd);
+  const op = el.querySelector('#openPlans'); if (op) op.addEventListener('click', openPlans);
   el.querySelectorAll('[data-pf]').forEach(x => x.addEventListener('click', () => { state.pFilter = x.dataset.pf; route(); }));
   const sn = el.querySelector('#sendNote'); if (sn) sn.addEventListener('click', () => sendNote(+sn.dataset.t));
   el.querySelectorAll('[data-cell]').forEach(x => x.addEventListener('click', () => { const [t, f] = x.dataset.cell.split(','); cellSheet(+t, +f); }));
@@ -928,6 +930,20 @@ function teacherProgram(k) {
 }
 
 // --- the وكيلة: results
+/* ---------- لوحة الخطط (site/plans, built by «لوحة الخطط 1448/build_dashboard.py») ---------- */
+function plansW() {
+  return `<h2>لوحة الخطة التشغيلية وخطة التحسين 1448هـ</h2>
+  <div class="card pad" style="display:grid;gap:12px;max-width:720px">
+    <p>لوحة واحدة تعرض مؤشرات الأداء وأولويات المعالجة، وبرامج الخطة التشغيلية التسعة والعشرين مع نسب التحقق ومجلدات الشواهد، وخطة التحسين بمجالاتها وتوصياتها، وجميع صفحات الملفين الأصليين.</p>
+    <p class="muted" style="font-size:13.5px">تفتح من حسابك مباشرة. المُقيِّمة تفتحها من الرابط نفسه برمز اطلاع خاص بها لا يتيح الدخول إلى بقية المنصة.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="openPlans">فتح لوحة الخطط</button><button class="btn ghost" data-copy="plansUrl">نسخ رابط اللوحة</button></div>
+    <input id="plansUrl" class="search" readonly dir="ltr" value="${esc(new URL('plans/', location.href.split('#')[0]).href)}" aria-label="رابط لوحة الخطط">
+  </div>`;
+}
+function openPlans() {
+  try { sessionStorage.setItem('wk-plans-code', sessionCode || ''); sessionStorage.setItem('wk-plans-from', '1'); } catch {}
+  location.href = 'plans/';
+}
 function planW() {
   const P = D.plan; if (!P.length) return '<div class="empty">لا توجد بيانات لبرامج الخطة التشغيلية</div>';
   const done = P.filter(p => p.s === 'ok').length, files = P.reduce((s, p) => s + p.n, 0), pct = Math.round(done / P.length * 100);
