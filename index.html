@@ -293,6 +293,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
   </div></header>
   <nav class="tabs"><div class="tabs-in" id="tabs">
     <button data-v="plans">لوحة الخطط</button>
+    <button data-v="timeline">الخطة الزمنية</button>
     <button data-v="me">ملفات الوكيلة</button>
     <button data-v="dash">لوحة المؤشرات</button>
     <button data-v="home">متابعة المعلمات</button>
@@ -440,7 +441,7 @@ function route() {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === (v === 't' ? 'teachers' : v === 'f' ? 'folders' : v === 'w' ? 'me' : v === 'board' ? 'home' : v)));
   const el = $('#view');
   el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folders(+a),
-    plan: planW, plans: plansW }[v] || me)();
+    plan: planW, plans: plansW, timeline: () => plansW('timeline') }[v] || me)();
   bind(el); window.scrollTo(0, 0);
 }
 document.querySelector('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.v); });
@@ -967,8 +968,8 @@ function teacherProgram(k) {
 
 // --- the وكيلة: results
 /* ---------- لوحة الخطط (site/plans, built by «لوحة الخطط 1448/build_dashboard.py») ---------- */
-function plansW() {
-  return '<div id="plansHost"><div class="muted" style="padding:24px 0">جارٍ فتح لوحة الخطط…</div></div>';
+function plansW(only) {   // only = one view of the plans app as its own page ('timeline' = «الخطة الزمنية»)
+  return '<div id="plansHost"' + (only ? ` data-only="${only}"` : '') + '><div class="muted" style="padding:24px 0">جارٍ فتح لوحة الخطط…</div></div>';
 }
 let plansApp = null;   // plans/app.js (built by «لوحة الخطط 1448/build_dashboard.py»), loaded once
 function loadPlansApp() {
@@ -977,7 +978,7 @@ function loadPlansApp() {
     .catch(e => { plansApp = null; throw e; });
 }
 function mountPlansHere(host) {
-  loadPlansApp().then(() => { if (host.isConnected) { host.textContent = ''; window.mountPlans(host, { embed: true, base: 'plans/', code: sessionCode,
+  loadPlansApp().then(() => { if (host.isConnected) { host.textContent = ''; window.mountPlans(host, { embed: true, base: 'plans/', code: sessionCode, only: host.dataset.only,
     offset: () => $('header.top').offsetHeight + ($('nav.tabs').offsetHeight || 0) }); } })
     .catch(() => { host.innerHTML = '<div class="empty card">تعذّر تحميل لوحة الخطط، تحققي من الاتصال ثم اضغطي «تحديث».</div>'; });
 }
