@@ -377,7 +377,7 @@ function prep() {
     t.pct = t.exist ? Math.round(t.done / t.exist * 100) : 0;
     t.last = exist.map(c => c.info.last).filter(Boolean).sort().pop() || '';
   });
-  D.plan = D.plan || [];
+  D.plan = D.plan || []; D.extra = D.extra || []; D.extra.forEach((x, k) => x.k = k);
   D.plan.forEach((p, k) => { p.k = k; p.n = p.ev?.count || 0; p.s = !p.ev ? 'na' : p.n ? 'ok' : 'none'; });
   const tm = D.kind === 'teacher';
   document.body.classList.toggle('tmode', tm);
@@ -399,7 +399,8 @@ function route() {
     const one = D.teachers.length === 1, i = one ? 0 : v === 't' && D.teachers[+a] ? +a : -1;
     // programs first: the programs page is the landing page; «ملفاتي» (#mine) is her folders page
     const mine = !D.planOnly && (v === 'mine' || v === 't' || !D.plan.length);
-    $('#view').innerHTML = !mine ? (v === 'plan' && a !== undefined && a !== '' ? teacherProgram(+a) : tTabs('plan') + teacherPlan())
+    $('#view').innerHTML = v === 'x' && D.extra[+a] ? teacherExtra(+a)
+      : !mine ? (v === 'plan' && a !== undefined && a !== '' ? teacherProgram(+a) : tTabs('plan') + teacherPlan())
       : tTabs('mine') + (i >= 0 ? teacher(i) : `<h2 style="margin:6px 0 12px">اختاري اسمك</h2><div class="list">${D.teachers.map(teacherRow).join('')}</div>`);
     bind($('#view')); window.scrollTo(0, 0); return;
   }
@@ -750,7 +751,7 @@ function renderPending(t) {
   const box = $('#upPend'); if (!box) return;
   // inbox.js may lowercase the extension or add " (2)", so compare loosely
   const loose = n => n.toLowerCase().replace(/ \(\d+\)(?=\.[^.]+$)/, '').replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim();
-  const have = new Set(filesOf(t).concat(D.plan.flatMap(p => p.ev?.files || [])).map(x => loose(x.n.split(' / ').pop())));
+  const have = new Set(filesOf(t).concat(D.plan.flatMap(p => p.ev?.files || []), D.extra.flatMap(x => x.files || [])).map(x => loose(x.n.split(' / ').pop())));
   const all = pendGet(), now = Date.now();
   // drop entries that reached OneDrive (same name now listed) or are older than 3 days
   const keep = all.filter(p => p.to !== t.name || (!have.has(loose(p.n)) && now - p.at < 3 * 864e5));
@@ -781,9 +782,9 @@ function bindUpload(box, t) {
   go.addEventListener('click', async () => {
     // "f:<folder index>" = one of her folders, "p:<program index>" = a program's «الشواهد» (sent as the teacher assigned to it)
     const [kind, ix] = box.querySelector('#upF').value.split(':');
-    const p = kind === 'p' && D.plan[+ix], c = !p && D.folders[+ix];
+    const x = kind === 'x' && D.extra[+ix], p = kind === 'p' && D.plan[+ix], c = !p && !x && D.folders[+ix];
     const who = p ? D.teachers.find(x => p.people.some(y => y.t === x.name)) || t : t;
-    const key = p ? 'plan:' + p.name : c.key, label = p ? 'برنامج ' + p.name : c.label;
+    const key = x ? 'w:' + x.rel : p ? 'plan:' + p.name : c.key, label = x ? x.title : p ? 'برنامج ' + p.name : c.label;
     go.disabled = true; box.querySelector('#upF').disabled = true;
     let ok = 0;
     for (const f of files.filter(f => !f.st && !f.err)) {
@@ -885,8 +886,31 @@ function teacherPlan() {
     <p>${P.length ? `${nf(done)} من ${nf(P.length)} ${P.length > 1 ? 'برامج أُرفقت شواهدها' : 'برنامج أُرفقت شواهده'}` : 'لا توجد برامج مسندة إليك في الخطة التشغيلية.'}</p>
     <p class="muted" style="font-size:13px;margin-top:4px">اضغطي اسم البرنامج لإرفاق الشواهد (صور، فيديوهات، أو أي ملفات) أو فتحه في OneDrive.</p></div></div>
   ${one ? inbox(one) : ''}
+  ${D.extra.length ? `<h2>مجلدات مسندة إليك</h2><div class="secs">${D.extra.map(x => `<button class="sec card" data-go="x/${x.k}"><span class="sec-ic">${planIcon}</span>
+      <span class="sec-t">${esc(x.title)}</span>
+      <span class="sec-s">${x.count ? `${nf(x.count)} ملف${x.last ? ' · آخر إضافة ' + esc(x.last) : ''}` : 'لا توجد ملفات بعد'}</span>
+      ${x.count ? chip('ok').replace('مكتمل', 'فيه ملفات') : chip('none').replace('لم ترفع', 'فارغ')}<span class="sec-l">فتح المجلد وإرفاق الملفات ←</span></button>`).join('')}</div>` : ''}
   <h2>برامجي</h2>
   <div class="secs">${btns || '<div class="empty card">لا توجد برامج</div>'}</div>`;
+}
+
+function teacherExtra(k) {   // a folder of the وكيلة's tree assigned to this teacher
+  const x = D.extra[k], t = D.teachers.find(y => y.name === x.to) || D.teachers[0];
+  return `<button class="back" data-go="plan">→ برامجي</button>
+  <div class="card hero" style="margin-top:8px"><span class="sec-ic">${planIcon}</span>
+    <div class="grow"><h2>${esc(x.title)}</h2><p>${x.count ? `${nf(x.count)} ملف${x.last ? ' · آخر إضافة ' + esc(x.last) : ''}` : 'لم تُرفق ملفات بعد'}</p></div></div>
+  <div class="card pad" style="margin-bottom:12px"><a class="btn wide" href="${esc(x.url)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a></div>
+  ${D.inbox ? `<div class="card pad up" id="up" data-t="${t.i}">
+    <div class="up-h"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
+      <b>إرفاق الملفات</b><span class="muted">تصل إلى المجلد في OneDrive خلال دقائق (اضغطي «تحديث» بعدها)</span></div>
+    <select id="upF" hidden><option value="x:${x.k}" selected></option></select>
+    <label class="up-drop" id="upDrop"><input type="file" id="upI" multiple accept="${UP_ACCEPT}" hidden>
+      <span><b>اختاري الملفات أو صوّريها</b><br><span class="muted">صور، فيديو، PDF، Word… حتى 20 م.ب للملف</span></span></label>
+    <div id="upList" class="up-list"></div>
+    <button class="btn wide" id="upGo" hidden>رفع</button>
+    <div id="upPend"></div></div>` : ''}
+  <h2>الملفات${x.count ? ` (${nf(x.count)})` : ''}</h2>
+  <div class="card">${x.files?.length ? `<ul class="files">${x.files.map(fileLi).join('')}</ul>` : '<div class="empty">لا توجد ملفات بعد</div>'}</div>`;
 }
 
 function teacherProgram(k) {
