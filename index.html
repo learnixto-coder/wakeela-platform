@@ -51,6 +51,10 @@ header.top{position:sticky;top:0;z-index:5;background:var(--brand);color:var(--b
 .top-in{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:12px}
 .top h1{font-size:17px;margin:0;line-height:1.3}
 .top small{display:block;opacity:.85;font-size:12.5px;font-weight:400}
+.top-txt{min-width:0}
+.top small.school span{white-space:nowrap}
+.top small.school{opacity:.95;line-height:1.7;margin-block:2px}
+.top small.school b{font-weight:700}
 .top .sp{flex:1}
 .icon-btn{background:rgba(255,255,255,.14);border:0;color:inherit;width:38px;height:38px;border-radius:10px;display:grid;place-items:center;cursor:pointer}
 .ref-btn{background:#fff;color:var(--brand);border:0;height:38px;padding:0 14px;border-radius:10px;display:flex;align-items:center;gap:7px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
@@ -239,6 +243,30 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .ttabs{display:flex;margin:0 0 14px}.ttabs button{flex:1;padding:10px 8px;font-size:14.5px}
 .btn.danger{background:var(--none);border-color:var(--none)}
 .foot{margin-top:28px;color:var(--muted);font-size:12.5px;text-align:center}
+
+/* المجلدات: content viewer */
+.fv{display:grid;grid-template-columns:1fr;gap:14px;align-items:start}
+@media (min-width:1000px){.fv{grid-template-columns:250px 1fr}}
+.fv-toc{display:none}
+@media (min-width:1000px){.fv-toc{display:grid;gap:2px;padding:8px;position:sticky;top:132px;max-height:calc(100vh - 150px);overflow:auto}}
+.fv-toc button{background:none;border:0;text-align:start;padding:7px 10px;border-radius:9px;display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--muted);font-size:14px}
+.fv-toc button:hover{background:var(--soft);color:var(--ink)}
+.fv-toc button.on{background:var(--ok-bg);color:var(--brand-2);font-weight:600}
+.fv-toc .t{flex:1;min-width:0;line-height:1.35}
+.fv-toc .g{display:block;font-size:11.5px;font-weight:400;color:var(--muted)}
+.fv-toc .n{font-size:12px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.fv-toc .grp{font-size:11.5px;color:var(--muted);padding:10px 10px 2px;font-weight:600}
+@media (min-width:1000px){.fv-sel{display:none}}
+.fv-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin:10px 0}
+.fv-bar h2{margin:0}
+.fv-nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.fv-nav .btn{min-height:42px}
+.fv-file{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 14px}
+.fv-file .grow{flex:1;min-width:0}
+.fv-file .nm{overflow-wrap:anywhere;color:var(--muted);font-size:13.5px}
+.fv-page{display:block;width:100%;max-width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:12px}
+.fv-page.loading{aspect-ratio:3/4;background:var(--soft)}
+.fv-more{margin-top:10px;font-size:13px}
 </style>
 </head>
 <body>
@@ -258,7 +286,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 
 <div id="app" hidden>
   <header class="top"><div class="top-in">
-    <div><h1 id="title">منصة مدرسة المتوسطة الحادية والعشرون</h1><small id="meta"></small></div>
+    <div class="top-txt"><h1 id="title">منصة مدرسة المتوسطة الحادية والعشرون</h1><small class="school"><span>المتوسطة الحادية والعشرون بالخميس</span> · <span>العام الدراسي 1448هـ</span> · <span>مديرة المدرسة: <b>أ. أمينة آل مشيط</b></span> · <span>وكيلة المدرسة: <b>أ. فوزية الدوسري</b></span></small><small id="meta"></small></div>
     <div class="sp"></div>
     <button class="ref-btn" id="reload" title="جلب أحدث البيانات"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg><span>تحديث</span></button>
     <button class="icon-btn" id="logout" title="خروج" aria-label="خروج"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17 5 12l5-5"/><path d="M5 12h12"/></svg></button>
@@ -345,12 +373,12 @@ async function unlock(code, remember) {
 let sessionCode = null;
 $('#lockForm').addEventListener('submit', e => { e.preventDefault(); if ($('#code').value.trim()) unlock($('#code').value, $('#remember').checked); });
 $('#logout').onclick = () => { store.set(null); sessionCode = null; D = null; $('#app').hidden = true; $('#lock').hidden = false; $('#code').value = ''; document.body.classList.remove('tmode', 'pmode');
-  try { sessionStorage.removeItem('wk-plans-code'); localStorage.removeItem('wk-plans-code'); } catch {} window.__plansCache = null; location.hash = ''; };
+  try { sessionStorage.removeItem('wk-plans-code'); localStorage.removeItem('wk-plans-code'); } catch {} window.__plansCache = null; prevReset(); location.hash = ''; };
 $('#reload').onclick = async () => {
   const b = $('#reload'), lbl = b.querySelector('span'), before = D && D.generated;
   b.disabled = true; b.classList.add('busy'); lbl.textContent = 'جارٍ التحديث…';
   try {
-    D = await load(sessionCode); prep(); route();
+    D = await load(sessionCode); prevReset(); prep(); route();
     toast(D.generated !== before ? 'تم جلب بيانات أحدث' : 'البيانات محدّثة — لا جديد منذ آخر تحديث');
   } catch { toast('تعذّر التحديث، تحققي من الاتصال'); }
   finally { b.disabled = false; b.classList.remove('busy'); lbl.textContent = 'تحديث'; }
@@ -411,7 +439,7 @@ function route() {
   }
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === (v === 't' ? 'teachers' : v === 'f' ? 'folders' : v === 'w' ? 'me' : v === 'board' ? 'home' : v)));
   const el = $('#view');
-  el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folder(+a),
+  el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folders(+a),
     plan: planW, plans: plansW }[v] || me)();
   bind(el); window.scrollTo(0, 0);
 }
@@ -430,6 +458,7 @@ function bind(el) {
   el.querySelectorAll('[data-close]').forEach(x => x.addEventListener('click', () => closeNote(x.dataset.close, +x.dataset.t)));
   const pd = el.querySelector('#pdel'); if (pd) bindPlanDel(pd);
   const ph = el.querySelector('#plansHost'); if (ph) mountPlansHere(ph);
+  if (el.querySelector('.fv')) bindFv(el);
   if (el.querySelector('[data-tdel], #tdelAll')) bindTDel(el);
   el.querySelectorAll('[data-pf]').forEach(x => x.addEventListener('click', () => { state.pFilter = x.dataset.pf; route(); }));
   const sn = el.querySelector('#sendNote'); if (sn) sn.addEventListener('click', () => sendNote(+sn.dataset.t));
@@ -1119,32 +1148,103 @@ function dash() {
 
 const fileLi = x =>`<li><span class="ext">${esc(x.x || '—')}</span><span class="n">${esc(x.n)}${x.f ? ` <span class="warn">(${esc(x.f.join('، '))})</span>` : ''}</span><span class="d">${esc(x.d)}</span></li>`;
 
-function folders() {
-  return `<h2>المجلدات</h2><div class="list">${D.folders.map(f => {
-    const cs = D.teachers.map(t => t.cells[f.i]).filter(c => c.s !== 'na');
-    const o = cs.filter(c => c.s === 'ok').length, p = cs.length ? Math.round(o / cs.length * 100) : 0;
-    return `<button class="row" data-go="f/${f.i}">${ring(p)}<div class="grow"><div class="name">${esc(f.label)}</div>
-      <div class="sub">${f.group ? esc(f.group) + ' · ' : ''}${nf(o)} من ${nf(cs.length)} مكتمل · المطلوب ${nf(f.min)} لكل معلمة</div></div></button>`;
-  }).join('')}</div>`;
+// --- المجلدات: the content of every file, folder by folder (previews built by tools/previews.py into site/prev/)
+const fvs = { fi: 0, t: 'all', k: 0 };
+let prevIdx = null, prevKey = null, prevLoading = null;
+const prevUrls = new Map();
+function prevReset() { prevIdx = null; prevKey = null; prevLoading = null; prevUrls.forEach(p => p.then(u => URL.revokeObjectURL(u)).catch(() => {})); prevUrls.clear(); }
+async function prevBin(url) {
+  const r = await fetch(url, { cache: 'no-cache' }); if (!r.ok) throw new Error('net');
+  const u = new Uint8Array(await r.arrayBuffer());
+  return crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.subarray(0, 12) }, prevKey, u.subarray(12));
 }
+function loadPrev() {
+  if (prevIdx) return Promise.resolve(prevIdx);
+  return prevLoading ??= (async () => {
+    const L = await (await fetch('prev/lock.json?t=' + Date.now(), { cache: 'no-store' })).json(), l = L.locks[0];
+    const raw = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(l.iv) }, await aesKey(sessionCode, b64(l.salt), L.iter), b64(l.ct));
+    prevKey = await crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['decrypt']);
+    const plain = await prevBin('prev/i.bin?t=' + Date.now());
+    return prevIdx = JSON.parse(await new Response(new Blob([plain]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
+  })().catch(e => { prevLoading = null; throw e; });
+}
+function prevPage(id, n) {
+  const k = id + '-' + n;
+  if (!prevUrls.has(k)) {
+    const p = prevBin(`prev/p/${k}.bin`).then(b => URL.createObjectURL(new Blob([b], { type: 'image/jpeg' })));
+    p.catch(() => prevUrls.delete(k));
+    prevUrls.set(k, p);
+    if (prevUrls.size > 120) { const [old, op] = prevUrls.entries().next().value; prevUrls.delete(old); op.then(u => URL.revokeObjectURL(u)).catch(() => {}); }
+  }
+  return prevUrls.get(k);
+}
+const fvFiles = (fi, t) => D.teachers.filter(x => (t === 'all' || x.i === t) && x.cells[fi].info)
+  .flatMap(x => x.cells[fi].info.files.map(f => ({ t: x, c: x.cells[fi], x: f })));
+const fileUrl = (c, n) => c.info.url + encodeURIComponent('/' + n.split(' / ').join('/')) + '&parent=' + c.info.url.split('?id=')[1];
+const KIND_NOTE = { video: 'مقطع فيديو، يُشغَّل من OneDrive.', office0: 'ملف Word أو PowerPoint أو Excel، تُجهَّز معاينته في التحديث القادم.', none: 'لا تتوفر معاينة لهذا النوع من الملفات.' };
 
-function folder(i) {
-  const f = D.folders[i]; if (!f) return '';
-  const rows = D.teachers.map(t => ({ t, c: t.cells[i] }));
-  const flt = state.fFilter, shown = rows.filter(r => flt === 'all' || (flt === 'miss' ? r.c.s === 'none' || r.c.s === 'part' : r.c.s === flt));
-  const miss = rows.filter(r => r.c.s === 'none' || r.c.s === 'part');
-  const cnt = s => rows.filter(r => r.c.s === s).length;
-  const group = miss.length ? `السلام عليكم ورحمة الله\nنأمل من المعلمات التالية أسماؤهن رفع ملفات «${f.group ? f.group + ' / ' : ''}${f.label}» في مجلداتهن على OneDrive (المطلوب ${f.min}):\n` + miss.map(r => `• ${r.t.name} (الموجود ${r.c.info.count})`).join('\n') + '\nشاكرين تعاونكن.' : '';
-  return `<button class="back" data-go="folders">→ المجلدات</button>
-  <h2>${esc(f.label)}${f.group ? ` <span class="muted" style="font-weight:400">· ${esc(f.group)}</span>` : ''}</h2>
-  <div class="toolbar"><div class="seg">
-    ${[['all', 'الكل', rows.length], ['ok', 'مكتمل', cnt('ok')], ['miss', 'يحتاج متابعة', miss.length], ['na', 'لا يوجد مجلد', cnt('na')]].filter(x => x[0] !== 'na' || x[2]).map(([k, l, n]) => `<button data-filter="${k}" class="${flt === k ? 'on' : ''}">${l} (${nf(n)})</button>`).join('')}
-  </div></div>
-  <div class="list">${shown.map(({ t, c }) => `<button class="row" data-cell="${t.i},${i}" data-name="${esc(t.short)}">
-    <div class="grow"><div class="name">${esc(t.name)}</div><div class="sub">${c.info ? `${nf(c.info.count)} ملف${c.info.last ? ' · آخر رفع ' + esc(c.info.last) : ''}` : '—'}</div></div>${chip(c.s)}</button>`).join('') || '<div class="empty">لا يوجد</div>'}</div>
-  ${group ? `<h2>رسالة جماعية للمتأخرات</h2><div class="card pad"><div class="msg" id="gmsg">${esc(group)}</div>
-    <div class="toolbar" style="margin:10px 0 0"><button class="btn sm" data-copy="gmsg">نسخ</button><button class="btn sm ghost" data-wa="gmsg">إرسال عبر واتساب</button></div></div>` : ''}`;
+function folders(i) {
+  if (i !== undefined && D.folders[i] && i !== fvs.fi) Object.assign(fvs, { fi: i, t: 'all', k: 0 });
+  const f = D.folders[fvs.fi], files = fvFiles(fvs.fi, fvs.t);
+  fvs.k = Math.min(fvs.k, Math.max(0, files.length - 1));
+  const cur = files[fvs.k];
+  let grp = '';
+  const toc = D.folders.map(x => {
+    const n = fvFiles(x.i, 'all').length, head = x.group && x.group !== grp ? `<div class="grp">${esc(x.group)}</div>` : '';
+    grp = x.group;
+    return `${head}<button data-fv="${x.i}" class="${x.i === fvs.fi ? 'on' : ''}"><span class="t">${esc(x.label)}</span><span class="n">${nf(n)}</span></button>`;
+  }).join('');
+  const who = D.teachers.map(x => ({ x, n: x.cells[fvs.fi].info?.count || 0 })).filter(r => r.n);
+  return `<div class="fv">
+  <nav class="card fv-toc" aria-label="المجلدات">${toc}</nav>
+  <div style="min-width:0">
+    <select class="search fv-sel" id="fvF" aria-label="المجلد" style="width:100%">${D.folders.map(x => `<option value="${x.i}"${x.i === fvs.fi ? ' selected' : ''}>${esc((x.group ? x.group + ' / ' : '') + x.label)} (${nf(fvFiles(x.i, 'all').length)})</option>`).join('')}</select>
+    <div class="fv-bar">
+      <h2>${esc(f.label)}${f.group ? ` <span class="muted" style="font-weight:400;font-size:14px">· ${esc(f.group)}</span>` : ''}</h2>
+      <select class="search" id="fvT" aria-label="المعلمة" style="flex:0 1 260px"><option value="all">كل المعلمات (${nf(fvFiles(fvs.fi, 'all').length)} ملف)</option>${who.map(r => `<option value="${r.x.i}"${fvs.t === r.x.i ? ' selected' : ''}>${esc(r.x.short)} (${nf(r.n)})</option>`).join('')}</select>
+    </div>
+    ${cur ? `<div class="fv-bar">
+      <div class="fv-nav"><button class="btn ghost sm" id="fvPrev"${fvs.k ? '' : ' disabled'}>→ السابق</button><button class="btn ghost sm" id="fvNext"${fvs.k < files.length - 1 ? '' : ' disabled'}>التالي ←</button>
+        <span class="muted" style="font-size:13.5px">الملف ${nf(fvs.k + 1)} من ${nf(files.length)}</span></div>
+      <select class="search" id="fvK" aria-label="الملف" style="flex:1 1 260px;max-width:460px">${files.map((r, j) => `<option value="${j}"${j === fvs.k ? ' selected' : ''}>${esc(r.t.short)} — ${esc(r.x.n.split(' / ').pop())}</option>`).join('')}</select>
+    </div>
+    <div class="card fv-file"><span class="ext">${esc(cur.x.x || '—')}</span>
+      <div class="grow"><b>${esc(cur.t.name)}</b><div class="nm">${esc(cur.x.n)} · <span dir="ltr">${esc(cur.x.d)}</span></div></div>
+      <a class="btn sm" href="${esc(fileUrl(cur.c, cur.x.n))}" target="_blank" rel="noopener">فتح في OneDrive</a></div>
+    <div id="fvPages" data-key="${esc(cur.t.name + '|' + f.key + '|' + cur.x.n)}"><div class="muted" style="padding:16px 0">جارٍ تحميل المحتوى…</div></div>`
+    : '<div class="empty card">لا توجد ملفات في هذا المجلد بعد</div>'}
+  </div></div>`;
 }
+async function fvShow(box) {
+  const key = box.dataset.key;
+  let e;
+  try { e = (await loadPrev())[key]; }
+  catch { box.innerHTML = '<div class="empty card">تعذّر تحميل المعاينات، تحققي من الاتصال ثم اضغطي «تحديث».</div>'; return; }
+  if (!box.isConnected || box.dataset.key !== key) return;
+  if (!e) { box.innerHTML = '<div class="empty card">تُجهَّز معاينة هذا الملف في التحديث القادم. يمكنك فتحه الآن من زر «فتح في OneDrive».</div>'; return; }
+  if (!e.n) { box.innerHTML = `<div class="empty card">${KIND_NOTE[e.k] || KIND_NOTE.none}</div>`; return; }
+  box.innerHTML = Array.from({ length: e.n }, (_, j) => `<img class="fv-page loading" alt="صفحة ${j + 1}" data-pg="${j + 1}">`).join('')
+    + (e.t ? `<p class="muted fv-more">تعرض المعاينة أول ${nf(e.n)} صفحات من ${nf(e.t)}، وبقية الصفحات في زر «فتح في OneDrive».</p>` : '');
+  box.querySelectorAll('img[data-pg]').forEach(img => prevPage(e.id, +img.dataset.pg)
+    .then(u => { img.src = u; img.classList.remove('loading'); })
+    .catch(() => { img.replaceWith(Object.assign(document.createElement('div'), { className: 'warn', textContent: 'تعذّر تحميل هذه الصفحة' })); }));
+}
+function fvGo(k) { const n = fvFiles(fvs.fi, fvs.t).length; if (k < 0 || k >= n) return; fvs.k = k; route(); }
+function bindFv(el) {
+  el.querySelectorAll('[data-fv]').forEach(b => b.addEventListener('click', () => go('f/' + b.dataset.fv)));
+  el.querySelector('#fvF')?.addEventListener('change', e => go('f/' + e.target.value));
+  el.querySelector('#fvT')?.addEventListener('change', e => { fvs.t = e.target.value === 'all' ? 'all' : +e.target.value; fvs.k = 0; route(); });
+  el.querySelector('#fvK')?.addEventListener('change', e => fvGo(+e.target.value));
+  el.querySelector('#fvPrev')?.addEventListener('click', () => fvGo(fvs.k - 1));
+  el.querySelector('#fvNext')?.addEventListener('click', () => fvGo(fvs.k + 1));
+  const box = el.querySelector('#fvPages'); if (box) fvShow(box);
+}
+document.addEventListener('keydown', e => {   // ← → move between files on the folders page
+  if (!el$fv() || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+  if (e.key === 'ArrowLeft') fvGo(fvs.k + 1);
+  if (e.key === 'ArrowRight') fvGo(fvs.k - 1);
+});
+const el$fv = () => document.querySelector('#view .fv');
 
 function board() {
   const head = D.folders.map(f => `<th title="${esc((f.group ? f.group + ' / ' : '') + f.label)}">${esc(f.label)}${f.group ? `<br><span class="muted" style="font-weight:400">مجتمع مهني</span>` : ''}</th>`).join('');
