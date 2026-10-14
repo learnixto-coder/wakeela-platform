@@ -169,9 +169,7 @@ select.search{flex:0 1 auto}
 /* teacher detail */
 body.tmode nav.tabs{display:none}
 body.pmode nav.tabs,body.pmode #reload{display:none}
-.plans-frame{display:block;width:100%;border:0;border-radius:var(--r);background:var(--bg);min-height:420px}
-@media (max-width:640px){.plans-frame{width:calc(100% + 32px);margin-inline:-16px;border-radius:0}}
-.plans-bar{display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:13px}
+#plansHost{min-height:60vh}
 .lock .hint{font-size:13px;margin:-12px 0 16px}
 .back{background:none;border:0;color:var(--brand-2);cursor:pointer;padding:4px 0;font-weight:600}
 .head{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
@@ -266,6 +264,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
     <button class="icon-btn" id="logout" title="خروج" aria-label="خروج"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17 5 12l5-5"/><path d="M5 12h12"/></svg></button>
   </div></header>
   <nav class="tabs"><div class="tabs-in" id="tabs">
+    <button data-v="plans">لوحة الخطط</button>
     <button data-v="me">ملفات الوكيلة</button>
     <button data-v="dash">لوحة المؤشرات</button>
     <button data-v="home">متابعة المعلمات</button>
@@ -274,7 +273,6 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
     <button data-v="alerts">التنبيهات</button>
     <button data-v="admins">الإداريات</button>
     <button data-v="plan">برامج الخطة 1448هـ</button>
-    <button data-v="plans">لوحة الخطط</button>
   </div></nav>
   <main id="view"></main>
 </div>
@@ -347,7 +345,7 @@ async function unlock(code, remember) {
 let sessionCode = null;
 $('#lockForm').addEventListener('submit', e => { e.preventDefault(); if ($('#code').value.trim()) unlock($('#code').value, $('#remember').checked); });
 $('#logout').onclick = () => { store.set(null); sessionCode = null; D = null; $('#app').hidden = true; $('#lock').hidden = false; $('#code').value = ''; document.body.classList.remove('tmode', 'pmode');
-  try { sessionStorage.removeItem('wk-plans-code'); localStorage.removeItem('wk-plans-code'); } catch {} location.hash = ''; };
+  try { sessionStorage.removeItem('wk-plans-code'); localStorage.removeItem('wk-plans-code'); } catch {} window.__plansCache = null; location.hash = ''; };
 $('#reload').onclick = async () => {
   const b = $('#reload'), lbl = b.querySelector('span'), before = D && D.generated;
   b.disabled = true; b.classList.add('busy'); lbl.textContent = 'جارٍ التحديث…';
@@ -401,7 +399,7 @@ function go(h) { location.hash = h; }
 function route() {
   if (!D) return;
   if (D.kind === 'plans') { const el = $('#view'); el.innerHTML = plansW(); bind(el); return; }
-  const [v, a] = (location.hash.slice(1) || 'me').split('/');
+  const [v, a] = (location.hash.slice(1) || (D.kind === 'teacher' ? 'me' : 'plans')).split('/');
   if (D.kind === 'teacher') {   // a teacher sees only her own page(s)
     const one = D.teachers.length === 1, i = one ? 0 : v === 't' && D.teachers[+a] ? +a : -1;
     // programs first: the programs page is the landing page; «ملفاتي» (#mine) is her folders page
@@ -431,7 +429,7 @@ function bind(el) {
     $('#upF').value = x.dataset.attach; $('#up').scrollIntoView({ behavior: 'smooth', block: 'start' }); $('#upI').click(); }));
   el.querySelectorAll('[data-close]').forEach(x => x.addEventListener('click', () => closeNote(x.dataset.close, +x.dataset.t)));
   const pd = el.querySelector('#pdel'); if (pd) bindPlanDel(pd);
-  if (el.querySelector('#plansFrame')) { el.querySelector('#plansFrame').hidden = false; requestAnimationFrame(sizePlansFrame); }
+  const ph = el.querySelector('#plansHost'); if (ph) mountPlansHere(ph);
   if (el.querySelector('[data-tdel], #tdelAll')) bindTDel(el);
   el.querySelectorAll('[data-pf]').forEach(x => x.addEventListener('click', () => { state.pFilter = x.dataset.pf; route(); }));
   const sn = el.querySelector('#sendNote'); if (sn) sn.addEventListener('click', () => sendNote(+sn.dataset.t));
@@ -941,24 +939,33 @@ function teacherProgram(k) {
 // --- the وكيلة: results
 /* ---------- لوحة الخطط (site/plans, built by «لوحة الخطط 1448/build_dashboard.py») ---------- */
 function plansW() {
-  try { sessionStorage.setItem('wk-plans-code', sessionCode || ''); } catch {}   // the frame opens with the same login
-  const bar = D.kind === 'plans' ? '' : `<div class="plans-bar muted"><span>المُقيِّمة تدخل من رابط المنصة نفسه برمز اطلاع خاص بها يعرض هذه اللوحة فقط.</span>
-    <button class="btn sm ghost" data-copy="plansUrl">نسخ رابط المنصة</button><input id="plansUrl" type="hidden" value="${esc(location.href.split('#')[0])}"></div>`;
-  return `${bar}<iframe class="plans-frame" id="plansFrame" src="plans/?embed=1" title="لوحة الخطة التشغيلية وخطة التحسين"></iframe>`;
+  return '<div id="plansHost"><div class="muted" style="padding:24px 0">جارٍ فتح لوحة الخطط…</div></div>';
+}
+let plansApp = null;   // plans/app.js (built by «لوحة الخطط 1448/build_dashboard.py»), loaded once
+function loadPlansApp() {
+  return plansApp ??= fetch('plans/app.ver?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.text() : '').catch(() => '')
+    .then(v => new Promise((ok, bad) => { const sc = document.createElement('script'); sc.src = 'plans/app.js?v=' + v.trim(); sc.onload = ok; sc.onerror = bad; document.head.append(sc); }))
+    .catch(e => { plansApp = null; throw e; });
+}
+function mountPlansHere(host) {
+  loadPlansApp().then(() => { if (host.isConnected) { host.textContent = ''; window.mountPlans(host, { embed: true, base: 'plans/', code: sessionCode,
+    offset: () => $('header.top').offsetHeight + ($('nav.tabs').offsetHeight || 0) }); } })
+    .catch(() => { host.innerHTML = '<div class="empty card">تعذّر تحميل لوحة الخطط، تحققي من الاتصال ثم اضغطي «تحديث».</div>'; });
 }
 async function isPlansCode(code) {   // the evaluator's code unwraps the plans content key (plans/lock.json), nothing else
   try {
     const L = await (await fetch('plans/lock.json?t=' + Date.now(), { cache: 'no-store' })).json();
     for (const l of L.locks) {
-      try { await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(l.iv) }, await aesKey(code, b64(l.salt), L.iter), b64(l.ct)); return true; } catch {}
+      try {   // keep the unwrapped key so the dashboard does not derive it again
+        const raw = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(l.iv) }, await aesKey(code, b64(l.salt), L.iter), b64(l.ct));
+        window.__plansCache = { pages: {}, code, CK: await crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['decrypt']) };
+        return true;
+      } catch {}
     }
   } catch {}
   return false;
 }
-function sizePlansFrame() {
-  const f = $('#plansFrame'); if (f) f.style.height = Math.max(420, innerHeight - f.getBoundingClientRect().top - 12) + 'px';
-}
-addEventListener('resize', sizePlansFrame);
+
 function planW() {
   const P = D.plan; if (!P.length) return '<div class="empty">لا توجد بيانات لبرامج الخطة التشغيلية</div>';
   const done = P.filter(p => p.s === 'ok').length, files = P.reduce((s, p) => s + p.n, 0), pct = Math.round(done / P.length * 100);
