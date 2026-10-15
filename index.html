@@ -714,7 +714,6 @@ function home() {
       <span class="track"><i class="o" style="width:${o / n * 100}%"></i><i class="p" style="width:${p / n * 100}%"></i><i class="n" style="width:${z / n * 100}%"></i></span>
       <span class="pct">${Math.round(o / n * 100)}%</span></button>`;
   }).join('');
-  const recent = T.flatMap(t => t.cells.flatMap(c => (c.info?.files || []).map(x => ({ t, f: c.f, x })))).sort((a, b) => b.x.d.localeCompare(a.x.d)).slice(0, 8);
   const low = [...T].filter(t => t.exist >= 5).sort((a, b) => a.pct - b.pct).slice(0, 5);
   return `
   <h2>نظرة عامة · ${esc(D.week)}</h2>
@@ -732,8 +731,6 @@ function home() {
   ${board()}
   <h2>الأقل إنجازًا</h2>
   <div class="list">${low.map(teacherRow).join('')}</div>
-  <h2>آخر ما رُفع</h2>
-  <div class="card"><ul class="files">${recent.map(r => `<li><span class="ext">${esc(r.x.x)}</span><span class="n"><b>${esc(r.t.short)}</b> · ${esc(r.f.label)}<br><span class="muted">${esc(r.x.n)}</span></span><span class="d">${esc(r.x.d)}</span></li>`).join('')}</ul></div>
   <p class="foot">تُحدَّث البيانات تلقائيًا من مجلدات OneDrive · المعايير من «معايير الفحص.xlsx»</p>`;
 }
 
