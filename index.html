@@ -1962,7 +1962,7 @@ function alerts() {
 // an admin's file as a thumbnail (previews.py key "@a|<her folder>|<file>"); opens all its pages like the وكيلة's files
 const aTile = (a, x) => `<button class="fv-tile" data-wkey="${esc('@a|' + a.name + '|' + x.n)}" data-key="${esc('@a|' + a.name + '|' + x.n)}" data-url="${esc(wFileUrl(a.url, x.n.split(' / ').join('/')))}" title="${esc(x.n)}">
   <span class="th"><span class="ext">${esc(x.x || '—')}</span><span class="ph">…</span></span>
-  <span class="cap"><b>${esc(x.n)}</b><span>${x.f ? `<span class="warn">${esc(x.f.join('، '))}</span> · ` : ''}<span dir="ltr">${esc(x.d)}</span></span></span></button>`;
+  <span class="cap"><span>${x.f ? `<span class="warn">${esc(x.f.join('، '))}</span> · ` : ''}<span dir="ltr">${esc(x.d)}</span></span></span></button>`;
 function admins() {
   const A = D.admins || [];
   if (!A.length) return '<div class="empty">لا توجد مجلدات للإداريات</div>';
