@@ -108,7 +108,7 @@ async function init() {
 
 $('#f').addEventListener('submit', async e => {
   e.preventDefault(); $('#err').textContent = '';
-  if (!type) { $('#err').textContent = 'اختاري الفئة أولًا (طالبة أو معلمة)'; $('#tbox').scrollIntoView({ behavior: 'smooth' }); return; }
+  if (!type) { $('#err').textContent = 'اختاري الفئة أولًا'; $('#tbox').scrollIntoView({ behavior: 'smooth' }); return; }
   const miss = ans.findIndex(v => !v);
   if (miss >= 0) { ans.forEach((v, i) => $('#q' + i).classList.toggle('miss', !v)); $('#err').textContent = 'أجيبي عن جميع العبارات'; $('#q' + miss).scrollIntoView({ behavior: 'smooth' }); return; }
   const btn = $('#send'); btn.disabled = true; btn.textContent = 'جارٍ الإرسال…';

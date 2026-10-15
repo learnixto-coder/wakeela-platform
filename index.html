@@ -1383,7 +1383,7 @@ function srvCard(p, full) {
   if (!srvOn(p)) return '';
   const u = srvUrl(p.no);
   return `<div class="card pad qa-card"><div class="qa-h"><b>استبانة قياس الأثر للمستفيدين</b>
-      <span class="muted">تمسح الطالبة الرمز وتجيب من جوالها دون تسجيل، والإجابات سرّية. المطلوب ${nf(SRV_TARGET)} ردًّا على الأقل.</span></div>
+      <span class="muted">تمسح المستفيدة (طالبة أو معلمة أو وليّة أمر) الرمز وتجيب من جوالها دون تسجيل، والإجابات سرّية. المطلوب ${nf(SRV_TARGET)} ردًّا على الأقل.</span></div>
     <div class="srv-row"><div class="qr" data-qr="${esc(u)}"></div><div class="grow">
       <div class="srv-u" id="srvU${p.no}" dir="ltr">${esc(u)}</div>
       <textarea id="srvW${p.no}" hidden>استبانة قياس أثر برنامج «${esc(p.name)}» — نرجو الإجابة (دقيقة واحدة، دون ذكر الاسم):\n${esc(u)}</textarea>
