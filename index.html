@@ -240,7 +240,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .ck .n{flex:1;min-width:0;overflow-wrap:anywhere}
 .ck.pend{opacity:.55;cursor:default}
 .note-close{margin-inline-start:auto}
-.ttabs{display:flex;margin:0 0 14px}.ttabs button{flex:1;padding:10px 8px;font-size:14.5px}
+.subtabs{display:flex;gap:10px;margin:0 0 16px;flex-wrap:wrap}.subtabs button{flex:1;min-width:130px;min-height:46px;padding:10px 14px;border-radius:12px;border:2px solid var(--brand);background:var(--card);color:var(--brand);font:inherit;font-size:15px;font-weight:700;cursor:pointer}.subtabs button:hover{background:var(--soft)}.subtabs button.on{background:var(--brand);color:var(--brand-ink)}.ttabs{display:flex;margin:0 0 14px}.ttabs button{flex:1;padding:10px 8px;font-size:14.5px}
 .btn.danger{background:var(--none);border-color:var(--none)}
 .foot{margin-top:28px;color:var(--muted);font-size:12.5px;text-align:center}
 
@@ -563,7 +563,7 @@ function route() {
   const el = $('#view');
   el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folders(+a),
     plan: planW, plans: plansW, timeline: () => plansW('timeline'), qa: () => qaW(a) }[v] || me)();
-  const sub = SUBTABS[top]; if (sub) el.insertAdjacentHTML('afterbegin', `<div class="seg ttabs">${sub.map(([g, l]) => `<button data-go="${g}" class="${(TAB_OF[v] ? SUB_OF[v] || v : v) === g ? 'on' : ''}">${l}</button>`).join('')}</div>`);
+  const sub = SUBTABS[top]; if (sub) el.insertAdjacentHTML('afterbegin', `<div class="subtabs">${sub.map(([g, l]) => `<button data-go="${g}" class="${(TAB_OF[v] ? SUB_OF[v] || v : v) === g ? 'on' : ''}">${l}</button>`).join('')}</div>`);
   bind(el); window.scrollTo(0, 0);
 }
 // top tabs that hold sub-pages: «برامج الخطة 1448هـ» and «المعلمات»
