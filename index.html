@@ -313,6 +313,9 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .qa-opt{display:flex;width:100%}.qa-opt button{flex:1;padding:8px 4px}
 .qa-opt button.on.v2{background:var(--ok-bg);color:var(--ok)} .qa-opt button.on.v1{background:var(--part-bg);color:var(--part)} .qa-opt button.on.v0{background:var(--none-bg);color:var(--none)}
 .qa-note{display:block;width:100%;margin-top:8px;padding:8px 12px;font-size:13.5px}
+.qa-sgs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.qa-sgs:empty{display:none}
+.qa-sg{font:inherit;font-size:12.5px;border:1px dashed var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:3px 10px;cursor:pointer}
+.qa-sg:hover{color:var(--brand-2);border-color:var(--brand-2)}.qa-sg::before{content:'+ '}
 .qa-cnt{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .qa-bar{position:sticky;bottom:0;z-index:3;display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;margin:16px -16px 0;padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);background:var(--card);border-top:1px solid var(--line)}
 .qa-bar #qaDirty{margin-inline-end:auto;font-size:13px;color:var(--part)}
@@ -406,7 +409,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 
 <div id="app" hidden>
   <header class="top"><div class="top-in">
-    <div class="top-txt"><h1 id="title">منصة مدرسة المتوسطة الحادية والعشرون</h1><small class="school"><span>المتوسطة الحادية والعشرون بالخميس</span> · <span>العام الدراسي 1448هـ</span> · <span>مديرة المدرسة: <b>أ. أمينة آل مشيط</b></span> · <span>وكيلة المدرسة: <b>أ. فوزية الدوسري</b></span></small></div>
+    <div class="top-txt"><h1 id="title">منصة مدرسة المتوسطة الحادية والعشرون</h1><small class="school"><span>مديرة المدرسة: <b>أ. أمينة آل مشيط</b></span> · <span>وكيلة المدرسة: <b>أ. فوزية الدوسري</b></span></small></div>
     <div class="sp"></div>
     <button class="ref-btn" id="reload" title="جلب أحدث البيانات"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg><span>تحديث</span></button>
     <button class="icon-btn" id="logout" title="خروج" aria-label="خروج"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17 5 12l5-5"/><path d="M5 12h12"/></svg></button>
@@ -535,7 +538,7 @@ function prep() {
   document.body.classList.toggle('tmode', tm);
   $('#title').textContent = tm ? (D.teachers.length === 1 ? D.teachers[0].name : D.planOnly ? D.teachers.map(t => t.name).join(' · ') : 'متابعة إنجازي') : 'منصة مدرسة المتوسطة الحادية والعشرون';
   const d = new Date(D.generated);
-  $('#meta').textContent = `${D.week} · آخر تحديث ${d.toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'long' })} ${d.toLocaleTimeString('ar-SA-u-nu-latn', { hour: 'numeric', minute: '2-digit' })}`;
+  $('#meta').textContent = `${D.week} · آخر تحديث ${d.toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'long' })} ${d.toLocaleTimeString('ar-SA-u-nu-latn', { hour: 'numeric', minute: '2-digit' })} · العام الدراسي 1448هـ`;
 }
 function daysSince(iso) { return iso ? Math.floor((new Date(D.generated) - new Date(iso)) / 864e5) : null; }
 const pctColor = p => p >= 80 ? 'var(--ok)' : p >= 40 ? '#e0a526' : 'var(--none)';
@@ -1254,6 +1257,42 @@ const QA_OBS = ['وضوح أهداف البرنامج للمستفيدين', 'م
   'توثيق البرنامج بالشواهد المناسبة', 'وجود أثر واضح للبرنامج على المستفيدين'];
 const QA_OV = [[2, 'متحقق'], [1, 'متحقق جزئيًا'], [0, 'غير متحقق']];
 const QA_INT = ['مدى رضا المستفيدين', 'أبرز جوانب القوة', 'أبرز التحديات', 'أثر البرنامج على المستفيدين', 'التوصيات المقترحة'];
+// suggested phrases (a click writes them into the field): observation notes per item × rating [2, 1, 0],
+// the improvement action per item (the وكيلة's guidance and the teacher's plan), and interview answers per question
+const QA_SG_OBS = [
+  [['الأهداف معلنة ومفهومة لدى المستفيدات', 'عُرضت الأهداف في بداية البرنامج'], ['الأهداف واضحة لبعض المستفيدات فقط', 'تحتاج الأهداف إلى إعلان أوضح'], ['لم تُعلن الأهداف للمستفيدات', 'لا تعرف المستفيدات الغاية من البرنامج']],
+  [['المحتوى مناسب لعمر المستفيدات واحتياجهن', 'أنشطة متدرجة تراعي الفروق الفردية'], ['بعض الأنشطة أعلى أو أقل من مستوى الفئة', 'يحتاج المحتوى إلى مواءمة مع احتياج الفئة'], ['المحتوى لا يناسب الفئة المستهدفة', 'لم يُراعَ مستوى المستفيدات']],
+  [['نُفّذ في الموعد المحدد بالخطة الزمنية', 'نُفّذت جميع الخطوات في وقتها'], ['تأخر تنفيذ بعض الخطوات عن موعدها', 'نُفّذ جزء من الخطوات في الموعد'], ['لم يُنفّذ وفق الخطة الزمنية', 'تأخر التنفيذ دون تعديل معتمد للخطة']],
+  [['توفرت المواد والتجهيزات اللازمة', 'المكان مهيأ ومناسب للتنفيذ'], ['نقص في بعض المواد أو التجهيزات', 'احتاج التنفيذ إلى تجهيزات إضافية'], ['لم تتوفر المتطلبات الأساسية', 'أثّر نقص التجهيزات على التنفيذ']],
+  [['تنوعت الأساليب بين العرض والعمل التعاوني والتطبيق', 'استُخدمت التقنية ووسائل جاذبة'], ['اقتصر التنفيذ على أسلوبين تقريبًا', 'يغلب الأسلوب الإلقائي'], ['أسلوب واحد طوال التنفيذ', 'لم تُستخدم أساليب تفاعلية']],
+  [['مشاركة واسعة وتفاعل واضح من المستفيدات', 'أبدت المستفيدات حماسًا ومبادرة'], ['المشاركة محدودة بعدد من المستفيدات', 'التفاعل متوسط ويحتاج تحفيزًا'], ['مشاركة ضعيفة من المستفيدات', 'غياب التفاعل أثناء التنفيذ']],
+  [['تحققت الأهداف المخططة', 'النتائج تطابق مؤشر البرنامج في الخطة'], ['تحقق جزء من الأهداف', 'النتائج دون المستهدف في الخطة'], ['لم تتحقق الأهداف المخططة', 'لا توجد نتائج تقيس تحقق الأهداف']],
+  [['تنظيم جيد وتوزيع واضح للأدوار', 'إدارة الوقت والمكان بكفاءة'], ['بعض الارتباك في التنظيم أو الوقت', 'الأدوار غير موزعة بوضوح'], ['ضعف في التنظيم والإدارة', 'لم تُحدَّد الأدوار والمسؤوليات']],
+  [['شواهد كافية ومتنوعة (صور، تقارير، كشوف)', 'الشواهد مرفوعة في مجلد البرنامج'], ['الشواهد قليلة أو غير متنوعة', 'ينقص التوثيق تقرير أو كشف حضور'], ['لا توجد شواهد كافية', 'لم تُرفع الشواهد في مجلد البرنامج']],
+  [['أثر واضح في سلوك المستفيدات أو مستواهن', 'تؤكد الاستبانة والمقابلة أثر البرنامج'], ['أثر محدود أو غير مقيس بعد', 'يحتاج الأثر إلى قياس بأداة واضحة'], ['لا يظهر أثر واضح للبرنامج', 'لم يُقس أثر البرنامج']]];
+const QA_SG_ACT = ['إعلان أهداف البرنامج للمستفيدات في بدايته (لوحة، رسالة، عرض)', 'مواءمة الأنشطة مع مستوى الفئة المستهدفة واحتياجها',
+  'الالتزام بمواعيد الخطة الزمنية، أو طلب تعديلها رسميًا', 'حصر المتطلبات قبل التنفيذ وتوفيرها بالتنسيق مع الإدارة',
+  'تنويع أساليب التنفيذ (تعلم تعاوني، تطبيق عملي، تقنية)', 'تحفيز المستفيدات على المشاركة وتوسيع عددهن',
+  'ربط الأنشطة بمؤشر البرنامج وقياس النتائج مقارنة بالمستهدف', 'توزيع الأدوار وجدولة التنفيذ مسبقًا',
+  'رفع الشواهد (صور، تقرير، كشف حضور) في مجلد البرنامج', 'قياس الأثر بالاستبانة والمقابلة وتوثيق النتائج'];
+const QA_SG_INT = [
+  ['راضيات بدرجة عالية، وطلبن تكرار البرنامج', 'راضيات بدرجة متوسطة', 'أغلبهن راضيات، وتمنّى بعضهن وقتًا أطول'],
+  ['الأنشطة العملية والتطبيق', 'أسلوب العرض الممتع والمشوّق', 'العمل الجماعي والتعاون', 'استخدام التقنية'],
+  ['ضيق الوقت', 'تعارضه مع الحصص أو الاختبارات', 'نقص بعض الأدوات', 'كثرة العدد'],
+  ['زادت ثقتهن بأنفسهن', 'اكتسبن مهارة جديدة يطبقنها', 'تحسّن في السلوك أو الانضباط', 'زاد اهتمامهن بموضوع البرنامج'],
+  ['تكرار البرنامج وتوسيعه لفئات أخرى', 'زيادة وقت التطبيق العملي', 'إشراك أولياء الأمور', 'توفير أدوات إضافية']];
+// chips: to = selector of the field inside the chip's .qa-sgw wrapper; first = fill the first empty one of several fields
+const qaSgs = (list, to, first) => `<div class="qa-sgs">${list.map(t => `<button type="button" class="qa-sg" data-sg="${esc(t)}" data-to="${esc(to)}"${first ? ' data-first="1"' : ''}>${esc(t)}</button>`).join('')}</div>`;
+const qaWeak = d => (d.obs?.items || []).map((v, i) => v != null && v < 2 ? i : -1).filter(i => i >= 0);
+document.addEventListener('click', e => {
+  const b = e.target.closest('.qa-sg'); if (!b) return;
+  const box = b.closest('.qa-sgw') || document, all = [...box.querySelectorAll(b.dataset.to)], t = b.dataset.sg;
+  if (all.some(x => x.value.includes(t))) return;
+  const el = b.dataset.first ? all.find(x => !x.value.trim()) : all[0];
+  if (!el) { if (all.length) toast('الخانات ممتلئة'); return; }
+  el.value = el.value.trim() ? el.value.trim() + '، ' + t : t;
+  el.dispatchEvent(new Event('input', { bubbles: true })); el.focus();
+});
 const QA_SRV = ['حقق البرنامج أهدافه المخطط لها.', 'ساهم البرنامج في تحسين مستوى الأداء.', 'كانت أنشطة البرنامج مناسبة للفئة المستهدفة.',
   'أسهم البرنامج في تنمية المعارف والمهارات المستهدفة.', 'تم تنفيذ البرنامج بصورة منظمة وفعالة.', 'استفدت من محتوى البرنامج وأنشطته.',
   'ساهم البرنامج في معالجة احتياج فعلي.', 'أظهر البرنامج أثرًا إيجابيًا ملموسًا.', 'أوصي بالاستمرار في تنفيذ البرنامج مستقبلًا.', 'مستوى رضاي العام عن البرنامج مرتفع.'];
@@ -1441,15 +1480,16 @@ function qaProgram() {
   </div>
   <div class="qa-bar"><span id="qaDirty" class="muted"></span><button class="btn ghost" id="qaPrint">طباعة النماذج</button><button class="btn" id="qaSave">حفظ</button></div>`;
 }
+const qaObsSg = (i, v) => v == null ? '' : qaSgs(QA_SG_OBS[i][2 - v], `[data-f="obs.notes.${i}"]`);
 function qaBody() {
   const { p, doc: d } = qaD, o = d.obs;
   if (qaD.tab === 'obs') return `<div class="card pad qa-card"><div class="qa-meta">
       <label>تاريخ التنفيذ<input class="search" data-f="obs.date" value="${esc(o.date)}" placeholder="مثال: 10/4/1448هـ">${planDate(p) ? `<span class="muted" style="font-size:12px">من الخطة الزمنية: ${esc(planDate(p))}</span>` : ''}</label>
       <label>اسم الملاحِظ<input class="search" data-f="obs.observer" value="${esc(o.observer)}"></label></div>
       <div class="muted" style="font-size:13px;margin-top:8px">القائم بالتنفيذ: ${esc(p.people.map(x => x.label).join('، ') || '—')}</div></div>
-    ${QA_OBS.map((t, i) => `<div class="card qa-it"><div class="qa-it-t"><span class="q-n">${nf(i + 1)}</span><span>${esc(t)}</span></div>
+    ${QA_OBS.map((t, i) => `<div class="card qa-it qa-sgw"><div class="qa-it-t"><span class="q-n">${nf(i + 1)}</span><span>${esc(t)}</span></div>
       <div class="seg qa-opt">${QA_OV.map(([v, l]) => `<button data-obs="${i}" data-v="${v}" class="v${v}${o.items[i] === v ? ' on' : ''}">${l}</button>`).join('')}</div>
-      <input class="search qa-note" data-f="obs.notes.${i}" value="${esc(o.notes[i])}" placeholder="الملاحظات (اختياري)"></div>`).join('')}
+      <input class="search qa-note" data-f="obs.notes.${i}" value="${esc(o.notes[i])}" placeholder="الملاحظات (اختياري)"><div data-sgo="${i}">${qaObsSg(i, o.items[i])}</div></div>`).join('')}
     <div class="card pad qa-card" id="qaObsSc">${qaObsSc()}</div>`;
   if (qaD.tab === 'int') return qaIntW();
   if (qaD.tab === 'srv') return srvOn(p) ? srvCard(p, true)
@@ -1467,7 +1507,7 @@ function qaIntForm(iv, pre) {   // shared by the وكيلة (filling it herself)
       <label>تاريخ المقابلة<input class="search" data-i="date" value="${esc(iv?.date || '')}" placeholder="مثال: 12/4/1448هـ"></label>
       <label>الفئة المستهدفة<input class="search" data-i="audience" value="${esc(iv?.audience || '')}" placeholder="مثال: طالبات الصف الثاني"></label>
       <label>عدد المشاركين<input class="search" data-i="count" inputmode="numeric" value="${esc(iv?.count || '')}" placeholder="5 – 8"></label></div>
-    ${QA_INT.map((t, i) => `<label class="up-l" style="margin-top:12px">${nf(i + 1)}. ${t}</label><textarea class="msg note-in" rows="2" data-ia="${i}">${esc(iv?.answers?.[i] || '')}</textarea>`).join('')}`;
+    ${QA_INT.map((t, i) => `<label class="up-l" style="margin-top:12px">${nf(i + 1)}. ${t}</label><div class="qa-sgw"><textarea class="msg note-in" rows="2" data-ia="${i}">${esc(iv?.answers?.[i] || '')}</textarea>${qaSgs(QA_SG_INT[i], `[data-ia="${i}"]`)}</div>`).join('')}`;
 }
 const readInt = box => ({ by: box.querySelector('[data-i="by"]').value.trim(), date: box.querySelector('[data-i="date"]').value.trim(),
   audience: box.querySelector('[data-i="audience"]').value.trim(), count: box.querySelector('[data-i="count"]').value.trim(),
@@ -1510,8 +1550,9 @@ function qaResW() {
       <div class="qa-lv">${Object.entries(QA_LV).map(([k, l]) => `<button data-lv="${k}" class="lv-${k}${d.level === k ? ' on' : ''}">${l}${k === sug ? '<small>مقترح</small>' : ''}</button>`).join('')}</div>
       <label class="qa-run"><input type="checkbox" id="qaRun"${d.running ? ' checked' : ''}> البرنامج لا يزال يُنفَّذ (تقييم مرحلي)</label>
       <label class="up-l" id="qaRecL"${d.running ? '' : ' hidden'}>موعد إعادة التدقيق (يظهر لكِ تذكير في قائمة البرامج)<input type="date" class="search" data-f="recheck" value="${esc(d.recheck || '')}" style="display:block;margin-top:4px"></label>
-      <label class="up-l" style="margin-top:12px">توجيه للمعلمة</label>
-      <textarea class="msg note-in" rows="3" data-f="guide" placeholder="مثال: أضيفي صور التنفيذ الفعلي، ووثّقي عدد المستفيدات…">${esc(d.guide || '')}</textarea></div>
+      <div class="qa-sgw"><label class="up-l" style="margin-top:12px">توجيه للمعلمة</label>
+      <textarea class="msg note-in" rows="3" data-f="guide" placeholder="مثال: أضيفي صور التنفيذ الفعلي، ووثّقي عدد المستفيدات…">${esc(d.guide || '')}</textarea>
+      ${qaSgs(qaWeak(d).map(i => QA_SG_ACT[i]), '[data-f="guide"]')}</div></div>
     ${r ? `<div class="card pad qa-card inbox"><div class="qa-h"><b>رد المعلمة</b><span class="muted">${esc(r.from || '')} · ${esc(whenTxt(r.at))}</span></div>
       ${r.text ? `<div class="note-b">${esc(r.text)}</div>` : ''}
       ${r.plan?.length ? `<div style="font-weight:600;margin-top:10px">خطة التحسين</div><ul class="qa-plan">${r.plan.map(x => `<li>${esc(x.act)}${x.due ? ` <span class="muted">— ${esc(x.due)}</span>` : ''}</li>`).join('')}</ul>` : ''}</div>` : ''}
@@ -1536,7 +1577,8 @@ function bindQa(host) {
     const t = e.target.closest('button'); if (!t || !host.contains(t)) return;
     if (t.dataset.qt) { qaD.tab = t.dataset.qt; host.querySelectorAll('#qaTabs button').forEach(b => b.classList.toggle('on', b === t)); $('#qaBody').innerHTML = qaBody(); bind($('#qaBody')); return; }
     if (t.dataset.obs) { qaD.doc.obs.items[+t.dataset.obs] = +t.dataset.v; qaMarkDirty();
-      t.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === t)); $('#qaObsSc').innerHTML = qaObsSc(); return; }
+      t.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === t)); $('#qaObsSc').innerHTML = qaObsSc();
+      const sg = host.querySelector(`[data-sgo="${t.dataset.obs}"]`); if (sg) sg.innerHTML = qaObsSg(+t.dataset.obs, +t.dataset.v); return; }
     if (t.dataset.lv) { qaSet('level', t.dataset.lv); $('#qaBody').innerHTML = qaBody(); return; }
     if (t.id === 'qaSave') { qaSaveNow(host); return; }
     if (t.id === 'qaPrint') { qaPrint(); return; }
@@ -1633,7 +1675,8 @@ function qaResT(p, d) {
     ${closed ? '' : `<div id="qaRBox" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
       <div style="font-weight:600">ردّك وخطة التحسين</div>
       <textarea class="msg note-in" id="qaRT" rows="2" placeholder="ردّك أو توضيحك (اختياري)" style="margin-top:8px">${esc(r?.text || '')}</textarea>
-      ${[0, 1, 2].map(i => `<div class="qa-pl"><input class="search" data-pa="${i}" placeholder="إجراء تحسين ${nf(i + 1)}" value="${esc(r?.plan?.[i]?.act || '')}"><input class="search" type="date" data-pd="${i}" value="${esc(r?.plan?.[i]?.due || '')}" aria-label="الموعد"></div>`).join('')}
+      <div class="qa-sgw">${[0, 1, 2].map(i => `<div class="qa-pl"><input class="search" data-pa="${i}" placeholder="إجراء تحسين ${nf(i + 1)}" value="${esc(r?.plan?.[i]?.act || '')}"><input class="search" type="date" data-pd="${i}" value="${esc(r?.plan?.[i]?.due || '')}" aria-label="الموعد"></div>`).join('')}
+      ${weak.length ? `<div class="muted" style="font-size:12.5px;margin-top:6px">إجراءات مقترحة (اضغطي لإضافتها):</div>${qaSgs(weak.map(x => QA_SG_ACT[x.i]), '[data-pa]', true)}` : ''}</div>
       <button class="btn" id="qaRGo" style="margin-top:10px">${r ? 'تحديث الرد' : 'إرسال الرد للوكيلة'}</button>
       ${r ? `<span class="muted" style="font-size:12.5px;margin-inline-start:8px">آخر رد: ${esc(whenTxt(r.at))}</span>` : ''}</div>`}</div>`;
 }

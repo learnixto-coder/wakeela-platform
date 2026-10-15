@@ -112,7 +112,7 @@ const builtTxt = built.toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-arab',
 
 $('#hMeta').innerHTML = `${esc(S.name)} · مديرة المدرسة: ${esc(S.principal)} · وكيلة المدرسة: ${esc(S.vice)}<br>مدة التنفيذ من ${from} إلى ${to}`;
 $('#foot').textContent = `آخر تحديث للبيانات: ${builtTxt}`;
-$('#opPeople').innerHTML = `<div><span>مدة التنفيذ: </span><b>من ${from} إلى ${to}</b></div>`;
+$('#opPeople').innerHTML = `<div><span>مديرة المدرسة: </span><b>${esc(S.principal)}</b></div><div><span>وكيلة المدرسة: </span><b>${esc(S.vice)}</b></div><div><span>مدة التنفيذ: </span><b>من ${from} إلى ${to}</b></div>`;
 
 /* tabs */
 function show(v){
