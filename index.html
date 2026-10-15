@@ -285,6 +285,8 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .fv-lb{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.82);display:grid;place-items:center;padding:16px;cursor:zoom-out}
 .fv-lb img{max-width:100%;max-height:100%;border-radius:8px;background:#fff}
 .fv-mode{display:inline-flex}
+.wv-lb{position:fixed;inset:0;z-index:35;background:rgba(0,0,0,.55);display:grid;place-items:start center;padding:24px 12px;overflow:auto}
+.wv-box{width:min(1000px,100%);padding:14px}
 
 /* تدقيق الجودة */
 :root{--mq:#0e6a80;--mq-bg:#d6eef4}
@@ -586,6 +588,7 @@ function bind(el) {
   el.querySelectorAll('[data-srv]').forEach(fillSrv);
   el.querySelectorAll('[data-qf]').forEach(x => x.addEventListener('click', () => { state.qaF = x.dataset.qf; const h = $('#qaHost'); h.innerHTML = qaList(); bind(h); }));
   if (el.querySelector('.fv')) bindFv(el);
+  if (el.querySelector('.wv-grid')) bindW(el);
   if (el.querySelector('[data-tdel], #tdelAll')) bindTDel(el);
   el.querySelectorAll('[data-pf]').forEach(x => x.addEventListener('click', () => { state.pFilter = x.dataset.pf; route(); }));
   const sn = el.querySelector('#sendNote'); if (sn) sn.addEventListener('click', () => sendNote(+sn.dataset.t));
@@ -625,6 +628,28 @@ function linkStat(link) {
   return { ok: cs.filter(c => c.s === 'ok').length, n: cs.length, go: 'f/' + f.i, who: 'المعلمات' };
 }
 
+// her files as thumbnails (previews.py key "@w|<folder path>|<file>"); a tile opens all pages of the file
+const wDir = p => p ? p.split('.').map((_, k, a) => nodeAt(a.slice(0, k + 1).join('.')).name).join('\\') : '';
+const wFileUrl = (url, n) => url + encodeURIComponent('/' + n) + '&parent=' + url.split('?id=')[1];
+const wTile = (x, dir, url, sub) => `<button class="fv-tile" data-wkey="${esc('@w|' + dir + '|' + x.n)}" data-key="${esc('@w|' + dir + '|' + x.n)}" data-url="${esc(wFileUrl(url, x.n))}" title="${esc(x.n)}">
+  <span class="th"><span class="ext">${esc(x.x || '—')}</span><span class="ph">…</span></span>
+  <span class="cap"><b>${esc(x.n)}</b><span>${sub ? esc(sub) + ' · ' : ''}<span dir="ltr">${esc(x.d)}</span></span></span></button>`;
+function wOpen(t) {   // all pages of one of her files, over the page
+  const lb = Object.assign(document.createElement('div'), { className: 'wv-lb', role: 'dialog' });
+  lb.innerHTML = `<div class="card wv-box"><div class="fv-file" style="padding:0 0 8px"><div class="grow"><b>${esc(t.title)}</b></div>
+    <a class="btn sm" href="${esc(t.dataset.url)}" target="_blank" rel="noopener">فتح في OneDrive</a><button class="btn sm ghost" data-x>إغلاق</button></div>
+    <div data-key="${esc(t.dataset.wkey)}"><div class="muted" style="padding:16px 0">جارٍ تحميل المحتوى…</div></div></div>`;
+  const close = () => { lb.remove(); document.removeEventListener('keydown', k); };
+  const k = e => { if (e.key === 'Escape' && !document.querySelector('.fv-lb')) close(); };
+  lb.addEventListener('click', e => { if (e.target === lb || e.target.closest('[data-x]')) close(); });
+  document.addEventListener('keydown', k); document.body.append(lb);
+  fvShow(lb.querySelector('[data-key]'));
+}
+function bindW(el) {
+  el.querySelectorAll('.wv-grid').forEach(g => fvGrid(g));
+  el.querySelectorAll('[data-wkey]').forEach(t => t.addEventListener('click', () => wOpen(t)));
+}
+
 function me() {
   const W = D.wakeela; if (!W) return '<div class="empty">مجلد الوكيلة غير متاح</div>';
   const all = leaves(W).filter(n => !n.link), filled = all.filter(n => n.total).length;
@@ -637,8 +662,8 @@ function me() {
       ${lv.length ? `<span class="track"><i class="o" style="width:${p}%"></i></span>` : ""}
       ${linked ? `<span class="sec-l">${nf(linked)} مرتبط بمجلدات المعلمات</span>` : ''}</button>`;
   }).join('');
-  const recent = (function walk(n, path) { return n.files.map(x => ({ x, path })).concat(n.subs.flatMap(s => walk(s, path ? path + ' / ' + s.name : s.name))); })(W, '')
-    .sort((a, b) => b.x.d.localeCompare(a.x.d)).slice(0, 6);
+  const recent = (function walk(n, path, dir) { return n.files.map(x => ({ x, path, dir, url: n.url })).concat(n.subs.flatMap(s => walk(s, path ? path + ' / ' + s.name : s.name, dir ? dir + '\\' + s.name : s.name))); })(W, '', '')
+    .sort((a, b) => b.x.d.localeCompare(a.x.d)).slice(0, 12);
   return `
   <div class="head" style="margin-bottom:6px"><h2 style="margin:4px 0">ملفات وكيلة المدرسة 1448هـ</h2><div style="flex:1"></div>
     <a class="btn sm ghost" href="${esc(W.url)}" target="_blank" rel="noopener">فتح في OneDrive</a></div>
@@ -650,7 +675,7 @@ function me() {
   </div>
   <h2>الأقسام</h2>
   <div class="secs">${secs}</div>
-  ${recent.length ? `<h2>آخر ما أُضيف</h2><div class="card"><ul class="files">${recent.map(r => `<li><span class="ext">${esc(r.x.x || '—')}</span><span class="n">${esc(r.x.n)}<br><span class="muted">${esc(r.path)}</span></span><span class="d">${esc(r.x.d)}</span></li>`).join('')}</ul></div>` : ''}
+  ${recent.length ? `<h2>آخر ما أُضيف</h2><div class="fv-grid wv-grid">${recent.map(r => wTile(r.x, r.dir, r.url, r.path.split(' / ').pop())).join('')}</div>` : ''}
   <p class="foot">ملفات الفاحص ولوحة المتابعة المولَّدة تلقائيًا لا تُحسب ضمن ملفات الوكيلة</p>`;
 }
 
@@ -674,7 +699,7 @@ function wNode(p) {
     <a class="btn sm" href="${esc(n.url)}" target="_blank" rel="noopener">فتح في OneDrive</a></div>
   ${ls ? `<button class="link-row card" data-go="${ls.go}" style="margin-bottom:14px"><span>يجمع ملفات ${ls.who}: <b>${nf(ls.ok)} من ${nf(ls.n)}</b> مكتمل</span><span class="track" style="flex:1;max-width:200px"><i class="o" style="width:${ls.n ? ls.ok / ls.n * 100 : 0}%"></i></span><span class="muted">عرض ←</span></button>` : ''}
   ${subs ? `<div class="list">${subs}</div>` : ''}
-  ${n.files.length ? `<h2>الملفات (${nf(n.files.length)})</h2><div class="card"><ul class="files">${n.files.map(fileLi).join('')}</ul></div>`
+  ${n.files.length ? `<h2>الملفات (${nf(n.files.length)})</h2><div class="fv-grid wv-grid">${n.files.map(x => wTile(x, wDir(p), n.url)).join('')}</div>`
     : (!n.subs.length ? '<div class="card empty">لا توجد ملفات في هذا المجلد بعد — افتحيه في OneDrive لإضافة الملفات</div>' : '')}`;
 }
 
