@@ -241,7 +241,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .ck .n{flex:1;min-width:0;overflow-wrap:anywhere}
 .ck.pend{opacity:.55;cursor:default}
 .note-close{margin-inline-start:auto}
-.subtabs{display:flex;gap:10px;margin:0 0 16px;flex-wrap:wrap}.subtabs button{flex:1;min-width:130px;min-height:46px;padding:10px 14px;border-radius:12px;border:2px solid var(--brand);background:var(--card);color:var(--brand);font:inherit;font-size:15px;font-weight:700;cursor:pointer}.subtabs button:hover{background:var(--soft)}.subtabs button.on{background:var(--brand);color:var(--brand-ink)}.qa-ph{margin:18px 0 10px;font-size:16px}nav.tabs{display:none!important}.hub{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}.hub-b{display:flex;align-items:center;gap:14px;padding:18px;min-height:92px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:var(--shadow);cursor:pointer;text-align:start;font:inherit;color:var(--ink)}.hub-b:hover{border-color:var(--brand)}.hub-b .sec-ic{width:50px;height:50px}.hub-t{display:block;font-weight:700;font-size:16.5px}.hub-s{display:block;color:var(--muted);font-size:13px;margin-top:3px}@media (max-width:560px){.hub{grid-template-columns:1fr}.hub-b{min-height:76px;padding:14px}}.hub-h{margin:18px 0 10px;font-size:15px;color:var(--muted)}.homebar{display:flex;align-items:center;gap:12px;margin:0 0 14px;flex-wrap:wrap}.homebar b{font-size:17px}.ttabs{display:flex;margin:0 0 14px}.ttabs button{flex:1;padding:10px 8px;font-size:14.5px}
+.subtabs{display:flex;gap:10px;margin:0 0 16px;flex-wrap:wrap}.subtabs button{flex:1;min-width:130px;min-height:46px;padding:10px 14px;border-radius:12px;border:2px solid var(--brand);background:var(--card);color:var(--brand);font:inherit;font-size:15px;font-weight:700;cursor:pointer}.subtabs button:hover{background:var(--soft)}.subtabs button.on{background:var(--brand);color:var(--brand-ink)}.qa-ph{margin:18px 0 10px;font-size:16px}nav.tabs{display:none!important}.hub{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}.hub-b{display:flex;align-items:center;gap:14px;padding:18px;min-height:92px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:var(--shadow);cursor:pointer;text-align:start;font:inherit;color:var(--ink)}.hub-b:hover{border-color:var(--brand)}.hub-b .sec-ic{width:50px;height:50px}.hub-t{display:block;font-weight:700;font-size:16.5px}.hub-s{display:block;color:var(--muted);font-size:13px;margin-top:3px}@media (max-width:560px){.hub{grid-template-columns:1fr}.hub-b{min-height:76px;padding:14px}}.hub-h{margin:18px 0 10px;font-size:15px;color:var(--muted)}.homebar{display:flex;align-items:center;gap:12px;margin:0 0 14px;flex-wrap:wrap}.homebar b{font-size:17px}:root{--th-0:#13786a;--th-1:#b7791f;--th-2:#2f6fb0;--th-3:#7a4fb5}.th-hero{border-inline-start:5px solid var(--brand)}.th-hero .sec-ic{width:52px;height:52px;border-radius:50%}.th-hub{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.th-b{display:flex;align-items:center;gap:16px;padding:20px;min-height:128px;border:1px solid var(--line);border-top:4px solid var(--a);border-radius:16px;background:var(--card);box-shadow:var(--shadow);cursor:pointer;text-align:start;font:inherit;color:var(--ink);transition:transform .15s,border-color .15s}.th-b:hover{transform:translateY(-2px);border-color:var(--a)}.th-b:focus-visible{outline:3px solid var(--a);outline-offset:2px}.th-ic{width:60px;height:60px;border-radius:16px;display:grid;place-items:center;flex:0 0 auto;color:var(--a);background:color-mix(in srgb,var(--a) 14%,transparent)}.th-x{flex:1;min-width:0}.th-t{display:block;font-weight:800;font-size:18px}.th-s{display:block;color:var(--muted);font-size:13.5px;margin-top:4px}.th-m{display:inline-block;margin-top:8px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;color:var(--a);background:color-mix(in srgb,var(--a) 12%,transparent)}.th-go{font-size:20px;color:var(--a)}@media (prefers-color-scheme:dark){:root{--th-0:#3bbfa3;--th-1:#f2c25b;--th-2:#6aa8ee;--th-3:#b48cf0}}@media (max-width:640px){.th-hub{grid-template-columns:1fr}.th-b{min-height:96px;padding:16px}.th-ic{width:50px;height:50px}}@media (prefers-reduced-motion:reduce){.th-b{transition:none}.th-b:hover{transform:none}}.ttabs{display:flex;margin:0 0 14px}.ttabs button{flex:1;padding:10px 8px;font-size:14.5px}
 .btn.danger{background:var(--none);border-color:var(--none)}
 .foot{margin-top:28px;color:var(--muted);font-size:12.5px;text-align:center}
 
@@ -550,14 +550,14 @@ function go(h) { location.hash = h; }
 function route() {
   if (!D) return;
   if (D.kind === 'plans') { const el = $('#view'); el.innerHTML = plansW(); bind(el); return; }
-  const [v, a] = (location.hash.slice(1) || (D.kind === 'teacher' ? (tList().length > 1 ? 'start' : 'me') : 'start')).split('/');
+  const [v, a] = (location.hash.slice(1) || 'start').split('/');
   if (D.kind === 'teacher') {   // a teacher sees only her own page(s)
     const one = D.teachers.length === 1, i = one ? 0 : v === 't' && D.teachers[+a] ? +a : -1;
     // programs first: the programs page is the landing page; «ملفاتي» (#mine) is her folders page
-    const mine = !D.planOnly && (v === 'mine' || v === 't' || !D.plan.length);
-    const rev = !mine && D.plan.some(p => p.rev) && v === 'rev';
-    const qa = !mine && D.plan.length && (v === 'qa' || v === 'me');   // «تدقيق الجودة» is her first page
-    $('#view').innerHTML = v === 'start' && tList().length > 1 ? hub('الرئيسية', tList())
+    const mine = !D.planOnly && (v === 'mine' || v === 't');
+    const rev = !mine && v === 'rev';
+    const qa = !mine && (v === 'qa' || v === 'me');
+    $('#view').innerHTML = v === 'start' ? tHub()
       : v === 'x' && D.extra[+a] ? teacherExtra(+a)
       : rev ? tTabs('rev') + teacherReview()
       : qa ? tTabs('qa') + teacherQa()
@@ -1087,7 +1087,7 @@ function teacherReview() {
   const date = rvDate(P.find(p => p.rev.date)?.rev.date);
   return `<div class="card hero">${sc.length ? ring(avg).replace('class="ring"', 'class="ring lg"') : ''}
     <div class="grow"><h2>جودة شواهد البرامج</h2>
-    <p>${!sc.length ? 'لم تُقيَّم شواهد برامجك بعد' : sc.length > 1 ? `متوسط تقييم برامجك (${nf(sc.length)} برامج) من 100` : 'تقييم شواهد برنامجك من 100'}${date ? ` · قُيّمت الشواهد المرفوعة حتى ${esc(date)}` : ''}</p>
+    <p>${!D.plan.length ? 'لا توجد برامج مسندة إليك في الخطة التشغيلية' : !sc.length ? 'لم تُقيَّم شواهد برامجك بعد' : sc.length > 1 ? `متوسط تقييم برامجك (${nf(sc.length)} برامج) من 100` : 'تقييم شواهد برنامجك من 100'}${date ? ` · قُيّمت الشواهد المرفوعة حتى ${esc(date)}` : ''}</p>
     <p class="muted" style="font-size:13px;margin-top:4px">لكل برنامج: جوانب القوة، وجوانب الضعف، وما يرفع التقييم، والإجراءات التي ينقصها شاهد. أرفقي الشواهد الناقصة من صفحة البرنامج، ويُعاد التقييم بعد مراجعتها.</p></div></div>
   ${P.map(rvCard).join('')}`;
 }
@@ -1112,10 +1112,25 @@ function rvCard(p) {
     <div class="rv-foot"><span class="muted" style="font-size:13px">${miss ? 'ابدئي بالإجراءات التي لا يوجد لها شاهد' : 'استمري في التوثيق وأرفقي قياس الأثر'}</span>
       <button class="btn sm" data-go="plan/${p.k}">إرفاق شواهد للبرنامج ←</button></div></section>`;
 }
-// teacher top tabs: «تقييم برامجي» (landing when reviewed), «برامج الخطة التشغيلية» and «ملفاتي»
-const tList = () => [D.plan.length && ['qa', 'تدقيق الجودة', 'نتيجة تدقيق برامجك وردّك وخطة التحسين'], D.plan.some(p => p.rev) && ['rev', 'جودة شواهد البرامج', 'تقييم الشواهد المرفقة لبرامجك'],
-  D.plan.length && ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها'], !D.planOnly && D.plan.length && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
-const tTabs = cur => { const T = tList(); return T.length < 2 ? '' : homeBar((T.find(x => x[0] === cur) || [])[1] || ''); };
+// the teacher's «الرئيسية»: the same 4 buttons for every teacher (plan-only accounts have no «ملفاتي»)
+const tList = () => [['qa', 'تدقيق الجودة', 'نتيجة تدقيق برامجك وردّك وخطة التحسين'], ['rev', 'جودة شواهد البرامج', 'تقييم الشواهد المرفقة لبرامجك'],
+  ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها'], !D.planOnly && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
+const tTabs = cur => homeBar((tList().find(x => x[0] === cur) || [])[1] || '');
+const T_IC = { qa: '<path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
+  rev: '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
+  plan: '<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/>',
+  mine: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>' };
+function tHub() {
+  const P = D.plan, A = P1(P), done = A.filter(p => p.s === 'ok').length, sc = P.filter(p => p.rev?.files);
+  const avg = sc.length ? Math.round(sc.reduce((s, p) => s + p.rev.score, 0) / sc.length) : null, t = D.teachers.length === 1 && D.teachers[0];
+  const progs = !P.length ? 'لا توجد برامج مسندة إليك' : P.length === 1 ? 'برنامج واحد' : P.length === 2 ? 'برنامجان' : `${nf(P.length)} ${P.length <= 10 ? 'برامج' : 'برنامجًا'}`;
+  const meta = { qa: progs, rev: !P.length ? progs : avg == null ? 'لم تُقيَّم بعد' : `متوسط التقييم ${nf(avg)} من 100`,
+    plan: !P.length ? progs : A.length ? `${nf(done)} من ${nf(A.length)} أُرفقت شواهدها` : 'تبدأ في الفصل الدراسي الثاني', mine: t ? `الإنجاز ${nf(t.pct)}٪` : '' };
+  return `<div class="card hero th-hero"><span class="sec-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>
+    <div class="grow"><h2>مرحبًا بكِ${t ? '، أ. ' + esc(t.short) : ''}</h2><p class="muted">اختاري القسم الذي تريدين العمل عليه.</p></div></div>
+  <div class="th-hub">${tList().map(([g, l, d], i) => `<button class="th-b" data-go="${g}" style="--a:var(--th-${i})"><span class="th-ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${T_IC[g]}</svg></span>
+    <span class="th-x"><span class="th-t">${l}</span><span class="th-s">${d}</span>${meta[g] ? `<span class="th-m">${meta[g]}</span>` : ''}</span><span class="th-go">←</span></button>`).join('')}</div>`;
+}
 // her programs as buttons; each opens the program's own page (#plan/<k>)
 function teacherPlan() {
   const P = D.plan, A = P1(P), done = A.filter(p => p.s === 'ok').length, pct = A.length ? Math.round(done / A.length * 100) : 0;
@@ -1644,6 +1659,7 @@ function qaPrint() {
 function teacherQa() {
   return `<div class="card hero"><span class="sec-ic">${planIcon}</span><div class="grow"><h2>تدقيق جودة برامجي</h2>
     <p>هنا تصلك نتيجة تدقيق الوكيلة لكل برنامج وملاحظاتها، وتكتبين ردّك وخطة التحسين، وترسلين نموذج المقابلة.</p></div></div>
+  ${D.plan.length ? '' : '<div class="empty">لا توجد برامج مسندة إليك في الخطة التشغيلية، فلا يوجد تدقيق جودة لكِ حاليًا.</div>'}
   ${D.plan.map(p => `<div class="qaT" data-k="${p.k}" data-page="1"><h2>${esc(p.name)}</h2><div class="muted" style="padding:6px 0 14px">جارٍ التحميل…</div></div>`).join('')}`;
 }
 
