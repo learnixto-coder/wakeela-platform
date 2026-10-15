@@ -185,7 +185,7 @@ body.pmode nav.tabs,body.pmode #reload{display:none}
 .fold summary .grow{flex:1;min-width:0}
 .fold summary .t{font-weight:600}
 .fold summary .g{color:var(--muted);font-size:12.5px}
-.fth{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.th-i{width:34px;height:44px;border-radius:5px;background:var(--soft);border:1px solid var(--line);overflow:hidden;display:grid;place-items:center;font-size:9px;color:var(--muted);text-transform:uppercase}.th-i img{width:100%;height:100%;object-fit:cover;display:block}.th-i.nx::after{content:attr(data-x)}
+.fth{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.th-i{width:72px;height:94px;cursor:zoom-in;border-radius:7px;background:var(--soft);border:1px solid var(--line);overflow:hidden;display:grid;place-items:center;font-size:9px;color:var(--muted);text-transform:uppercase}.th-i img{width:100%;height:100%;object-fit:cover;display:block}.th-i.nx::after{content:attr(data-x)}.fth{gap:8px}.th-i:hover{outline:2px solid var(--brand);outline-offset:1px}@media (max-width:560px){.th-i{width:58px;height:76px}}.tz-img{display:block;max-width:100%;margin:0 auto;border-radius:8px}
 .fold[open] summary{border-bottom:1px solid var(--line)}
 .files{list-style:none;margin:0;padding:6px 0}
 .files li{display:flex;gap:10px;padding:7px 14px;font-size:13.5px;align-items:baseline}
@@ -798,7 +798,7 @@ function teacher(i) {
     const flagged = c.info.files.filter(x => x.f).length;
     return `<details class="fold" data-fi="${c.f.i}"><summary><div class="grow"><div class="t">${esc(c.f.label)}</div>
       <div class="g">${c.f.group ? esc(c.f.group) + ' · ' : ''}${nf(c.info.count)} من ${nf(c.f.min)} مطلوب${c.info.last ? ' · آخر رفع ' + esc(c.info.last) : ''}${flagged ? ` · <span class="warn">${nf(flagged)} ملاحظة</span>` : ''}</div>
-      ${c.info.files.length ? `<div class="fth">${c.info.files.slice(0, 20).map(x => `<span class="th-i" data-key="${esc(t.name + '|' + c.f.key + '|' + x.n)}" data-x="${esc(x.x || '')}"></span>`).join('')}</div>` : ''}</div>${chip(c.s)}</summary>
+      ${c.info.files.length ? `<div class="fth">${c.info.files.slice(0, 20).map(x => `<span class="th-i" role="button" tabindex="0" title="${esc(x.n)}" data-n="${esc(x.n)}" data-url="${esc(c.info.url ? wFileUrl(c.info.url, x.n.split(' / ').join('/')) : '')}" data-key="${esc(t.name + '|' + c.f.key + '|' + x.n)}" data-x="${esc(x.x || '')}"></span>`).join('')}</div>` : ''}</div>${chip(c.s)}</summary>
       ${c.info.parentLoose ? `<div class="pad warn" style="padding-bottom:0">${nf(c.info.parentLoose)} ملف في «${esc(c.f.group)}» غير موزّع على المجلدات الفرعية</div>` : ''}
       ${c.info.files.length ? `<ul class="files">${c.info.files.map(fileLi).join('')}</ul>` : '<div class="empty">المجلد فارغ</div>'}
       <div class="acts"><a class="btn sm ghost" href="${esc(c.info.url)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a></div></details>`;
@@ -1898,9 +1898,17 @@ const loadTThumbs = () => tThumbs ??= (async () => {
   return r.ok ? openBox(await r.json(), ph) : {};
 })().catch(() => { tThumbs = null; return {}; });
 const thumbSet = (s, u) => { if (!u) return s.classList.add('nx'); const im = new Image(); im.alt = ''; im.src = u; s.append(im); };
+// a click on a thumbnail opens the file large enough to assess it: the وكيلة gets every page (full previews), the teacher her own thumbnail enlarged
+function thumbZoom(s) {
+  if (D.kind !== 'teacher') return wOpen({ title: s.dataset.n, dataset: { wkey: s.dataset.key, url: s.dataset.url } });
+  const im = s.querySelector('img'), lb = Object.assign(document.createElement('div'), { className: 'wv-lb', role: 'dialog' });
+  lb.innerHTML = `<div class="card wv-box"><div class="fv-file" style="padding:0 0 8px"><div class="grow"><b>${esc(s.dataset.n)}</b></div>${s.dataset.url ? `<a class="btn sm" href="${esc(s.dataset.url)}" target="_blank" rel="noopener">فتح في OneDrive</a>` : ''}<button class="btn sm ghost" data-x>إغلاق</button></div>
+    ${im ? `<img class="tz-img" alt="" src="${im.src}" style="width:min(480px,100%)">` : '<div class="muted" style="padding:16px 0">لا توجد معاينة لهذا الملف، افتحيه في OneDrive.</div>'}</div>`;
+  lb.addEventListener('click', e => { if (e.target === lb || e.target.closest('[data-x]')) lb.remove(); }); document.body.append(lb);
+}
 async function thumbsFill(el) {
   const S = [...el.querySelectorAll('.th-i:not([data-done])')]; if (!S.length) return;
-  S.forEach(s => s.dataset.done = 1);
+  S.forEach(s => { s.dataset.done = 1; s.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); thumbZoom(s); }); });
   if (D.kind === 'teacher') { const T = await loadTThumbs(); S.forEach(s => thumbSet(s, T[s.dataset.key] && 'data:image/jpeg;base64,' + T[s.dataset.key])); return; }
   let idx = {}; try { idx = await loadPrev(); } catch {}
   const io = new IntersectionObserver(es => es.forEach(en => {
