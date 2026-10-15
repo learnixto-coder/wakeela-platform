@@ -486,6 +486,7 @@ async function unlock(code, remember) {
     D = await load(c).catch(async e => { if (e.message === 'code' && await isPlansCode(c)) return { kind: 'plans' }; throw e; });
     if (remember) store.set(c);
     sessionCode = c;
+    if (location.hash) history.replaceState(null, '', location.pathname + location.search);   // opening the platform always starts at «الرئيسية» (the buttons)
     prep(); $('#lock').hidden = true; $('#app').hidden = false; route();
   } catch (e) {
     $('#err').textContent = { code: 'الرمز غير صحيح', phone: 'الرقم غير مسجّل في المنصة، راجعي الوكيلة' }[e.message] || 'تعذّر تحميل البيانات، تحققي من الاتصال';
