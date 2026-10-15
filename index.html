@@ -552,10 +552,11 @@ function route() {
     const one = D.teachers.length === 1, i = one ? 0 : v === 't' && D.teachers[+a] ? +a : -1;
     // programs first: the programs page is the landing page; «ملفاتي» (#mine) is her folders page
     const mine = !D.planOnly && (v === 'mine' || v === 't' || !D.plan.length);
-    const rev = !mine && D.plan.some(p => p.rev) && (v === 'rev' || v === 'me');   // the review is her first page
+    const rev = !mine && D.plan.some(p => p.rev) && v === 'rev';
+    const qa = !mine && D.plan.length && (v === 'qa' || v === 'me');   // «تدقيق الجودة» is her first page
     $('#view').innerHTML = v === 'x' && D.extra[+a] ? teacherExtra(+a)
       : rev ? tTabs('rev') + teacherReview()
-      : v === 'qa' && D.plan.length ? tTabs('qa') + teacherQa()
+      : qa ? tTabs('qa') + teacherQa()
       : !mine ? (v === 'plan' && a !== undefined && a !== '' ? teacherProgram(+a) : tTabs('plan') + teacherPlan())
       : tTabs('mine') + (i >= 0 ? teacher(i) : `<h2 style="margin:6px 0 12px">اختاري اسمك</h2><div class="list">${D.teachers.map(teacherRow).join('')}</div>`);
     bind($('#view')); window.scrollTo(0, 0); return;
@@ -1070,7 +1071,7 @@ function teacherReview() {
   const avg = sc.length ? Math.round(sc.reduce((s, p) => s + p.rev.score, 0) / sc.length) : 0;
   const date = rvDate(P.find(p => p.rev.date)?.rev.date);
   return `<div class="card hero">${sc.length ? ring(avg).replace('class="ring"', 'class="ring lg"') : ''}
-    <div class="grow"><h2>تقييم شواهد برامجي</h2>
+    <div class="grow"><h2>جودة شواهد البرامج</h2>
     <p>${!sc.length ? 'لم تُقيَّم شواهد برامجك بعد' : sc.length > 1 ? `متوسط تقييم برامجك (${nf(sc.length)} برامج) من 100` : 'تقييم شواهد برنامجك من 100'}${date ? ` · قُيّمت الشواهد المرفوعة حتى ${esc(date)}` : ''}</p>
     <p class="muted" style="font-size:13px;margin-top:4px">لكل برنامج: جوانب القوة، وجوانب الضعف، وما يرفع التقييم، والإجراءات التي ينقصها شاهد. أرفقي الشواهد الناقصة من صفحة البرنامج، ويُعاد التقييم بعد مراجعتها.</p></div></div>
   ${P.map(rvCard).join('')}`;
@@ -1097,7 +1098,7 @@ function rvCard(p) {
       <button class="btn sm" data-go="plan/${p.k}">إرفاق شواهد للبرنامج ←</button></div></section>`;
 }
 // teacher top tabs: «تقييم برامجي» (landing when reviewed), «برامج الخطة التشغيلية» and «ملفاتي»
-const tTabs = cur => { const T = [D.plan.some(p => p.rev) && ['rev', 'تقييم برامجي'], D.plan.length && ['plan', 'برامج الخطة التشغيلية'], D.plan.length && ['qa', 'تدقيق الجودة'], !D.planOnly && D.plan.length && ['mine', 'ملفاتي (سجلات الإنجاز)']].filter(Boolean);
+const tTabs = cur => { const T = [D.plan.length && ['qa', 'تدقيق الجودة'], D.plan.some(p => p.rev) && ['rev', 'جودة شواهد البرامج'], D.plan.length && ['plan', 'برامج الخطة التشغيلية'], !D.planOnly && D.plan.length && ['mine', 'ملفاتي (سجلات الإنجاز)']].filter(Boolean);
   return T.length < 2 ? '' : `<div class="seg ttabs">${T.map(([g, l]) => `<button data-go="${g}" class="${cur === g ? 'on' : ''}">${l}</button>`).join('')}</div>`; };
 // her programs as buttons; each opens the program's own page (#plan/<k>)
 function teacherPlan() {
