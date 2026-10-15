@@ -353,7 +353,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
   .pf-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
   .pf-t{display:grid;gap:2px;font-size:12.5px}.pf-t b{font-size:13.5px}
   .pf-v{display:inline-block;min-width:220px;border-bottom:1px solid #000;padding:0 4px}
-  .pf-moe{color:#1b7f9e;font-weight:700;font-size:16px;text-align:left;display:grid}.pf-moe small{font-size:10.5px;font-weight:400}
+  .pf-moe{color:#1b7f9e;font-weight:700;font-size:15px;text-align:center;display:grid;justify-items:center;gap:2px}.pf-moe img{width:1.5cm;height:1.5cm}.pf-moe small{font-size:12px}
   table.pf{width:100%;border-collapse:collapse;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .pf th{background:#4a9dbb;color:#fff;border:1px solid #0c3b4a;padding:5px 6px;text-align:right;font-size:11.5px}
   .pf td{border:1px solid #0c3b4a;padding:6px;text-align:center;background:#f4f4f4;vertical-align:middle}
@@ -1659,16 +1659,22 @@ async function qaAlert(text) {   // an alert in each assigned teacher's account 
 window.addEventListener('beforeunload', e => { if (qaD?.dirty && location.hash.startsWith('#qa/')) { e.preventDefault(); e.returnValue = ''; } });
 
 // the three ministry forms, filled, for printing / saving as PDF
+// «10/4/1448هـ», the same form as the observation and interview dates
+const hijriNum = d => { const g = t => new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(d).find(x => x.type === t).value;
+  return `${g('day')}/${g('month')}/${g('year')}هـ`; };
 function qaPrint() {
   const { p, doc: d, srv: s } = qaD, o = d.obs, iv = d.interview, ck = on => on ? '☑' : '☐';
-  const head = (title, lines) => `<div class="pf-h"><div class="pf-t"><b>${title}</b>${lines.map(([k, v]) => `<div>${k}: <span class="pf-v">${esc(v || '')}</span></div>`).join('')}</div>
-    <div class="pf-moe">وزارة التعليم<small>Ministry of Education</small><small>المتوسطة الحادية والعشرون بالخميس</small></div></div>`;
+  // d/m/yyyy is shown as an isolated «1448/4/9هـ» (read right to left: day, month, year); a range as «من … إلى …»
+  const ar = s => s.replace(/\d/g, x => '٠١٢٣٤٥٦٧٨٩'[x]);
+  const hd = v => v.replace(/(\d{1,2})\/(\d{1,2})\/(\d{4})/g, (_, d, m, y) => `<bdi dir="ltr">${ar(`${y}/${m}/${d}`)}</bdi>`).replace(/^(.*<\/bdi>هـ?)\s*[–-]\s*(<bdi.*)$/, 'من $1 إلى $2');
+  const head = (title, lines) => `<div class="pf-h"><div class="pf-t"><b>${title}</b>${lines.map(([k, v]) => `<div>${k}: <span class="pf-v">${hd(esc(v || ''))}</span></div>`).join('')}</div>
+    <div class="pf-moe">وزارة التعليم<small>المتوسطة الحادية والعشرون</small><img src="moe-logo.png?v=3" alt="شعار وزارة التعليم"></div></div>`;
   const res = `<div class="pf-res">مستوى الجودة: <b>${d.level ? QA_LV[d.level] : '—'}</b>${d.running ? ' — تقييم مرحلي: البرنامج لا يزال يُنفَّذ' : ''}${d.guide ? `<br>التوجيه: ${esc(d.guide)}` : ''}</div>`;
   const box = document.createElement('div'); box.id = 'pfBox';
   box.innerHTML = `<section>${head('نموذج بطاقة ملاحظة تنفيذ البرامج والبرامج المدرسية', [['اسم البرنامج', p.name], ['تاريخ التنفيذ', o.date], ['القائم بالتنفيذ', p.people.map(x => x.label).join('، ')], ['اسم الملاحظ', o.observer]])}
     <table class="pf"><tr><th>م</th><th>عنصر الملاحظة</th><th>متحقق</th><th>متحقق جزئيًا</th><th>غير متحقق</th><th>الملاحظات</th></tr>
     ${QA_OBS.map((t, i) => `<tr><td class="q">${i + 1}</td><td class="q">${esc(t)}</td>${[2, 1, 0].map(v => `<td>${ck(o.items[i] === v)}</td>`).join('')}<td>${esc(o.notes[i] || '')}</td></tr>`).join('')}</table>${res}</section>
-  <section>${head('استبانة قياس أثر البرامج والبرامج المدرسية', [['اسم البرنامج', p.name], ['الفئة المستهدفة', s ? s.types.map(x => x[0]).join('، ') : ''], ['عدد المستجيبين', s ? String(s.n) : '0']])}
+  <section>${head('استبانة قياس أثر البرامج والبرامج المدرسية', [['اسم البرنامج', p.name], ['تاريخ التطبيق', hijriNum(new Date())], ['الفئة المستهدفة', s ? s.types.map(x => x[0]).join('، ') : ''], ['عدد المستجيبين', s ? String(s.n) : '0']])}
     ${s ? `<table class="pf"><tr><th>م</th><th>العبارة</th>${['أوافق بشدة (5)', 'أوافق (4)', 'محايد (3)', 'لا أوافق (2)', 'لا أوافق بشدة (1)'].map(x => `<th>${x}</th>`).join('')}<th>المتوسط</th></tr>
       ${QA_SRV.map((t, i) => `<tr><td class="q">${i + 1}</td><td class="q">${esc(t)}</td>${[4, 3, 2, 1, 0].map(j => `<td>${s.dist[i][j]}</td>`).join('')}<td><b>${s.items[i].toFixed(2)}</b></td></tr>`).join('')}</table>
       <div class="pf-res">الأرقام = عدد من اختار كل درجة · متوسط الموافقة العام ${s.avg.toFixed(2)} من 5 (${srvPct(s)}%)</div>` : '<div class="pf-res">لا توجد ردود على الاستبانة.</div>'}</section>
@@ -1676,7 +1682,8 @@ function qaPrint() {
     <table class="pf"><tr><th style="width:32%">العنصر</th><th>النتيجة</th></tr>${QA_INT.map((t, i) => `<tr><td class="q">${t}</td><td>${esc(iv?.answers?.[i] || '')}</td></tr>`).join('')}</table></section>`;
   document.body.append(box); document.body.classList.add('printing');
   window.addEventListener('afterprint', () => { box.remove(); document.body.classList.remove('printing'); }, { once: true });
-  window.print();
+  // the print dialog freezes the page as it is: wait for the logo first
+  Promise.all([...box.querySelectorAll('img')].map(i => i.decode().catch(() => {}))).then(() => window.print());
 }
 
 // --- the teacher: tab «تدقيق الجودة» = every program of hers with the وكيلة's feedback, her reply, the interview and the survey
