@@ -401,6 +401,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .th-b:hover{transform:translateY(-2px);filter:brightness(1.04);border:0}.th-ic{width:52px;height:52px;color:var(--brand);background:rgba(255,255,255,.5)}
 .th-t{font-size:18px}.th-s{display:block;color:inherit;opacity:.82}.th-m{color:#2b3120;background:var(--card)}.th-go{display:block;color:inherit}
 @media (max-width:900px){.th-hub>.th-b{flex-basis:calc((100% - 14px) / 2)}}@media (max-width:520px){.th-hub,.th-hub.w{gap:10px}.th-hub>.th-b{flex-basis:100%}.th-b{min-height:0;padding:14px 16px}.th-t{font-size:16px}.th-ic{width:44px;height:44px}}
+.fv-tile,.th-i{position:relative}.seen-b{position:absolute;top:6px;inset-inline-start:6px;z-index:2;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.95);border:2px solid #9aa08a;display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.18)}.seen-b::before{content:'✓';font-weight:800;font-size:16px;color:#b9bdaa}.seen-b.seen{background:var(--ok);border-color:var(--ok)}.seen-b.seen::before{color:#fff}.th-i .seen-b{top:3px;inset-inline-start:3px;width:22px;height:22px}.th-i .seen-b::before{font-size:12px}.fv-tile.seen,.th-i.seen{outline:3px solid var(--ok);outline-offset:-2px}.seen-btn{background:var(--card);color:var(--ink);border:1px solid var(--line)}.seen-btn.seen{background:var(--ok);color:#fff;border-color:var(--ok)}
 </style>
 </head>
 <body>
@@ -619,6 +620,7 @@ function bind(el) {
   el.querySelectorAll('[data-qr]').forEach(drawQr);
   el.querySelectorAll('[data-srv]').forEach(fillSrv);
   el.querySelectorAll('[data-qf]').forEach(x => x.addEventListener('click', () => { state.qaF = x.dataset.qf; const h = $('#qaHost'); h.innerHTML = qaList(); bind(h); }));
+  if (seenOn() && el.querySelector('[data-sk]')) seenLoad().then(() => seenPaint(el));
   if (el.querySelector('.fv')) bindFv(el);
   if (el.querySelector('.wv-grid')) bindW(el);
   if (el.querySelector('[data-tdel], #tdelAll')) bindTDel(el);
@@ -637,6 +639,54 @@ async function copy(t) {
   try { await navigator.clipboard.writeText(t); toast('تم النسخ'); }
   catch { const a = document.createElement('textarea'); a.value = t; document.body.append(a); a.select(); document.execCommand('copy'); a.remove(); toast('تم النسخ'); }
 }
+// «تم الاطلاع»: the وكيلة ticks a file as reviewed (one click on ✓). Shared across her devices: data/seen.json in the site repo
+// = {v:1, w: box({<file key>: 'YYYY-MM-DD'}, her code)} — re-seal it if the وكيلة code ever changes.
+let seenSet = null, seenDirty = {}, seenTimer = null, seenLoading = null;
+const seenOn = () => D && D.kind !== 'teacher' && D.kind !== 'plans' && !!D.gh;
+const seenMark = k => seenOn() ? `<span class="seen-b" role="button" tabindex="0" aria-label="تم الاطلاع" title="تم الاطلاع" data-sk="${esc(k)}"></span>` : '';
+const seenBtn = k => seenOn() ? `<button class="btn sm seen-btn" data-sk="${esc(k)}">☐ تم الاطلاع</button>` : '';
+async function seenRead() {
+  const r = await ghApi(`data/seen.json?ref=${D.gh.branch}&t=${Date.now()}`);
+  if (r.status === 404) return { cur: {}, sha: null };
+  if (!r.ok) throw new Error('gh' + r.status);
+  const j = await r.json(); return { cur: await openBox(ghJson(j).w, sessionCode), sha: j.sha };
+}
+function seenLoad() {
+  if (seenSet) return Promise.resolve(seenSet);
+  return seenLoading ??= seenRead().then(x => seenSet = x.cur).catch(() => seenSet = {}).finally(() => { seenLoading = null; });
+}
+function seenPaint(root = document) {
+  if (!seenSet) return;
+  root.querySelectorAll('[data-sk]').forEach(x => {
+    const on = !!seenSet[x.dataset.sk]; x.classList.toggle('seen', on);
+    const tile = x.closest('.fv-tile,.th-i'); if (tile) tile.classList.toggle('seen', on);
+    if (x.classList.contains('seen-btn')) x.textContent = on ? '✓ تم الاطلاع' : '☐ تم الاطلاع';
+  });
+}
+function seenToggle(k) {
+  if (!seenSet) return;
+  if (seenSet[k]) delete seenSet[k]; else seenSet[k] = new Date().toISOString().slice(0, 10);
+  seenDirty[k] = !!seenSet[k]; seenPaint();
+  clearTimeout(seenTimer); seenTimer = setTimeout(seenSave, 1200);
+}
+async function seenSave() {
+  const dirty = seenDirty; seenDirty = {};
+  if (!Object.keys(dirty).length) return;
+  try {
+    const { cur, sha } = await seenRead();
+    for (const [k, on] of Object.entries(dirty)) { if (on) cur[k] = seenSet[k] || new Date().toISOString().slice(0, 10); else delete cur[k]; }
+    const w = await ghApi('data/seen.json', { method: 'PUT', body: JSON.stringify({ message: 'تم الاطلاع', branch: D.gh.branch,
+      content: toB64(utf8.encode(JSON.stringify({ v: 1, w: await sealBox(cur, sessionCode) }))), ...(sha && { sha }) }) });
+    if (!w.ok) throw new Error('gh' + w.status);
+    for (const [k, on] of Object.entries(seenDirty)) { if (on) cur[k] = seenSet[k]; else delete cur[k]; }   // ticks made while saving stay
+    seenSet = cur;
+    seenPaint();
+  } catch { Object.assign(dirty, seenDirty); seenDirty = dirty; toast('تعذّر حفظ «تم الاطلاع»، سيُعاد المحاولة'); clearTimeout(seenTimer); seenTimer = setTimeout(seenSave, 8000); }
+}
+document.addEventListener('click', e => {   // capture: the ✓ on a tile must not open the file
+  const b = e.target.closest('[data-sk]'); if (!b || !seenOn()) return;
+  e.preventDefault(); e.stopPropagation(); seenToggle(b.dataset.sk);
+}, true);
 function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.append(d); setTimeout(() => d.remove(), 1800); }
 
 /* ---------- ملفات الوكيلة ---------- */
@@ -669,13 +719,13 @@ const wTile = (x, dir, url, sub) => `<button class="fv-tile" data-wkey="${esc('@
 function wOpen(t) {   // all pages of one of her files, over the page
   const lb = Object.assign(document.createElement('div'), { className: 'wv-lb', role: 'dialog' });
   lb.innerHTML = `<div class="card wv-box"><div class="fv-file" style="padding:0 0 8px"><div class="grow"><b>${esc(t.title)}</b></div>
-    <a class="btn sm" href="${esc(t.dataset.url)}" target="_blank" rel="noopener">فتح في OneDrive</a><button class="btn sm ghost" data-x>إغلاق</button></div>
+    ${seenBtn(t.dataset.wkey)}<a class="btn sm" href="${esc(t.dataset.url)}" target="_blank" rel="noopener">فتح في OneDrive</a><button class="btn sm ghost" data-x>إغلاق</button></div>
     <div data-key="${esc(t.dataset.wkey)}"><div class="muted" style="padding:16px 0">جارٍ تحميل المحتوى…</div></div></div>`;
   const close = () => { lb.remove(); document.removeEventListener('keydown', k); };
   const k = e => { if (e.key === 'Escape' && !document.querySelector('.fv-lb')) close(); };
   lb.addEventListener('click', e => { if (e.target === lb || e.target.closest('[data-x]')) close(); });
   document.addEventListener('keydown', k); document.body.append(lb);
-  fvShow(lb.querySelector('[data-key]'));
+  fvShow(lb.querySelector('[data-key]')); if (seenOn()) seenLoad().then(() => seenPaint(lb));
 }
 function bindW(el) {
   el.querySelectorAll('.wv-grid').forEach(g => fvGrid(g));
@@ -798,7 +848,7 @@ function teacher(i) {
     const flagged = c.info.files.filter(x => x.f).length;
     return `<details class="fold" data-fi="${c.f.i}"><summary><div class="grow"><div class="t">${esc(c.f.label)}</div>
       <div class="g">${c.f.group ? esc(c.f.group) + ' · ' : ''}${nf(c.info.count)} من ${nf(c.f.min)} مطلوب${c.info.last ? ' · آخر رفع ' + esc(c.info.last) : ''}${flagged ? ` · <span class="warn">${nf(flagged)} ملاحظة</span>` : ''}</div>
-      ${c.info.files.length ? `<div class="fth">${c.info.files.slice(0, 20).map(x => `<span class="th-i" role="button" tabindex="0" title="${esc(x.n)}" data-n="${esc(x.n)}" data-url="${esc(c.info.url ? wFileUrl(c.info.url, x.n.split(' / ').join('/')) : '')}" data-key="${esc(t.name + '|' + c.f.key + '|' + x.n)}" data-x="${esc(x.x || '')}"></span>`).join('')}</div>` : ''}</div>${chip(c.s)}</summary>
+      ${c.info.files.length ? `<div class="fth">${c.info.files.slice(0, 20).map(x => `<span class="th-i" role="button" tabindex="0" data-n="${esc(t.name)}" data-url="${esc(c.info.url ? wFileUrl(c.info.url, x.n.split(' / ').join('/')) : '')}" data-key="${esc(t.name + '|' + c.f.key + '|' + x.n)}" data-x="${esc(x.x || '')}">${seenMark(t.name + '|' + c.f.key + '|' + x.n)}</span>`).join('')}</div>` : ''}</div>${chip(c.s)}</summary>
       ${c.info.parentLoose ? `<div class="pad warn" style="padding-bottom:0">${nf(c.info.parentLoose)} ملف في «${esc(c.f.group)}» غير موزّع على المجلدات الفرعية</div>` : ''}
       ${c.info.files.length ? `<ul class="files">${c.info.files.map(fileLi).join('')}</ul>` : '<div class="empty">المجلد فارغ</div>'}
       <div class="acts"><a class="btn sm ghost" href="${esc(c.info.url)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a></div></details>`;
@@ -1976,16 +2026,16 @@ function folders(i) {
       <select class="search" id="fvT" aria-label="المعلمة" style="flex:0 1 260px"><option value="all">كل المعلمات (${nf(fvFiles(fvs.fi, 'all').length)} ملف)</option>${who.map(r => `<option value="${r.x.i}"${fvs.t === r.x.i ? ' selected' : ''}>${esc(r.x.short)} (${nf(r.n)})</option>`).join('')}</select>
     </div>
     ${cur ? `<div class="seg fv-mode"><button id="fvGridBtn" class="${fvs.mode === 'grid' ? 'on' : ''}">كل الملفات (مصغّرة)</button><button id="fvOneBtn" class="${fvs.mode === 'one' ? 'on' : ''}">ملف واحد</button></div>` : ''}
-    ${cur && fvs.mode === 'grid' ? `<div class="fv-grid" id="fvGrid">${files.map((r, j) => `<button class="fv-tile" data-k="${j}" data-key="${esc(r.t.name + '|' + f.key + '|' + r.x.n)}" title="${esc(r.t.short + ' — ' + r.x.n)}">
+    ${cur && fvs.mode === 'grid' ? `<div class="fv-grid" id="fvGrid">${files.map((r, j) => `<button class="fv-tile" data-k="${j}" data-key="${esc(r.t.name + '|' + f.key + '|' + r.x.n)}" title="${esc(r.t.short)}">${seenMark(r.t.name + '|' + f.key + '|' + r.x.n)}
         <span class="th"><span class="ext">${esc(r.x.x || '—')}</span><span class="ph">…</span></span>
-        <span class="cap"><b>${esc(r.x.n.split(' / ').pop())}</b><span>${esc(r.t.short)} · <span dir="ltr">${esc(r.x.d)}</span></span></span></button>`).join('')}</div>`
+        <span class="cap"><b>${esc(r.t.short)}</b></span></button>`).join('')}</div>`
     : cur ? `<div class="fv-bar">
       <div class="fv-nav"><button class="btn ghost sm" id="fvPrev"${fvs.k ? '' : ' disabled'}>→ السابق</button><button class="btn ghost sm" id="fvNext"${fvs.k < files.length - 1 ? '' : ' disabled'}>التالي ←</button>
         <span class="muted" style="font-size:13.5px">الملف ${nf(fvs.k + 1)} من ${nf(files.length)}</span></div>
-      <select class="search" id="fvK" aria-label="الملف" style="flex:1 1 260px;max-width:460px">${files.map((r, j) => `<option value="${j}"${j === fvs.k ? ' selected' : ''}>${esc(r.t.short)} — ${esc(r.x.n.split(' / ').pop())}</option>`).join('')}</select>
+      <select class="search" id="fvK" aria-label="الملف" style="flex:1 1 260px;max-width:460px">${files.map((r, j) => `<option value="${j}"${j === fvs.k ? ' selected' : ''}>${esc(r.t.short)} — الملف ${nf(j + 1)}</option>`).join('')}</select>
     </div>
     <div class="card fv-file"><span class="ext">${esc(cur.x.x || '—')}</span>
-      <div class="grow"><b>${esc(cur.t.name)}</b><div class="nm">${esc(cur.x.n)} · <span dir="ltr">${esc(cur.x.d)}</span></div></div>
+      <div class="grow"><b>${esc(cur.t.name)}</b></div>${seenBtn(cur.t.name + '|' + f.key + '|' + cur.x.n)}
       <a class="btn sm" href="${esc(fileUrl(cur.c, cur.x.n))}" target="_blank" rel="noopener">فتح في OneDrive</a></div>
     <div id="fvPages" data-key="${esc(cur.t.name + '|' + f.key + '|' + cur.x.n)}"><div class="muted" style="padding:16px 0">جارٍ تحميل المحتوى…</div></div>`
     : '<div class="empty card">لا توجد ملفات في هذا المجلد بعد</div>'}
