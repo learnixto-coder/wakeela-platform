@@ -1331,11 +1331,14 @@ async function qaLoadAll() {
   else if (r.status !== 404) throw new Error('gh' + r.status);
   return qaDocs = out;
 }
+// the program's period in the timeline (programs_1448.json from/to, y/m/d) as «17/3/1448هـ – 6/4/1448هـ»
+const planDate = p => { const f = s => s ? s.split('/').reverse().join('/') + 'هـ' : ''; return !p.from ? '' : p.from === p.to ? f(p.from) : `${f(p.from)} – ${f(p.to)}`; };
 let qaD = null;   // the open program: {p, doc (working copy), tab, dirty, intTouched, intAt, statusSet, srv}
 function qaOpen(p, doc) {
   const keep = qaD?.p === p ? qaD.tab : 'obs';
   doc = doc ? structuredClone(doc) : { v: 1, program: p.name, no: p.no, status: 'none' };
   doc.obs ||= { items: Array(10).fill(null), notes: Array(10).fill(''), date: '', observer: lsGet('wk-qa-observer') || 'وكيلة المدرسة' };
+  doc.obs.date ||= planDate(p);   // from «الخطة الزمنية»; she can still change it
   qaD = { p, doc, tab: keep, dirty: false, intTouched: false, intAt: doc.interview?.at || null, statusSet: false, srv: null };
 }
 async function qaPersist() {   // read-modify-write: her parts over the latest file, so a teacher's answer that arrived meanwhile stays
@@ -1414,7 +1417,7 @@ function qaProgram() {
 function qaBody() {
   const { p, doc: d } = qaD, o = d.obs;
   if (qaD.tab === 'obs') return `<div class="card pad qa-card"><div class="qa-meta">
-      <label>تاريخ التنفيذ<input class="search" data-f="obs.date" value="${esc(o.date)}" placeholder="مثال: 10/4/1448هـ"></label>
+      <label>تاريخ التنفيذ<input class="search" data-f="obs.date" value="${esc(o.date)}" placeholder="مثال: 10/4/1448هـ">${planDate(p) ? `<span class="muted" style="font-size:12px">من الخطة الزمنية: ${esc(planDate(p))}</span>` : ''}</label>
       <label>اسم الملاحِظ<input class="search" data-f="obs.observer" value="${esc(o.observer)}"></label></div>
       <div class="muted" style="font-size:13px;margin-top:8px">القائم بالتنفيذ: ${esc(p.people.map(x => x.label).join('، ') || '—')}</div></div>
     ${QA_OBS.map((t, i) => `<div class="card qa-it"><div class="qa-it-t"><span class="q-n">${nf(i + 1)}</span><span>${esc(t)}</span></div>
