@@ -241,7 +241,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .ck .n{flex:1;min-width:0;overflow-wrap:anywhere}
 .ck.pend{opacity:.55;cursor:default}
 .note-close{margin-inline-start:auto}
-.subtabs{display:flex;gap:10px;margin:0 0 16px;flex-wrap:wrap}.subtabs button{flex:1;min-width:130px;min-height:46px;padding:10px 14px;border-radius:12px;border:2px solid var(--brand);background:var(--card);color:var(--brand);font:inherit;font-size:15px;font-weight:700;cursor:pointer}.subtabs button:hover{background:var(--soft)}.subtabs button.on{background:var(--brand);color:var(--brand-ink)}.qa-ph{margin:18px 0 10px;font-size:16px}nav.tabs{display:none!important}.hub{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}.hub-b{display:flex;align-items:center;gap:14px;padding:18px;min-height:92px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:var(--shadow);cursor:pointer;text-align:start;font:inherit;color:var(--ink)}.hub-b:hover{border-color:var(--brand)}.hub-b .sec-ic{width:50px;height:50px}.hub-t{display:block;font-weight:700;font-size:16.5px}.hub-s{display:block;color:var(--muted);font-size:13px;margin-top:3px}@media (max-width:560px){.hub{grid-template-columns:1fr}.hub-b{min-height:76px;padding:14px}}.homebar{display:flex;align-items:center;gap:12px;margin:0 0 14px;flex-wrap:wrap}.homebar b{font-size:17px}.ttabs{display:flex;margin:0 0 14px}.ttabs button{flex:1;padding:10px 8px;font-size:14.5px}
+.subtabs{display:flex;gap:10px;margin:0 0 16px;flex-wrap:wrap}.subtabs button{flex:1;min-width:130px;min-height:46px;padding:10px 14px;border-radius:12px;border:2px solid var(--brand);background:var(--card);color:var(--brand);font:inherit;font-size:15px;font-weight:700;cursor:pointer}.subtabs button:hover{background:var(--soft)}.subtabs button.on{background:var(--brand);color:var(--brand-ink)}.qa-ph{margin:18px 0 10px;font-size:16px}nav.tabs{display:none!important}.hub{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}.hub-b{display:flex;align-items:center;gap:14px;padding:18px;min-height:92px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:var(--shadow);cursor:pointer;text-align:start;font:inherit;color:var(--ink)}.hub-b:hover{border-color:var(--brand)}.hub-b .sec-ic{width:50px;height:50px}.hub-t{display:block;font-weight:700;font-size:16.5px}.hub-s{display:block;color:var(--muted);font-size:13px;margin-top:3px}@media (max-width:560px){.hub{grid-template-columns:1fr}.hub-b{min-height:76px;padding:14px}}.hub-h{margin:18px 0 10px;font-size:15px;color:var(--muted)}.homebar{display:flex;align-items:center;gap:12px;margin:0 0 14px;flex-wrap:wrap}.homebar b{font-size:17px}.ttabs{display:flex;margin:0 0 14px}.ttabs button{flex:1;padding:10px 8px;font-size:14.5px}
 .btn.danger{background:var(--none);border-color:var(--none)}
 .foot{margin-top:28px;color:var(--muted);font-size:12.5px;text-align:center}
 
@@ -566,16 +566,20 @@ function route() {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === top));
   const el = $('#view');
   el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folders(+a),
-    plan: planW, plans: plansW, timeline: () => plansW('timeline'), qa: () => qaW(a), start: () => hub('الرئيسية', HUB) }[v] || me)();
-  const sub = SUBTABS[top]; if (sub) el.insertAdjacentHTML('afterbegin', `<div class="subtabs">${sub.map(([g, l]) => `<button data-go="${g}" class="${(TAB_OF[v] ? SUB_OF[v] || v : v) === g ? 'on' : ''}">${l}</button>`).join('')}</div>`);
-  if (v !== 'start') { const h = HUB.find(x => x[0] === top); el.insertAdjacentHTML('afterbegin', homeBar(h ? h[1] : '')); }
+    plan: planW, plans: plansW, timeline: () => plansW('timeline'), qa: () => qaW(a), start: () => hub('الرئيسية', HUB, HUB_G) }[v] || me)();
+  if (v !== 'start') { const h = HUB.find(x => x[0] === (SUB_OF[v] || (v === 'w' ? 'me' : v))); el.insertAdjacentHTML('afterbegin', homeBar(h ? h[1] : '')); }
   bind(el); window.scrollTo(0, 0);
 }
 // «الرئيسية»: big buttons instead of a tab bar (the user's choice, to keep the وكيلة and the teacher focused); every page gets a «الرئيسية» button
-const HUB = [['plans', 'الخطة التشغيلية وخطة التحسين', 'الخطتان وبطاقات البرامج ومؤشراتها'], ['me', 'مجلدات وكيلة المدرسة', 'أقسام ملفاتك وما فيها'],
-  ['timeline', 'الخطة الزمنية', 'مواعيد تنفيذ البرامج'], ['plan', 'برامج الخطة 1448هـ', 'شواهد البرامج وتدقيق الجودة'], ['dash', 'لوحة المؤشرات', 'مؤشرات إنجاز المعلمات'],
-  ['home', 'المعلمات', 'المتابعة والمجلدات والتنبيهات'], ['admins', 'الإداريات', 'مبادرات الإداريات']];
-const hub = (t, L) => `<h2 style="margin:4px 0 14px">${t}</h2><div class="hub">${L.map(([g, l, d]) => `<button class="hub-b" data-go="${g}"><span class="sec-ic">${['me', 'mine', 'home', 'admins'].includes(g) ? secIcon('') : planIcon}</span><span><span class="hub-t">${l}</span><span class="hub-s">${d}</span></span></button>`).join('')}</div>`;
+const HUB_G = [['الخطط والبرامج', [['plans', 'الخطة التشغيلية وخطة التحسين', 'الخطتان وبطاقات البرامج ومؤشراتها'], ['timeline', 'الخطة الزمنية', 'مواعيد تنفيذ البرامج'],
+    ['plan', 'برامج الخطة 1448هـ', 'شواهد البرامج ومجلداتها'], ['qa', 'تدقيق الجودة', 'تدقيق البرامج ونتائجها']]],
+  ['ملفات الوكيلة', [['me', 'مجلدات وكيلة المدرسة', 'أقسام ملفاتك وما فيها']]],
+  ['المعلمات', [['home', 'متابعة المعلمات', 'لوحة التتبع والإنجاز حسب المجلد'], ['teachers', 'قائمة المعلمات', 'صفحة كل معلمة'], ['folders', 'المجلدات', 'محتوى ملفات المعلمات'],
+    ['alerts', 'التنبيهات', 'الملفات المكررة والفارغة والتذكير'], ['dash', 'لوحة المؤشرات', 'مؤشرات إنجاز المعلمات']]],
+  ['الإداريات', [['admins', 'الإداريات', 'مبادرات الإداريات']]]];
+const HUB = HUB_G.flatMap(g => g[1]);
+const hubBtns = L => `${L.map(([g, l, d]) => `<button class="hub-b" data-go="${g}"><span class="sec-ic">${['me', 'mine', 'home', 'admins'].includes(g) ? secIcon('') : planIcon}</span><span><span class="hub-t">${l}</span><span class="hub-s">${d}</span></span></button>`).join('')}`;
+const hub = (t, L, G) => `<h2 style="margin:4px 0 14px">${t}</h2>${G ? G.map(([gt, gl]) => `<h3 class="hub-h">${gt}</h3><div class="hub">${hubBtns(gl)}</div>`).join('') : `<div class="hub">${hubBtns(L)}</div>`}`;
 const homeBar = t => `<div class="homebar"><button class="btn sm" data-go="start">→ الرئيسية</button>${t ? `<b>${t}</b>` : ''}</div>`;
 // top tabs that hold sub-pages: «برامج الخطة 1448هـ» and «المعلمات»
 const SUBTABS = { plan: [['plan', 'البرامج'], ['qa', 'تدقيق الجودة']], home: [['home', 'متابعة المعلمات'], ['teachers', 'قائمة المعلمات'], ['folders', 'المجلدات'], ['alerts', 'التنبيهات']] };
