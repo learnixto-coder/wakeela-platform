@@ -267,6 +267,76 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .fv-page{display:block;width:100%;max-width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:12px}
 .fv-page.loading{aspect-ratio:3/4;background:var(--soft)}
 .fv-more{margin-top:10px;font-size:13px}
+
+/* تدقيق الجودة */
+:root{--mq:#0e6a80;--mq-bg:#d6eef4}
+@media (prefers-color-scheme:dark){:root{--mq:#6fd0e8;--mq-bg:#123843}}
+.lv-mt{background:var(--ok-bg);color:var(--ok)} .lv-mq{background:var(--mq-bg);color:var(--mq)} .lv-mb{background:var(--part-bg);color:var(--part)} .lv-ih{background:var(--none-bg);color:var(--none)}
+.lv-sum{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.qa-chips{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:46%}
+.seg-wrap{flex-wrap:wrap}
+.warnbox{background:var(--part-bg);color:var(--ink);border-radius:12px;padding:10px 12px;font-size:13.5px;margin-bottom:10px}
+.warnbox a{font-weight:600}
+.qa-grid{display:grid;grid-template-columns:1fr;gap:14px;align-items:start}
+@media (min-width:1000px){.qa-grid{grid-template-columns:1fr 320px}.qa-ev{position:sticky;top:132px;max-height:calc(100vh - 220px);overflow:auto}}
+.qa-tabs{display:flex;width:100%;margin-bottom:12px;overflow-x:auto}.qa-tabs button{flex:1 0 auto;padding:9px 10px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--part);vertical-align:middle}
+.qa-card{margin-bottom:10px}
+.qa-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.qa-h b{font-size:15.5px}.qa-h .muted{font-size:12.5px}
+.qa-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qa-meta label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.qa-meta .search{min-width:0;color:var(--ink)}
+@media (max-width:560px){.qa-meta{grid-template-columns:1fr}}
+.qa-it{padding:12px 14px;margin-bottom:8px}
+.qa-it-t{display:flex;gap:10px;align-items:baseline;font-weight:600;margin-bottom:10px}
+.q-n{flex:0 0 26px;height:26px;border-radius:8px;background:var(--soft);display:grid;place-items:center;font-size:13px;color:var(--brand-2)}
+.qa-opt{display:flex;width:100%}.qa-opt button{flex:1;padding:8px 4px}
+.qa-opt button.on.v2{background:var(--ok-bg);color:var(--ok)} .qa-opt button.on.v1{background:var(--part-bg);color:var(--part)} .qa-opt button.on.v0{background:var(--none-bg);color:var(--none)}
+.qa-note{display:block;width:100%;margin-top:8px;padding:8px 12px;font-size:13.5px}
+.qa-cnt{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.qa-bar{position:sticky;bottom:0;z-index:3;display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;margin:16px -16px 0;padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);background:var(--card);border-top:1px solid var(--line)}
+.qa-bar #qaDirty{margin-inline-end:auto;font-size:13px;color:var(--part)}
+.qa-sc{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.qa-sc>div{display:grid;gap:2px;background:var(--soft);border-radius:12px;padding:10px 12px}
+.qa-sc span{color:var(--muted);font-size:12.5px}.qa-sc b{font-size:22px;line-height:1.3}.qa-sc small{color:var(--muted);font-size:11.5px}
+@media (max-width:640px){.qa-sc{grid-template-columns:1fr 1fr}}
+.qa-lv{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.qa-lv button{border:2px solid transparent;border-radius:12px;padding:12px 6px;font-weight:700;cursor:pointer;display:grid;gap:2px;opacity:.6}
+.qa-lv button small{font-weight:500;font-size:11.5px}
+.qa-lv button.on{border-color:currentColor;opacity:1;box-shadow:var(--shadow)}
+@media (max-width:560px){.qa-lv{grid-template-columns:1fr 1fr}}
+.qa-run{display:flex;gap:8px;align-items:center;margin:14px 0 6px;font-weight:600;cursor:pointer}.qa-run input{width:18px;height:18px}
+.qa-kv{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13.5px;margin-bottom:6px}
+.qa-qa{border-top:1px solid var(--line);padding:8px 0}.qa-qa .muted{font-size:12.5px}
+.qa-plan{margin:6px 0 0;padding-inline-start:20px;line-height:1.8;font-size:14px}
+.qa-pl{display:grid;grid-template-columns:1fr 150px;gap:8px;margin-top:8px}.qa-pl .search{min-width:0}
+@media (max-width:480px){.qa-pl{grid-template-columns:1fr}}
+.srv-row{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}.srv-row .grow{flex:1;min-width:220px}
+.qr{width:132px;height:132px;flex:0 0 auto;background:#fff;border-radius:10px;padding:4px;display:grid;place-items:center;border:1px solid var(--line)}
+.qr svg{width:100%;height:100%}
+.srv-u{font-size:12.5px;overflow-wrap:anywhere;background:var(--soft);border-radius:8px;padding:6px 10px;text-align:left}
+.srv-k{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin:12px 0 4px;font-size:14px}
+.srv-t{display:grid;gap:2px;margin-top:10px}
+.srv-tr{display:grid;grid-template-columns:22px 1fr 110px 36px;gap:8px;align-items:center;font-size:13px;padding:5px 0;border-top:1px solid var(--line)}
+@media (max-width:560px){.srv-tr{grid-template-columns:22px 1fr 36px}.srv-tr .track{grid-column:2/-1;grid-row:2}}
+#pfBox{display:none}
+@media print{
+  @page{size:A4 landscape;margin:10mm}
+  body.printing>*:not(#pfBox){display:none!important}
+  body.printing{background:#fff}
+  body.printing #pfBox{display:block;color:#000;font:12px/1.5 Tahoma,Arial,sans-serif}
+  #pfBox section{page-break-after:always}
+  #pfBox section:last-child{page-break-after:auto}
+  .pf-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+  .pf-t{display:grid;gap:2px;font-size:12.5px}.pf-t b{font-size:13.5px}
+  .pf-v{display:inline-block;min-width:220px;border-bottom:1px solid #000;padding:0 4px}
+  .pf-moe{color:#1b7f9e;font-weight:700;font-size:16px;text-align:left;display:grid}.pf-moe small{font-size:10.5px;font-weight:400}
+  table.pf{width:100%;border-collapse:collapse;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .pf th{background:#4a9dbb;color:#fff;border:1px solid #0c3b4a;padding:5px 6px;text-align:right;font-size:11.5px}
+  .pf td{border:1px solid #0c3b4a;padding:6px;text-align:center;background:#f4f4f4;vertical-align:middle}
+  .pf td.q{background:#2a8eae;color:#fff;text-align:right}
+  .pf-res{margin-top:10px;font-size:12.5px}
+}
 </style>
 </head>
 <body>
@@ -302,6 +372,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
     <button data-v="alerts">التنبيهات</button>
     <button data-v="admins">الإداريات</button>
     <button data-v="plan">برامج الخطة 1448هـ</button>
+    <button data-v="qa">تدقيق الجودة</button>
   </div></nav>
   <main id="view"></main>
 </div>
@@ -441,7 +512,7 @@ function route() {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === (v === 't' ? 'teachers' : v === 'f' ? 'folders' : v === 'w' ? 'me' : v === 'board' ? 'home' : v)));
   const el = $('#view');
   el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folders(+a),
-    plan: planW, plans: plansW, timeline: () => plansW('timeline') }[v] || me)();
+    plan: planW, plans: plansW, timeline: () => plansW('timeline'), qa: () => qaW(a) }[v] || me)();
   bind(el); window.scrollTo(0, 0);
 }
 document.querySelector('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.v); });
@@ -459,6 +530,11 @@ function bind(el) {
   el.querySelectorAll('[data-close]').forEach(x => x.addEventListener('click', () => closeNote(x.dataset.close, +x.dataset.t)));
   const pd = el.querySelector('#pdel'); if (pd) bindPlanDel(pd);
   const ph = el.querySelector('#plansHost'); if (ph) mountPlansHere(ph);
+  const qh = el.querySelector('#qaHost'); if (qh) mountQa(qh);
+  const qt = el.querySelector('#qaT'); if (qt) mountQaT(qt);
+  el.querySelectorAll('[data-qr]').forEach(drawQr);
+  el.querySelectorAll('[data-srv]').forEach(fillSrv);
+  el.querySelectorAll('[data-qf]').forEach(x => x.addEventListener('click', () => { state.qaF = x.dataset.qf; const h = $('#qaHost'); h.innerHTML = qaList(); bind(h); }));
   if (el.querySelector('.fv')) bindFv(el);
   if (el.querySelector('[data-tdel], #tdelAll')) bindTDel(el);
   el.querySelectorAll('[data-pf]').forEach(x => x.addEventListener('click', () => { state.pFilter = x.dataset.pf; route(); }));
@@ -962,6 +1038,7 @@ function teacherProgram(k) {
     <a class="btn wide" href="${esc(p.share || D.planShare)}" target="_blank" rel="noopener">${p.share ? 'فتح مجلد البرنامج في OneDrive' : 'فتح المجلد في OneDrive'}</a>
     <div class="muted" style="font-size:13px;margin-top:8px">يفتح من أي حساب دون تسجيل دخول. ${p.share ? '' : `بعد فتحه اضغطي مجلد «${esc(p.name)}»، ثم `}اضغطي «الشواهد» للإضافة، أو «قياس الأثر والتقرير» للاطلاع.</div></div>` : ''}
   ${planUploadCard(k)}
+  <div id="qaT" data-k="${k}"></div>
   <h2>الشواهد المرفوعة${p.n ? ` (${nf(p.n)})` : ''}</h2>
   <div class="card">${p.ev?.files.length ? `<ul class="files">${p.ev.files.map(fileLi).join('')}</ul>` : '<div class="empty">لا توجد شواهد بعد — أرفقيها من الأعلى أو من OneDrive</div>'}</div>`;
 }
@@ -1033,6 +1110,409 @@ function planW() {
   ${group ? `<h2>رسالة جماعية للبرامج بلا شواهد</h2><div class="card pad"><div class="msg" id="pmsg">${esc(group)}</div>
     <div class="toolbar" style="margin:10px 0 0"><button class="btn sm" data-copy="pmsg">نسخ</button><button class="btn sm ghost" data-wa="pmsg">إرسال عبر واتساب</button></div></div>` : ''}
   <p class="foot">البرنامج «أُرفقت شواهده» عند وجود ملف واحد على الأقل في مجلد «الشواهد» · الأسماء المنقطة بلا حساب في المنصة</p>`;
+}
+
+/* ---------- تدقيق جودة برامج الخطة التشغيلية ----------
+   data/q/p<no>.json = {v, w: box(doc, her passcode), t: {<tid>: box(qaTView(doc), phone)}}: written by the وكيلة through the
+   GitHub API, and by tools/inbox.js when a teacher's interview / reply arrives through the inbox (editQ, same format).
+   doc = {v, program, no, status: none|draft|sent|replied|closed, obs: {items[10] 2|1|0|null, notes[10], date, observer},
+          level: mt|mq|mb|ih, running, recheck, guide, sentAt, closedAt,
+          interview: {by, date, audience, count, answers[5], from, at, state: pending|ok|back, back}, reply: {text, plan[{act, due}], from, at}}
+   The survey (site/s/, answers in a separate Apps Script) only gives per-program totals. */
+const QA_OBS = ['وضوح أهداف البرنامج للمستفيدين', 'مناسبة محتوى البرنامج للفئة المستهدفة', 'الالتزام بخطة التنفيذ الزمنية', 'توفر المتطلبات والتجهيزات اللازمة',
+  'تنوع أساليب التنفيذ المستخدمة', 'مشاركة المستفيدين وتفاعلهم', 'تحقيق البرنامج لأهدافه المخططة', 'جودة التنظيم والإدارة أثناء التنفيذ',
+  'توثيق البرنامج بالشواهد المناسبة', 'وجود أثر واضح للبرنامج على المستفيدين'];
+const QA_OV = [[2, 'متحقق'], [1, 'متحقق جزئيًا'], [0, 'غير متحقق']];
+const QA_INT = ['مدى رضا المستفيدين', 'أبرز جوانب القوة', 'أبرز التحديات', 'أثر البرنامج على المستفيدين', 'التوصيات المقترحة'];
+const QA_SRV = ['حقق البرنامج أهدافه المخطط لها.', 'ساهم البرنامج في تحسين مستوى الأداء.', 'كانت أنشطة البرنامج مناسبة للفئة المستهدفة.',
+  'أسهم البرنامج في تنمية المعارف والمهارات المستهدفة.', 'تم تنفيذ البرنامج بصورة منظمة وفعالة.', 'استفدت من محتوى البرنامج وأنشطته.',
+  'ساهم البرنامج في معالجة احتياج فعلي.', 'أظهر البرنامج أثرًا إيجابيًا ملموسًا.', 'أوصي بالاستمرار في تنفيذ البرنامج مستقبلًا.', 'مستوى رضاي العام عن البرنامج مرتفع.'];
+const QA_LV = { mt: 'متميز', mq: 'متقدم', mb: 'مقبول', ih: 'يحتاج تحسين' };
+const QA_ST = { none: 'لم يُدقق', draft: 'مسودة', sent: 'بانتظار رد المعلمة', replied: 'ردّت المعلمة', closed: 'مغلق' };
+const QA_STC = { none: 'na', draft: 'na', sent: 'part', replied: 'ok', closed: 'ok' };
+const QA_DONE = ['sent', 'replied', 'closed'];
+const SRV_TARGET = 30;
+// what a teacher may see: the audit once it is sent; before that only her own interview (same as tools/inbox.js)
+const qaTView = d => QA_DONE.includes(d.status) ? d : { program: d.program, no: d.no, status: 'draft', interview: d.interview || null };
+const lvChip = (l, running) => (l ? `<span class="chip lv-${l}">${QA_LV[l]}</span>` : '') + (l && running ? ' <span class="chip s-part">⏳ قيد التنفيذ</span>' : '');
+const qaChip = s => `<span class="chip s-${QA_STC[s] || 'na'}">${QA_ST[s] || QA_ST.none}</span>`;
+const ghJson = j => JSON.parse(new TextDecoder().decode(b64(j.content.replace(/\s/g, ''))));
+const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+
+// --- scores: observation 2/1/0 per item (of 20), survey average of 5; combined 60/40 when the survey has answers
+const obsPct = o => o?.items?.length === 10 && o.items.every(v => v != null) ? Math.round(o.items.reduce((a, b) => a + b, 0) / 20 * 100) : null;
+const srvPct = s => s ? Math.round(s.avg / 5 * 100) : null;
+const qaScore = (o, s) => o == null ? null : s == null ? o : Math.round(o * .6 + s * .4);
+const lvOf = x => x == null ? null : x >= 90 ? 'mt' : x >= 75 ? 'mq' : x >= 60 ? 'mb' : 'ih';
+
+// --- survey totals (Apps Script, read key in D.survey), cached for a minute
+let srvCache = null;
+async function srvResults() {
+  if (!D.survey) return null;
+  if (srvCache && Date.now() - srvCache.t < 60000) return srvCache.r;
+  const r = await (await fetch(`${D.survey.url}?a=results&key=${encodeURIComponent(D.survey.key)}`)).json();
+  if (!r.ok) throw new Error(r.error || 'survey');
+  srvCache = { t: Date.now(), r }; return r;
+}
+function srvStat(pr) {   // all respondent types together: {n, items[10] avg, avg, dist[10][5] (1..5), types [[type, n]]}
+  if (!pr?.n) return null;
+  const T = Object.entries(pr.types), n = pr.n;
+  const items = QA_SRV.map((_, i) => T.reduce((s, [, t]) => s + t.avg[i] * t.n, 0) / n);
+  const dist = QA_SRV.map((_, i) => [0, 1, 2, 3, 4].map(j => T.reduce((s, [, t]) => s + (t.dist[i]?.[j] || 0), 0)));
+  return { n, items, dist, avg: items.reduce((a, b) => a + b, 0) / items.length, types: T.map(([k, t]) => [k, t.n]) };
+}
+const srvOn = p => !!D.survey?.progs?.includes(p.no);
+const srvUrl = no => new URL(`s/?p=${no}`, location.href.split('#')[0]).href;
+let qrLib = null;
+const loadQr = () => qrLib ??= new Promise((ok, bad) => { const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'; s.onload = ok; s.onerror = () => { qrLib = null; bad(); }; document.head.append(s); });
+async function drawQr(el) {
+  try { await loadQr(); const q = qrcode(0, 'M'); q.addData(el.dataset.qr); q.make(); el.innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); }
+  catch { el.innerHTML = '<span class="muted" style="font-size:12px">تعذّر إنشاء الرمز</span>'; }
+}
+function srvCard(p, full) {
+  if (!srvOn(p)) return '';
+  const u = srvUrl(p.no);
+  return `<div class="card pad qa-card"><div class="qa-h"><b>استبانة قياس الأثر للمستفيدين</b>
+      <span class="muted">تمسح الطالبة الرمز وتجيب من جوالها دون تسجيل، والإجابات سرّية. المطلوب ${nf(SRV_TARGET)} ردًّا على الأقل.</span></div>
+    <div class="srv-row"><div class="qr" data-qr="${esc(u)}"></div><div class="grow">
+      <div class="srv-u" id="srvU${p.no}" dir="ltr">${esc(u)}</div>
+      <textarea id="srvW${p.no}" hidden>استبانة قياس أثر برنامج «${esc(p.name)}» — نرجو الإجابة (دقيقة واحدة، دون ذكر الاسم):\n${esc(u)}</textarea>
+      <div class="toolbar" style="margin:8px 0 0"><button class="btn sm" data-copy="srvU${p.no}">نسخ الرابط</button><button class="btn sm ghost" data-wa="srvW${p.no}">إرسال عبر واتساب</button>
+        <a class="btn sm ghost" href="${esc(u)}" target="_blank" rel="noopener">فتح الاستبانة</a></div>
+      <div data-srv="${p.no}"${full ? ' data-full="1"' : ''}><div class="muted" style="margin-top:10px">جارٍ تحميل النتائج…</div></div></div></div></div>`;
+}
+function srvSummary(s, full) {
+  const weak = s.items.indexOf(Math.min(...s.items));
+  return `<div class="srv-k"><span><b>${nf(s.n)}</b> / ${nf(SRV_TARGET)} ردًّا</span><span class="track"><i style="width:${Math.min(100, s.n / SRV_TARGET * 100)}%;background:var(--brand-2)"></i></span></div>
+    <div class="muted" style="font-size:13px">${s.types.map(([k, n]) => `${esc(k)}: ${nf(n)}`).join(' · ')} · متوسط الموافقة <b>${s.avg.toFixed(1)}</b> من 5
+      · أضعف عبارة: ${nf(weak + 1)} «${esc(QA_SRV[weak])}» (${s.items[weak].toFixed(1)})</div>
+    ${full ? `<div class="srv-t">${QA_SRV.map((t, i) => `<div class="srv-tr"><span class="muted">${nf(i + 1)}</span><span>${esc(t)}</span>
+      <span class="track"><i style="width:${s.items[i] / 5 * 100}%;background:${pctColor(s.items[i] / 5 * 100)}"></i></span><span class="pct">${s.items[i].toFixed(1)}</span></div>`).join('')}</div>` : ''}`;
+}
+async function fillSrv(el) {
+  try {
+    const s = srvStat((await srvResults())?.programs?.[el.dataset.srv]);
+    if (el.isConnected) el.innerHTML = s ? srvSummary(s, !!el.dataset.full) : '<div class="muted" style="margin-top:10px">لا توجد ردود بعد.</div>';
+  } catch { if (el.isConnected) el.innerHTML = '<div class="warn" style="margin-top:10px">تعذّر تحميل نتائج الاستبانة.</div>'; }
+}
+
+// --- the وكيلة: load / save
+let qaDocs = null;   // {no: {sha, doc}} for the list
+async function qaLoadOne(no) {
+  const r = await ghApi(`data/q/p${no}.json?ref=${D.gh.branch}&t=${Date.now()}`);
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error('gh' + r.status);
+  const j = await r.json(); return { sha: j.sha, doc: await openBox(ghJson(j).w, sessionCode) };
+}
+async function qaLoadAll() {
+  const r = await ghApi(`data/q?ref=${D.gh.branch}&t=${Date.now()}`), out = {};
+  if (r.ok) await Promise.all((await r.json()).filter(x => /^p\d+\.json$/.test(x.name)).map(async it => {
+    try { const one = await qaLoadOne(+it.name.slice(1, -5)); if (one) out[one.doc.no] = one; } catch {}
+  }));
+  else if (r.status !== 404) throw new Error('gh' + r.status);
+  return qaDocs = out;
+}
+let qaD = null;   // the open program: {p, doc (working copy), tab, dirty, intTouched, intAt, statusSet, srv}
+function qaOpen(p, doc) {
+  const keep = qaD?.p === p ? qaD.tab : 'obs';
+  doc = doc ? structuredClone(doc) : { v: 1, program: p.name, no: p.no, status: 'none' };
+  doc.obs ||= { items: Array(10).fill(null), notes: Array(10).fill(''), date: '', observer: lsGet('wk-qa-observer') || 'وكيلة المدرسة' };
+  qaD = { p, doc, tab: keep, dirty: false, intTouched: false, intAt: doc.interview?.at || null, statusSet: false, srv: null };
+}
+async function qaPersist() {   // read-modify-write: her parts over the latest file, so a teacher's answer that arrived meanwhile stays
+  const { p, doc: mine } = qaD;
+  for (let n = 0; ; n++) {
+    const cur = await qaLoadOne(p.no), doc = cur?.doc || { v: 1, program: p.name, no: p.no, status: 'none' };
+    if (qaD.intTouched && (doc.interview?.at || null) !== qaD.intAt) throw new Error('int');
+    for (const k of ['obs', 'level', 'running', 'recheck', 'guide']) doc[k] = mine[k];
+    if (qaD.intTouched) doc.interview = mine.interview;
+    if (qaD.statusSet) Object.assign(doc, { status: mine.status, sentAt: mine.sentAt, closedAt: mine.closedAt });
+    else if (doc.status === 'none') doc.status = 'draft';
+    const t = {};
+    for (const x of p.people.filter(x => x.t && D.phones?.[x.t])) t[await teacherId(D.phones[x.t])] = await sealBox(qaTView(doc), D.phones[x.t]);
+    const r = await ghApi(`data/q/p${p.no}.json`, { method: 'PUT', body: JSON.stringify({ message: 'تحديث', branch: D.gh.branch,
+      content: toB64(utf8.encode(JSON.stringify({ v: 1, w: await sealBox(doc, sessionCode), t }))), ...(cur && { sha: cur.sha }) }) });
+    if (r.ok) { (qaDocs ||= {})[p.no] = { sha: (await r.json()).content.sha, doc }; const tab = qaD.tab, srv = qaD.srv; qaOpen(p, doc); qaD.tab = tab; qaD.srv = srv; return doc; }
+    if (n || (r.status !== 409 && r.status !== 422)) throw new Error('gh' + r.status);
+  }
+}
+
+// --- the وكيلة: views
+function qaW(a) { return `<div id="qaHost" data-a="${esc(a ?? '')}"><div class="muted" style="padding:24px 0">جارٍ تحميل التدقيق…</div></div>`; }
+async function mountQa(host) {
+  if (!D.gh) { host.innerHTML = '<div class="empty card">التدقيق يحتاج ربط المنصة بـ GitHub (keys/github.token)</div>'; return; }
+  const a = host.dataset.a;
+  try {
+    if (a !== '') {
+      const p = D.plan[+a]; if (!p) { go('qa'); return; }
+      const one = await qaLoadOne(p.no);
+      qaOpen(p, one?.doc);
+      if (srvOn(p)) try { qaD.srv = srvStat((await srvResults())?.programs?.[p.no]); } catch {}
+      if (!host.isConnected) return;
+      host.innerHTML = qaProgram(); bindQa(host);
+    } else {
+      await qaLoadAll(); if (!host.isConnected) return;
+      host.innerHTML = qaList();
+    }
+    bind(host);
+  } catch (e) { if (host.isConnected) host.innerHTML = `<div class="empty card">تعذّر تحميل التدقيق${e.message === 'gh401' || e.message === 'gh403' ? ' (رمز GitHub غير صالح أو منتهي)' : ''}، اضغطي «تحديث».</div>`; }
+}
+function qaList() {
+  const docs = qaDocs || {}, rows = D.plan.map(p => ({ p, d: docs[p.no]?.doc || { status: 'none' } }));
+  const done = rows.filter(r => QA_DONE.includes(r.d.status)), pct = Math.round(done.length / rows.length * 100);
+  const lv = k => done.filter(r => r.d.level === k).length;
+  const F = { all: () => true, todo: r => !QA_DONE.includes(r.d.status), sent: r => r.d.status === 'sent', replied: r => r.d.status === 'replied',
+    run: r => QA_DONE.includes(r.d.status) && r.d.running, closed: r => r.d.status === 'closed' };
+  const flt = F[state.qaF] ? state.qaF : 'all', shown = rows.filter(F[flt]);
+  const due = rows.filter(r => r.d.running && r.d.recheck && r.d.recheck <= D.generated.slice(0, 10) && r.d.status !== 'none');
+  return `<div class="card hero">${ring(pct).replace('class="ring"', 'class="ring lg"')}
+    <div class="grow"><h2>تدقيق جودة برامج الخطة التشغيلية 1448هـ</h2>
+    <p>${nf(done.length)} من ${nf(rows.length)} برنامجًا دُققت وأُرسلت نتيجتها</p>
+    <div class="lv-sum">${Object.entries(QA_LV).map(([k, l]) => `<span class="chip lv-${k}">${l} ${nf(lv(k))}</span>`).join('')}
+      <span class="chip s-part">⏳ قيد التنفيذ ${nf(done.filter(r => r.d.running).length)}</span></div></div></div>
+  ${due.length ? `<div class="card pad warnbox"><b>حان موعد إعادة التدقيق:</b> ${due.map(r => `<a href="#qa/${r.p.k}">${esc(r.p.name)}</a>`).join('، ')}</div>` : ''}
+  <div class="toolbar"><div class="seg seg-wrap">${[['all', 'الكل'], ['todo', 'لم يُدقق'], ['sent', 'بانتظار رد المعلمة'], ['replied', 'ردّت المعلمة'], ['run', 'قيد التنفيذ'], ['closed', 'مغلق']]
+    .map(([k, l]) => `<button data-qf="${k}" class="${flt === k ? 'on' : ''}">${l} (${nf(rows.filter(F[k]).length)})</button>`).join('')}</div></div>
+  <div class="list">${shown.map(({ p, d }) => { const sc = qaScore(obsPct(d.obs), null);
+    return `<button class="row" data-go="qa/${p.k}">${sc == null ? `<div class="ring" style="--v:0">—</div>` : ring(sc)}<div class="grow"><div class="name">${esc(p.name)}</div>
+      <div class="sub">${esc(p.people.map(x => x.label).join('، ') || '—')} · ${p.n ? nf(p.n) + ' شاهد' : 'بلا شواهد'}${srvOn(p) ? ' · استبانة مفعّلة' : ''}${d.interview?.state === 'pending' ? ' · <b style="color:var(--part)">مقابلة بانتظار اعتمادك</b>' : ''}</div></div>
+      <div class="qa-chips">${qaChip(d.status)}${lvChip(d.level, d.running)}</div></button>`; }).join('') || '<div class="empty card">لا يوجد</div>'}</div>
+  <p class="foot">النسبة في الدائرة = بطاقة الملاحظة · المستوى النهائي تختارينه في صفحة البرنامج · الاستبانة مفعّلة حاليًا لبرامج التجربة فقط</p>`;
+}
+function qaProgram() {
+  const { p, doc: d } = qaD;
+  return `<button class="back" data-go="qa">→ كل البرامج</button>
+  <div class="card hero" style="margin-top:8px"><span class="sec-ic">${planIcon}</span>
+    <div class="grow"><h2>${esc(p.name)}</h2><p>${esc(p.owner)} · ${p.n ? nf(p.n) + ' شاهد' : 'لا توجد شواهد'}</p>${people(p)}</div>
+    <div class="qa-chips">${qaChip(d.status)}${lvChip(d.level, d.running)}</div></div>
+  <div class="qa-grid"><div>
+    <div class="seg qa-tabs" id="qaTabs">${[['obs', 'بطاقة الملاحظة'], ['int', 'المقابلة'], ['srv', 'الاستبانة'], ['res', 'النتيجة والإرسال']]
+      .map(([k, l]) => `<button data-qt="${k}" class="${qaD.tab === k ? 'on' : ''}">${l}${k === 'int' && d.interview?.state === 'pending' ? ' <i class="dot"></i>' : ''}</button>`).join('')}</div>
+    <div id="qaBody">${qaBody()}</div></div>
+    <aside class="card qa-ev"><div class="qa-h" style="padding:12px 14px 0"><b>الشواهد (${nf(p.n)})</b></div>
+      ${p.ev?.files.length ? `<ul class="files">${p.ev.files.map(fileLi).join('')}</ul>` : '<div class="empty">لا توجد شواهد بعد</div>'}
+      <div class="acts">${p.ev ? `<a class="btn sm ghost" href="${esc(p.ev.url)}" target="_blank" rel="noopener">فتح مجلد الشواهد</a>` : ''}
+        ${p.rep ? `<a class="btn sm ghost" href="${esc(p.rep.url)}" target="_blank" rel="noopener">قياس الأثر والتقرير</a>` : ''}</div></aside></div>
+  <div class="qa-bar"><span id="qaDirty" class="muted"></span><button class="btn ghost" id="qaPrint">طباعة النماذج</button><button class="btn" id="qaSave">حفظ</button></div>`;
+}
+function qaBody() {
+  const { p, doc: d } = qaD, o = d.obs;
+  if (qaD.tab === 'obs') return `<div class="card pad qa-card"><div class="qa-meta">
+      <label>تاريخ التنفيذ<input class="search" data-f="obs.date" value="${esc(o.date)}" placeholder="مثال: 10/4/1448هـ"></label>
+      <label>اسم الملاحِظ<input class="search" data-f="obs.observer" value="${esc(o.observer)}"></label></div>
+      <div class="muted" style="font-size:13px;margin-top:8px">القائم بالتنفيذ: ${esc(p.people.map(x => x.label).join('، ') || '—')}</div></div>
+    ${QA_OBS.map((t, i) => `<div class="card qa-it"><div class="qa-it-t"><span class="q-n">${nf(i + 1)}</span><span>${esc(t)}</span></div>
+      <div class="seg qa-opt">${QA_OV.map(([v, l]) => `<button data-obs="${i}" data-v="${v}" class="v${v}${o.items[i] === v ? ' on' : ''}">${l}</button>`).join('')}</div>
+      <input class="search qa-note" data-f="obs.notes.${i}" value="${esc(o.notes[i])}" placeholder="الملاحظات (اختياري)"></div>`).join('')}
+    <div class="card pad qa-card" id="qaObsSc">${qaObsSc()}</div>`;
+  if (qaD.tab === 'int') return qaIntW();
+  if (qaD.tab === 'srv') return srvOn(p) ? srvCard(p, true)
+    : `<div class="empty card">الاستبانة غير مفعّلة لهذا البرنامج بعد — التجربة الحالية على برنامجي «سفيرات التقنية» و«تقنية تقود للمعرفة».</div>`;
+  return qaResW();
+}
+function qaObsSc() {
+  const o = qaD.doc.obs, c = v => o.items.filter(x => x === v).length, left = o.items.filter(x => x == null).length, op = obsPct(o);
+  return `<div class="qa-cnt"><span class="chip s-ok">متحقق ${nf(c(2))}</span><span class="chip s-part">جزئيًا ${nf(c(1))}</span><span class="chip s-none">غير متحقق ${nf(c(0))}</span>
+    <b style="margin-inline-start:auto">${op == null ? `بقي ${nf(left)} ${left > 2 ? 'عناصر' : 'عنصر'}` : `النتيجة ${nf(op)}%`}</b></div>`;
+}
+function qaIntForm(iv, pre) {   // shared by the وكيلة (filling it herself) and the teacher
+  return `<div class="qa-meta">
+      <label>${pre === 't' ? 'المقابِلة' : 'اسم المقابِل'}<input class="search" data-i="by" value="${esc(iv?.by || '')}"></label>
+      <label>تاريخ المقابلة<input class="search" data-i="date" value="${esc(iv?.date || '')}" placeholder="مثال: 12/4/1448هـ"></label>
+      <label>الفئة المستهدفة<input class="search" data-i="audience" value="${esc(iv?.audience || '')}" placeholder="مثال: طالبات الصف الثاني"></label>
+      <label>عدد المشاركين<input class="search" data-i="count" inputmode="numeric" value="${esc(iv?.count || '')}" placeholder="5 – 8"></label></div>
+    ${QA_INT.map((t, i) => `<label class="up-l" style="margin-top:12px">${nf(i + 1)}. ${t}</label><textarea class="msg note-in" rows="2" data-ia="${i}">${esc(iv?.answers?.[i] || '')}</textarea>`).join('')}`;
+}
+const readInt = box => ({ by: box.querySelector('[data-i="by"]').value.trim(), date: box.querySelector('[data-i="date"]').value.trim(),
+  audience: box.querySelector('[data-i="audience"]').value.trim(), count: box.querySelector('[data-i="count"]').value.trim(),
+  answers: [...box.querySelectorAll('[data-ia]')].map(x => x.value.trim()) });
+const intView = iv => `<div class="qa-kv"><span>المقابِل: <b>${esc(iv.by || '—')}</b></span><span>التاريخ: <b>${esc(iv.date || '—')}</b></span>
+    <span>الفئة: <b>${esc(iv.audience || '—')}</b></span><span>عدد المشاركين: <b>${esc(iv.count || '—')}</b></span></div>
+  ${QA_INT.map((t, i) => `<div class="qa-qa"><div class="muted">${t}</div><div class="note-b">${esc(iv.answers?.[i] || '—')}</div></div>`).join('')}`;
+const INT_ST = { pending: ['part', 'بانتظار اعتماد الوكيلة'], ok: ['ok', 'معتمدة ✓'], back: ['none', 'أُعيدت للمعلمة'] };
+function qaIntW() {
+  const iv = qaD.doc.interview;
+  const how = '<div class="muted" style="font-size:13px">مقابلة جماعية قصيرة تجريها معلمة البرنامج مع 5 – 8 من المستفيدين، ثم تكتب خلاصة إجاباتهم هنا من حسابها، وتعتمدينها.</div>';
+  if (!iv || qaD.editInt) return `<div class="card pad qa-card" id="qaIntBox"><div class="qa-h"><b>نموذج مقابلة لقياس أثر البرنامج</b></div>
+    ${iv ? '' : `<div class="warnbox" style="margin-bottom:10px">لم ترسل المعلمة المقابلة بعد. يمكنك تعبئتها بنفسك إن أجريتِها.</div>${how}`}
+    ${qaIntForm(iv || { by: qaD.doc.obs.observer })}
+    <div class="toolbar" style="margin:12px 0 0"><button class="btn" data-qa="intSave">اعتماد المقابلة</button>${qaD.editInt ? '<button class="btn ghost" data-qa="intCancel">إلغاء</button>' : ''}</div></div>`;
+  const [c, l] = INT_ST[iv.state] || INT_ST.pending;
+  return `<div class="card pad qa-card"><div class="qa-h"><b>نموذج مقابلة لقياس أثر البرنامج</b><span class="chip s-${c}">${l}</span>
+      <span class="muted">${iv.from ? `من ${esc(iv.from)} · ` : ''}${iv.at ? esc(whenTxt(iv.at)) : ''}</span></div>
+    ${intView(iv)}
+    ${iv.state === 'back' && iv.back ? `<div class="warnbox">ملاحظتك عند الإعادة: ${esc(iv.back)}</div>` : ''}
+    <div class="toolbar" style="margin:12px 0 0">${iv.state !== 'ok' ? '<button class="btn" data-qa="intOk">اعتماد المقابلة</button>' : ''}
+      ${iv.state !== 'back' ? '<button class="btn ghost" data-qa="intBack">إعادتها للمعلمة</button>' : ''}<button class="btn ghost" data-qa="intEdit">تعديل بنفسي</button></div>
+    <div id="qaBackBox" hidden><textarea class="msg note-in" id="qaBackT" rows="2" placeholder="ما المطلوب من المعلمة؟ (يظهر لها)" style="margin-top:10px"></textarea>
+      <button class="btn sm" data-qa="intBackGo" style="margin-top:8px">إعادة مع الملاحظة</button></div></div>`;
+}
+function qaResW() {
+  const d = qaD.doc, op = obsPct(d.obs), sp = srvPct(qaD.srv), sc = qaScore(op, sp), sug = lvOf(sc);
+  const st = d.status, r = d.reply;
+  const act = st === 'closed' ? `<div class="qa-h"><b>التدقيق مغلق</b><span class="muted">${d.closedAt ? esc(whenTxt(d.closedAt)) : ''}</span></div><button class="btn ghost" data-qa="reopen">إعادة فتح التدقيق</button>`
+    : QA_DONE.includes(st) ? `<div class="qa-h"><b>أُرسلت النتيجة للمعلمة</b><span class="muted">${d.sentAt ? esc(whenTxt(d.sentAt)) : ''} · أي تعديل تحفظينه يصلها مباشرة</span></div>
+      <button class="btn" data-qa="close">إغلاق التدقيق</button>`
+    : `<button class="btn wide" data-qa="send"${d.level ? '' : ' disabled'}>اعتماد وإرسال النتيجة للمعلمة</button>
+      <div class="muted" style="font-size:12.5px;margin-top:6px">${d.level ? 'تصلها النتيجة في صفحة البرنامج مع تنبيه في حسابها، وتستطيع الرد ووضع خطة تحسين.' : 'اختاري مستوى الجودة أولًا.'}</div>`;
+  return `<div class="card pad qa-card"><div class="qa-sc">
+      <div><span>بطاقة الملاحظة</span><b>${op == null ? '—' : nf(op) + '%'}</b><small>${op == null ? 'أكملي العناصر العشرة' : ''}</small></div>
+      <div><span>الاستبانة</span><b>${sp == null ? '—' : nf(sp) + '%'}</b><small>${qaD.srv ? nf(qaD.srv.n) + ' ردًّا' : srvOn(qaD.p) ? 'لا ردود بعد' : 'غير مفعّلة'}</small></div>
+      <div><span>المحصلة</span><b>${sc == null ? '—' : nf(sc) + '%'}</b><small>${sp == null ? 'الملاحظة وحدها' : '60% ملاحظة + 40% استبانة'}</small></div>
+      <div><span>المستوى المقترح</span><b>${sug ? QA_LV[sug] : '—'}</b><small>90+ متميز · 75+ متقدم · 60+ مقبول</small></div></div></div>
+    <div class="card pad qa-card"><div class="qa-h"><b>مستوى الجودة</b><span class="muted">القرار لكِ، والمقترح للاسترشاد فقط</span></div>
+      <div class="qa-lv">${Object.entries(QA_LV).map(([k, l]) => `<button data-lv="${k}" class="lv-${k}${d.level === k ? ' on' : ''}">${l}${k === sug ? '<small>مقترح</small>' : ''}</button>`).join('')}</div>
+      <label class="qa-run"><input type="checkbox" id="qaRun"${d.running ? ' checked' : ''}> البرنامج لا يزال يُنفَّذ (تقييم مرحلي)</label>
+      <label class="up-l" id="qaRecL"${d.running ? '' : ' hidden'}>موعد إعادة التدقيق (يظهر لكِ تذكير في قائمة البرامج)<input type="date" class="search" data-f="recheck" value="${esc(d.recheck || '')}" style="display:block;margin-top:4px"></label>
+      <label class="up-l" style="margin-top:12px">توجيه للمعلمة</label>
+      <textarea class="msg note-in" rows="3" data-f="guide" placeholder="مثال: أضيفي صور التنفيذ الفعلي، ووثّقي عدد المستفيدات…">${esc(d.guide || '')}</textarea></div>
+    ${r ? `<div class="card pad qa-card inbox"><div class="qa-h"><b>رد المعلمة</b><span class="muted">${esc(r.from || '')} · ${esc(whenTxt(r.at))}</span></div>
+      ${r.text ? `<div class="note-b">${esc(r.text)}</div>` : ''}
+      ${r.plan?.length ? `<div style="font-weight:600;margin-top:10px">خطة التحسين</div><ul class="qa-plan">${r.plan.map(x => `<li>${esc(x.act)}${x.due ? ` <span class="muted">— ${esc(x.due)}</span>` : ''}</li>`).join('')}</ul>` : ''}</div>` : ''}
+    <div class="card pad qa-card">${act}</div>`;
+}
+function qaMarkDirty() { qaD.dirty = true; const x = $('#qaDirty'); if (x) x.textContent = 'تغييرات غير محفوظة'; }
+function qaSet(path, val) { const ks = path.split('.'); let o = qaD.doc; ks.slice(0, -1).forEach(k => o = o[k] ??= {}); o[ks.at(-1)] = val; qaMarkDirty(); }
+function qaRedraw(host) { host.innerHTML = qaProgram(); bind(host); }
+async function qaSaveNow(host, okMsg) {
+  const b = $('#qaSave'); if (b) { b.disabled = true; b.textContent = 'جارٍ الحفظ…'; }
+  try { if (qaD.doc.obs.observer) lsSet('wk-qa-observer', qaD.doc.obs.observer); await qaPersist(); qaRedraw(host); toast(okMsg || 'حُفظ التدقيق'); return true; }
+  catch (e) {
+    toast(e.message === 'int' ? 'وصلت مقابلة جديدة من المعلمة، راجعيها ثم أعيدي الاعتماد' : e.message === 'gh401' || e.message === 'gh403' ? 'رمز GitHub غير صالح أو منتهي' : 'تعذّر الحفظ، حاولي مرة أخرى');
+    if (e.message === 'int') { const one = await qaLoadOne(qaD.p.no).catch(() => null); const tab = qaD.tab, srv = qaD.srv; qaOpen(qaD.p, one?.doc); qaD.tab = tab; qaD.srv = srv; qaRedraw(host); }
+    return false;
+  } finally { const b2 = $('#qaSave'); if (b2) { b2.disabled = false; b2.textContent = 'حفظ'; } }
+}
+function bindQa(host) {
+  host.addEventListener('input', e => { const f = e.target.closest('[data-f]'); if (f) qaSet(f.dataset.f, f.value); });
+  host.addEventListener('change', e => { if (e.target.id === 'qaRun') { qaSet('running', e.target.checked); const l = $('#qaRecL'); if (l) l.hidden = !e.target.checked; } });
+  host.addEventListener('click', async e => {
+    const t = e.target.closest('button'); if (!t || !host.contains(t)) return;
+    if (t.dataset.qt) { qaD.tab = t.dataset.qt; host.querySelectorAll('#qaTabs button').forEach(b => b.classList.toggle('on', b === t)); $('#qaBody').innerHTML = qaBody(); bind($('#qaBody')); return; }
+    if (t.dataset.obs) { qaD.doc.obs.items[+t.dataset.obs] = +t.dataset.v; qaMarkDirty();
+      t.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === t)); $('#qaObsSc').innerHTML = qaObsSc(); return; }
+    if (t.dataset.lv) { qaSet('level', t.dataset.lv); $('#qaBody').innerHTML = qaBody(); return; }
+    if (t.id === 'qaSave') { qaSaveNow(host); return; }
+    if (t.id === 'qaPrint') { qaPrint(); return; }
+    const a = t.dataset.qa, d = qaD.doc; if (!a) return;
+    const now = new Date().toISOString();
+    if (a === 'intEdit') { qaD.editInt = true; $('#qaBody').innerHTML = qaBody(); return; }
+    if (a === 'intCancel') { qaD.editInt = false; $('#qaBody').innerHTML = qaBody(); return; }
+    if (a === 'intBack') { $('#qaBackBox').hidden = false; $('#qaBackT').focus(); return; }
+    if (a === 'intSave') {
+      const iv = readInt($('#qaIntBox')); if (!iv.answers.some(Boolean)) { toast('اكتبي نتيجة عنصر واحد على الأقل'); return; }
+      d.interview = { ...iv, from: d.interview?.from && qaD.editInt ? d.interview.from + ' (عدّلتها الوكيلة)' : 'الوكيلة', at: now, state: 'ok' };
+      qaD.intTouched = true; qaD.editInt = false; await qaSaveNow(host, 'اعتُمدت المقابلة'); return;
+    }
+    if (a === 'intOk') { d.interview = { ...d.interview, state: 'ok', back: '' }; qaD.intTouched = true; await qaSaveNow(host, 'اعتُمدت المقابلة'); return; }
+    if (a === 'intBackGo') {
+      const note = $('#qaBackT').value.trim(); if (!note) { toast('اكتبي المطلوب من المعلمة'); return; }
+      d.interview = { ...d.interview, state: 'back', back: note }; qaD.intTouched = true;
+      if (await qaSaveNow(host, 'أُعيدت المقابلة للمعلمة')) qaAlert(`أعادت الوكيلة نموذج المقابلة لبرنامج «${qaD.p.name}»: ${note}`);
+      return;
+    }
+    if (a === 'send') {
+      if (!d.level) { toast('اختاري مستوى الجودة أولًا'); return; }
+      if (t.dataset.sure !== '1') { t.dataset.sure = '1'; t.textContent = `تأكيد الإرسال بمستوى «${QA_LV[d.level]}»${d.running ? ' (مرحلي)' : ''}`; return; }
+      Object.assign(d, { status: d.reply ? 'replied' : 'sent', sentAt: now }); qaD.statusSet = true;
+      if (await qaSaveNow(host, 'أُرسلت النتيجة للمعلمة'))
+        qaAlert(`صدرت نتيجة تدقيق جودة برنامج «${qaD.p.name}»: المستوى «${QA_LV[d.level]}»${d.running ? ' (تقييم مرحلي، البرنامج لا يزال يُنفَّذ)' : ''}. افتحي صفحة البرنامج للاطلاع والرد.`);
+      return;
+    }
+    if (a === 'close') { Object.assign(d, { status: 'closed', closedAt: now }); qaD.statusSet = true; await qaSaveNow(host, 'أُغلق التدقيق'); return; }
+    if (a === 'reopen') { Object.assign(d, { status: d.reply ? 'replied' : 'sent', closedAt: null }); qaD.statusSet = true; await qaSaveNow(host, 'أُعيد فتح التدقيق'); return; }
+  });
+}
+async function qaAlert(text) {   // an alert in each assigned teacher's account (same as «التنبيهات»)
+  for (const x of qaD.p.people.filter(x => x.t && D.phones?.[x.t])) {
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    try { await saveNotes({ name: x.t }, items => items.push({ id, to: x.t, at: new Date().toISOString(), text, kind: 'qa' })); } catch {}
+  }
+}
+window.addEventListener('beforeunload', e => { if (qaD?.dirty && location.hash.startsWith('#qa/')) { e.preventDefault(); e.returnValue = ''; } });
+
+// the three ministry forms, filled, for printing / saving as PDF
+function qaPrint() {
+  const { p, doc: d, srv: s } = qaD, o = d.obs, iv = d.interview, ck = on => on ? '☑' : '☐';
+  const head = (title, lines) => `<div class="pf-h"><div class="pf-t"><b>${title}</b>${lines.map(([k, v]) => `<div>${k}: <span class="pf-v">${esc(v || '')}</span></div>`).join('')}</div>
+    <div class="pf-moe">وزارة التعليم<small>Ministry of Education</small><small>المتوسطة الحادية والعشرون بالخميس</small></div></div>`;
+  const res = `<div class="pf-res">مستوى الجودة: <b>${d.level ? QA_LV[d.level] : '—'}</b>${d.running ? ' — تقييم مرحلي: البرنامج لا يزال يُنفَّذ' : ''}${d.guide ? `<br>التوجيه: ${esc(d.guide)}` : ''}</div>`;
+  const box = document.createElement('div'); box.id = 'pfBox';
+  box.innerHTML = `<section>${head('نموذج بطاقة ملاحظة تنفيذ البرامج والبرامج المدرسية', [['اسم البرنامج', p.name], ['تاريخ التنفيذ', o.date], ['القائم بالتنفيذ', p.people.map(x => x.label).join('، ')], ['اسم الملاحظ', o.observer]])}
+    <table class="pf"><tr><th>م</th><th>عنصر الملاحظة</th><th>متحقق</th><th>متحقق جزئيًا</th><th>غير متحقق</th><th>الملاحظات</th></tr>
+    ${QA_OBS.map((t, i) => `<tr><td class="q">${i + 1}</td><td class="q">${esc(t)}</td>${[2, 1, 0].map(v => `<td>${ck(o.items[i] === v)}</td>`).join('')}<td>${esc(o.notes[i] || '')}</td></tr>`).join('')}</table>${res}</section>
+  <section>${head('استبانة قياس أثر البرامج والبرامج المدرسية', [['اسم البرنامج', p.name], ['الفئة المستهدفة', s ? s.types.map(x => x[0]).join('، ') : ''], ['عدد المستجيبين', s ? String(s.n) : '0']])}
+    ${s ? `<table class="pf"><tr><th>م</th><th>العبارة</th>${['أوافق بشدة (5)', 'أوافق (4)', 'محايد (3)', 'لا أوافق (2)', 'لا أوافق بشدة (1)'].map(x => `<th>${x}</th>`).join('')}<th>المتوسط</th></tr>
+      ${QA_SRV.map((t, i) => `<tr><td class="q">${i + 1}</td><td class="q">${esc(t)}</td>${[4, 3, 2, 1, 0].map(j => `<td>${s.dist[i][j]}</td>`).join('')}<td><b>${s.items[i].toFixed(2)}</b></td></tr>`).join('')}</table>
+      <div class="pf-res">الأرقام = عدد من اختار كل درجة · متوسط الموافقة العام ${s.avg.toFixed(2)} من 5 (${srvPct(s)}%)</div>` : '<div class="pf-res">لا توجد ردود على الاستبانة.</div>'}</section>
+  <section>${head('نموذج مقابلة لقياس أثر البرامج والبرامج المدرسية', [['اسم البرنامج', p.name], ['تاريخ المقابلة', iv?.date], ['الفئة المستهدفة', iv?.audience], ['اسم المقابل', iv?.by], ['عدد المشاركين', iv?.count]])}
+    <table class="pf"><tr><th style="width:32%">العنصر</th><th>النتيجة</th></tr>${QA_INT.map((t, i) => `<tr><td class="q">${t}</td><td>${esc(iv?.answers?.[i] || '')}</td></tr>`).join('')}</table></section>`;
+  document.body.append(box); document.body.classList.add('printing');
+  window.addEventListener('afterprint', () => { box.remove(); document.body.classList.remove('printing'); }, { once: true });
+  window.print();
+}
+
+// --- the teacher: her program page gets «الجودة وقياس الأثر» (the survey for pilot programs, the interview, and the audit once sent)
+async function mountQaT(host) {
+  const p = D.plan[+host.dataset.k]; if (!p) return;
+  let doc = null;
+  try {
+    const r = await fetch(`data/q/p${p.no}.json?t=${Date.now()}`, { cache: 'no-store' });
+    if (r.ok) { const box = (await r.json()).t?.[await teacherId(sessionCode)]; if (box) doc = await openBox(box, sessionCode); }
+  } catch {}
+  if (!host.isConnected) return;
+  if (!doc && !srvOn(p)) { host.innerHTML = ''; return; }
+  host.innerHTML = `<h2>الجودة وقياس الأثر</h2>${qaResT(p, doc)}${srvCard(p)}${qaIntT(p, doc)}`;
+  bind(host); bindQaT(host, p, doc);
+}
+function qaResT(p, d) {
+  if (!d || !QA_DONE.includes(d.status)) return '';
+  const it = d.obs?.items || [], c = v => it.filter(x => x === v).length, weak = QA_OBS.map((t, i) => ({ t, i, v: it[i], n: d.obs.notes?.[i] })).filter(x => x.v != null && x.v < 2);
+  const r = d.reply, closed = d.status === 'closed';
+  return `<div class="card pad qa-card inbox"><div class="qa-h"><b>نتيجة تدقيق البرنامج</b>${lvChip(d.level, d.running)}${closed ? '<span class="chip s-ok">مغلق</span>' : ''}</div>
+    ${d.running ? '<div class="warnbox">تقييم مرحلي: البرنامج لا يزال يُنفَّذ، استمري في إرفاق الشواهد.</div>' : ''}
+    <div class="qa-cnt"><span class="chip s-ok">متحقق ${nf(c(2))}</span><span class="chip s-part">جزئيًا ${nf(c(1))}</span><span class="chip s-none">غير متحقق ${nf(c(0))}</span></div>
+    ${weak.length ? `<div style="font-weight:600;margin-top:10px">يحتاج عناية</div><ul class="qa-plan">${weak.map(x => `<li>${nf(x.i + 1)}. ${esc(x.t)} — <b>${x.v ? 'متحقق جزئيًا' : 'غير متحقق'}</b>${x.n ? `<br><span class="muted">${esc(x.n)}</span>` : ''}</li>`).join('')}</ul>` : ''}
+    ${d.guide ? `<div style="font-weight:600;margin-top:10px">توجيه الوكيلة</div><div class="note-b">${esc(d.guide)}</div>` : ''}
+    ${closed ? '' : `<div id="qaRBox" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+      <div style="font-weight:600">ردّك وخطة التحسين</div>
+      <textarea class="msg note-in" id="qaRT" rows="2" placeholder="ردّك أو توضيحك (اختياري)" style="margin-top:8px">${esc(r?.text || '')}</textarea>
+      ${[0, 1, 2].map(i => `<div class="qa-pl"><input class="search" data-pa="${i}" placeholder="إجراء تحسين ${nf(i + 1)}" value="${esc(r?.plan?.[i]?.act || '')}"><input class="search" type="date" data-pd="${i}" value="${esc(r?.plan?.[i]?.due || '')}" aria-label="الموعد"></div>`).join('')}
+      <button class="btn" id="qaRGo" style="margin-top:10px">${r ? 'تحديث الرد' : 'إرسال الرد للوكيلة'}</button>
+      ${r ? `<span class="muted" style="font-size:12.5px;margin-inline-start:8px">آخر رد: ${esc(whenTxt(r.at))}</span>` : ''}</div>`}</div>`;
+}
+function qaIntT(p, d) {
+  const iv = d?.interview, sentAt = lsGet('wk-qa-int-' + p.no), waiting = sentAt && (!iv?.at || iv.at < sentAt);
+  const [c, l] = iv ? INT_ST[iv.state] || INT_ST.pending : [];
+  const head = `<div class="qa-h"><b>نموذج مقابلة لقياس أثر البرنامج</b>${waiting ? '<span class="chip s-na">أُرسلت · تصل خلال دقائق</span>' : iv ? `<span class="chip s-${c}">${l}</span>` : ''}</div>`;
+  if (iv?.state === 'ok') return `<div class="card pad qa-card">${head}${intView(iv)}</div>`;
+  const who = D.teachers.find(x => p.people.some(y => y.t === x.name)) || D.teachers[0];
+  return `<div class="card pad qa-card" id="qaIntT">${head}
+    ${iv?.state === 'back' && iv.back ? `<div class="warnbox">ملاحظة الوكيلة: ${esc(iv.back)}</div>` : ''}
+    <div class="muted" style="font-size:13.5px">اجلسي 10 دقائق مع 5 – 8 من المستفيدات من البرنامج، واسأليهن عن العناصر الخمسة، ثم اكتبي <b>خلاصة إجاباتهن</b> (لا رأيك أنتِ).</div>
+    ${qaIntForm(iv || { by: who?.name || '' }, 't')}
+    <button class="btn" id="qaIGo" style="margin-top:12px">${iv ? 'إعادة الإرسال للوكيلة' : 'إرسال المقابلة للوكيلة'}</button></div>`;
+}
+function bindQaT(host, p) {
+  const send = async (btn, fields, key, msg) => {
+    if (!D.inbox) { toast('الإرسال غير متاح حاليًا'); return; }
+    const who = D.teachers.find(x => p.people.some(y => y.t === x.name)) || D.teachers[0];
+    btn.disabled = true; const was = btn.textContent; btn.textContent = 'جارٍ الإرسال…';
+    try { await sealSend({ name: who.name, kind: 'qa', program: p.name, ...fields }, new Uint8Array(0)); if (key) lsSet(key, new Date().toISOString()); toast(msg); btn.textContent = '✓ أُرسل'; }
+    catch { toast('تعذّر الإرسال، تحققي من الاتصال'); btn.disabled = false; btn.textContent = was; }
+  };
+  host.querySelector('#qaIGo')?.addEventListener('click', e => {
+    const iv = readInt($('#qaIntT'));
+    if (!iv.count || iv.answers.filter(Boolean).length < 3) { toast('اكتبي عدد المشاركات ونتائج 3 عناصر على الأقل'); return; }
+    send(e.currentTarget, { interview: iv }, 'wk-qa-int-' + p.no, 'أُرسلت المقابلة، وتصل للوكيلة خلال دقائق');
+  });
+  host.querySelector('#qaRGo')?.addEventListener('click', e => {
+    const plan = [0, 1, 2].map(i => ({ act: host.querySelector(`[data-pa="${i}"]`).value.trim(), due: host.querySelector(`[data-pd="${i}"]`).value })).filter(x => x.act);
+    const text = $('#qaRT').value.trim(); if (!text && !plan.length) { toast('اكتبي ردّك أو إجراء تحسين واحدًا على الأقل'); return; }
+    send(e.currentTarget, { reply: { text, plan } }, null, 'أُرسل ردّك، ويصل للوكيلة خلال دقائق');
+  });
 }
 
 // --- the وكيلة: delete evidence. The request (encrypted with her passcode) goes to data/del/; the PC moves the file
