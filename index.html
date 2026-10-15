@@ -296,7 +296,6 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .warnbox{background:var(--part-bg);color:var(--ink);border-radius:12px;padding:10px 12px;font-size:13.5px;margin-bottom:10px}
 .warnbox a{font-weight:600}
 .qa-grid{display:grid;grid-template-columns:1fr;gap:14px;align-items:start}
-@media (min-width:1000px){.qa-grid{grid-template-columns:1fr 320px}.qa-ev{position:sticky;top:132px;max-height:calc(100vh - 220px);overflow:auto}}
 .qa-tabs{display:flex;width:100%;margin-bottom:12px;overflow-x:auto}.qa-tabs button{flex:1 0 auto;padding:9px 10px}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--part);vertical-align:middle}
 .qa-card{margin-bottom:10px}
@@ -1366,7 +1365,7 @@ function qaList() {
     return `<button class="row" data-go="qa/${p.k}">${sc == null ? `<div class="ring" style="--v:0">—</div>` : ring(sc)}<div class="grow"><div class="name">${esc(p.name)}</div>
       <div class="sub">${esc(p.people.map(x => x.label).join('، ') || '—')} · ${p.n ? nf(p.n) + ' شاهد' : 'بلا شواهد'}${srvOn(p) ? ' · استبانة مفعّلة' : ''}${d.interview?.state === 'pending' ? ' · <b style="color:var(--part)">مقابلة بانتظار اعتمادك</b>' : ''}</div></div>
       <div class="qa-chips">${qaChip(d.status)}${lvChip(d.level, d.running)}</div></button>`; }).join('') || '<div class="empty card">لا يوجد</div>'}</div>
-  <p class="foot">النسبة في الدائرة = بطاقة الملاحظة · المستوى النهائي تختارينه في صفحة البرنامج · الاستبانة مفعّلة حاليًا لبرامج التجربة فقط</p>`;
+  <p class="foot">النسبة في الدائرة = بطاقة الملاحظة · المستوى النهائي تختارينه في صفحة البرنامج · الاستبانة مفعّلة لبرامج التجربة والبرامج المنتهية</p>`;
 }
 function qaProgram() {
   const { p, doc: d } = qaD;
@@ -1378,10 +1377,7 @@ function qaProgram() {
     <div class="seg qa-tabs" id="qaTabs">${[['obs', 'بطاقة الملاحظة'], ['int', 'المقابلة'], ['srv', 'الاستبانة'], ['res', 'النتيجة والإرسال']]
       .map(([k, l]) => `<button data-qt="${k}" class="${qaD.tab === k ? 'on' : ''}">${l}${k === 'int' && d.interview?.state === 'pending' ? ' <i class="dot"></i>' : ''}</button>`).join('')}</div>
     <div id="qaBody">${qaBody()}</div></div>
-    <aside class="card qa-ev"><div class="qa-h" style="padding:12px 14px 0"><b>الشواهد (${nf(p.n)})</b></div>
-      ${p.ev?.files.length ? `<ul class="files">${p.ev.files.map(fileLi).join('')}</ul>` : '<div class="empty">لا توجد شواهد بعد</div>'}
-      <div class="acts">${p.ev ? `<a class="btn sm ghost" href="${esc(p.ev.url)}" target="_blank" rel="noopener">فتح مجلد الشواهد</a>` : ''}
-        ${p.rep ? `<a class="btn sm ghost" href="${esc(p.rep.url)}" target="_blank" rel="noopener">قياس الأثر والتقرير</a>` : ''}</div></aside></div>
+  </div>
   <div class="qa-bar"><span id="qaDirty" class="muted"></span><button class="btn ghost" id="qaPrint">طباعة النماذج</button><button class="btn" id="qaSave">حفظ</button></div>`;
 }
 function qaBody() {
