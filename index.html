@@ -241,7 +241,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .ck .n{flex:1;min-width:0;overflow-wrap:anywhere}
 .ck.pend{opacity:.55;cursor:default}
 .note-close{margin-inline-start:auto}
-.subtabs{display:flex;gap:10px;margin:0 0 16px;flex-wrap:wrap}.subtabs button{flex:1;min-width:130px;min-height:46px;padding:10px 14px;border-radius:12px;border:2px solid var(--brand);background:var(--card);color:var(--brand);font:inherit;font-size:15px;font-weight:700;cursor:pointer}.subtabs button:hover{background:var(--soft)}.subtabs button.on{background:var(--brand);color:var(--brand-ink)}.ttabs{display:flex;margin:0 0 14px}.ttabs button{flex:1;padding:10px 8px;font-size:14.5px}
+.subtabs{display:flex;gap:10px;margin:0 0 16px;flex-wrap:wrap}.subtabs button{flex:1;min-width:130px;min-height:46px;padding:10px 14px;border-radius:12px;border:2px solid var(--brand);background:var(--card);color:var(--brand);font:inherit;font-size:15px;font-weight:700;cursor:pointer}.subtabs button:hover{background:var(--soft)}.subtabs button.on{background:var(--brand);color:var(--brand-ink)}.qa-ph{margin:18px 0 10px;font-size:16px}.ttabs{display:flex;margin:0 0 14px}.ttabs button{flex:1;padding:10px 8px;font-size:14.5px}
 .btn.danger{background:var(--none);border-color:var(--none)}
 .foot{margin-top:28px;color:var(--muted);font-size:12.5px;text-align:center}
 
@@ -1379,6 +1379,19 @@ async function mountQa(host) {
     bind(host);
   } catch (e) { if (host.isConnected) host.innerHTML = `<div class="empty card">تعذّر تحميل التدقيق${e.message === 'gh401' || e.message === 'gh403' ? ' (رمز GitHub غير صالح أو منتهي)' : ''}، اضغطي «تحديث».</div>`; }
 }
+// the program's phase by the timeline (from/to in Hijri y/m/d → Gregorian by Umm al-Qura month starts) — groups the audit list
+const HM1 = { '1448/3': '2026-08-14', '1448/4': '2026-09-12', '1448/5': '2026-10-12', '1448/6': '2026-11-11', '1448/7': '2026-12-10', '1448/8': '2027-01-09',
+  '1448/9': '2027-02-08', '1448/10': '2027-03-09', '1448/11': '2027-04-08', '1448/12': '2027-05-07', '1449/1': '2027-06-06', '1449/2': '2027-07-05' };
+const hDay = s => { const [y, m, d] = (s || '').split('/'), b = HM1[y + '/' + +m]; return b ? new Date(new Date(b + 'T00:00:00').getTime() + (d - 1) * 864e5) : null; };
+const TERM2 = new Date('2027-01-17T00:00:00');   // first day of the second semester (school_weeks_1448.py)
+const PHASES = [['done', 'البرامج المنتهية'], ['run', 'البرامج المستمرة والمستدامة'], ['t1', 'لم تبدأ بعد · تبدأ في الفصل الدراسي الأول'], ['t2', 'لم تبدأ بعد · تبدأ في الفصل الدراسي الثاني']];
+function phase(p) {
+  const now = new Date(), a = hDay(p.from), b = hDay(p.to);
+  if (!a || !b) return 'run';
+  if (now > new Date(b.getTime() + 864e5)) return 'done';
+  if (now >= a) return 'run';
+  return a >= TERM2 ? 't2' : 't1';
+}
 function qaList() {
   const docs = qaDocs || {}, rows = D.plan.map(p => ({ p, d: docs[p.no]?.doc || { status: 'none' } }));
   const done = rows.filter(r => QA_DONE.includes(r.d.status)), pct = Math.round(done.length / rows.length * 100);
@@ -1386,6 +1399,10 @@ function qaList() {
   const F = { all: () => true, todo: r => !QA_DONE.includes(r.d.status), sent: r => r.d.status === 'sent', replied: r => r.d.status === 'replied',
     run: r => QA_DONE.includes(r.d.status) && r.d.running, closed: r => r.d.status === 'closed' };
   const flt = F[state.qaF] ? state.qaF : 'all', shown = rows.filter(F[flt]);
+  const row = ({ p, d }) => { const sc = qaScore(obsPct(d.obs), null);
+    return `<button class="row" data-go="qa/${p.k}">${sc == null ? `<div class="ring" style="--v:0">—</div>` : ring(sc)}<div class="grow"><div class="name">${esc(p.name)}</div>
+      <div class="sub">${esc(p.people.map(x => x.label).join('، ') || '—')} · ${p.n ? nf(p.n) + ' شاهد' : 'بلا شواهد'}${srvOn(p) ? ' · استبانة مفعّلة' : ''}${d.interview?.state === 'pending' ? ' · <b style="color:var(--part)">مقابلة بانتظار اعتمادك</b>' : ''}</div></div>
+      <div class="qa-chips">${qaChip(d.status)}${lvChip(d.level, d.running)}</div></button>`;  };
   const due = rows.filter(r => r.d.running && r.d.recheck && r.d.recheck <= D.generated.slice(0, 10) && r.d.status !== 'none');
   return `<div class="card hero">${ring(pct).replace('class="ring"', 'class="ring lg"')}
     <div class="grow"><h2>تدقيق جودة برامج الخطة التشغيلية 1448هـ</h2>
@@ -1395,10 +1412,7 @@ function qaList() {
   ${due.length ? `<div class="card pad warnbox"><b>حان موعد إعادة التدقيق:</b> ${due.map(r => `<a href="#qa/${r.p.k}">${esc(r.p.name)}</a>`).join('، ')}</div>` : ''}
   <div class="toolbar"><div class="seg seg-wrap">${[['all', 'الكل'], ['todo', 'لم يُدقق'], ['sent', 'بانتظار رد المعلمة'], ['replied', 'ردّت المعلمة'], ['run', 'قيد التنفيذ'], ['closed', 'مغلق']]
     .map(([k, l]) => `<button data-qf="${k}" class="${flt === k ? 'on' : ''}">${l} (${nf(rows.filter(F[k]).length)})</button>`).join('')}</div></div>
-  <div class="list">${shown.map(({ p, d }) => { const sc = qaScore(obsPct(d.obs), null);
-    return `<button class="row" data-go="qa/${p.k}">${sc == null ? `<div class="ring" style="--v:0">—</div>` : ring(sc)}<div class="grow"><div class="name">${esc(p.name)}</div>
-      <div class="sub">${esc(p.people.map(x => x.label).join('، ') || '—')} · ${p.n ? nf(p.n) + ' شاهد' : 'بلا شواهد'}${srvOn(p) ? ' · استبانة مفعّلة' : ''}${d.interview?.state === 'pending' ? ' · <b style="color:var(--part)">مقابلة بانتظار اعتمادك</b>' : ''}</div></div>
-      <div class="qa-chips">${qaChip(d.status)}${lvChip(d.level, d.running)}</div></button>`; }).join('') || '<div class="empty card">لا يوجد</div>'}</div>
+  ${PHASES.map(([k, l]) => { const g = shown.filter(r => phase(r.p) === k); return g.length ? `<h2 class="qa-ph">${l} <span class="muted" style="font-weight:400">(${nf(g.length)})</span></h2><div class="list">${g.map(row).join('')}</div>` : ''; }).join('') || '<div class="empty card">لا يوجد</div>'}
   <p class="foot">النسبة في الدائرة = بطاقة الملاحظة · المستوى النهائي تختارينه في صفحة البرنامج · الاستبانة مفعّلة لبرامج التجربة والبرامج المنتهية</p>`;
 }
 function qaProgram() {
