@@ -196,7 +196,8 @@ function renderRows(){
 syncFilters(); renderRows();
 
 /* program dialog */
-const tlOf = p => { const r = D.timeline && D.timeline.rows.find(x => x.no === p.no); return r ? hd(`${D.timeline.year}/${r.start[0]}/${r.start[1]}`) + ' – ' + hd(`${D.timeline.year}/${r.end[0]}/${r.end[1]}`) : ''; };
+const hmd = ([m,d]) => hd(m > 12 ? `1449/${m-12}/${d}` : `1448/${m}/${d}`);
+const tlOf = p => { const r = D.timeline && D.timeline.rows.find(x => x.no === p.no); return r ? hmd(r.start) + ' – ' + hmd(r.end) : ''; };
 const dlg = $('#dlg');
 function openProgram(name){
   const p = byName[name]; if (!p) return;
@@ -216,8 +217,8 @@ function openProgram(name){
       <div><div class="k">خط الأساس ← المستهدف</div><div class="v num">${fx(p.base,2)}٪ ← ${fx(p.target,1)}٪</div></div>
       <div><div class="k">دورة القياس</div><div class="v">${esc(p.cycle)}</div></div>
       <div><div class="k">التكلفة</div><div class="v num">${p.cost ? ar(p.cost)+' ر.س' : 'بدون تكلفة'}</div></div>
-      <div><div class="k">مدة التنفيذ</div><div class="v num">${from} – ${to}</div></div>
-      ${tlOf(p) ? `<div><div class="k">الخطة الزمنية</div><div class="v num">${tlOf(p)}</div></div>` : ''}
+      <div><div class="k">مدة التنفيذ</div><div class="v num">${tlOf(p) || from + ' – ' + to}</div></div>
+      ${p.weeks ? `<div><div class="k">الأسابيع الدراسية</div><div class="v">${esc(ar(p.weeks[0] === p.weeks[1] ? p.weeks[0] : p.weeks[0] + ' ← ' + p.weeks[1]))}</div></div>` : ''}
     </div>
     <div class="cols">
       <div style="display:grid;gap:10px;align-content:start">
@@ -275,8 +276,8 @@ function renderTimeline(){
     const d = Math.round((today - dOf(T.monthStart[m])) / DAY) + 1;
     hm = [m, d]; cur = (m - ms[0]) * 4 + Math.min(Math.floor((d - 1) / 7), 3);
   } else if (today >= endAll) cur = ms.length * 4;
-  const week = Math.floor((today - dOf(T.week1)) / DAY / 7) + 1;
-  const hd2 = ([m,d]) => hd(`${T.year}/${m}/${d}`);
+  const tw = (T.weeks || []).find(w => today >= dOf(w[2]) && today <= dOf(w[2]) + 4 * DAY);
+  const hd2 = hmd;
   const R = T.rows.map(r => {
     const st = dOf(r.sg), en = dOf(r.eg);
     const state = today < st ? 'wait' : today > en ? 'done' : 'run';
@@ -286,7 +287,7 @@ function renderTimeline(){
   const nextEnd = R.filter(r => r.state !== 'done').sort((a,b) => a.left - b.left)[0];
   $('#tlSub').textContent = `${ar(R.length)} برنامجًا · اضغطي على اسم البرنامج لعرض بطاقته`;
   $('#tlTiles').innerHTML = [
-    ['الأسبوع الدراسي الحالي', week >= 1 ? ar(week) : '—', hm ? 'اليوم ' + hd2(hm) : ''],
+    ['الأسبوع الدراسي الحالي', tw ? ar(tw[1]) : '—', (tw ? (tw[0] === 1 ? 'الفصل الأول' : 'الفصل الثاني') + ' · ' : '') + (hm ? 'اليوم ' + hd2(hm) : '')],
     ['برامج جارية الآن', ar(running.length), `من ${ar(R.length)} برنامجًا`],
     ['برامج لم تبدأ بعد', ar(wait.length), wait.length ? wait.map(r => r.name).join('، ') : 'بدأت جميع البرامج'],
     ['برامج انتهت', ar(done.length), done.length ? done.map(r => r.name).join('، ') : 'التنفيذ مستمر'],
@@ -295,7 +296,7 @@ function renderTimeline(){
   const W = ms.length * 4;
   let h = `<thead><tr><th class="c-no" rowspan="3">م</th><th class="c-name" rowspan="3">البرامج والأنشطة</th><th class="c-d" rowspan="3">البداية</th><th class="c-d" rowspan="3">النهاية</th>`;
   h += T.months.map(o => `<th class="mo${o.dark ? ' dk' : ''}" colspan="4" style="background:#${o.color}">${esc(o.name)}</th>`).join('') + '</tr><tr>';
-  h += T.months.map(o => `<th class="wk" colspan="4" style="background:#${o.tint}">الأسابيع ${o.weeks.length ? ar(o.weeks[0]) + '–' + ar(o.weeks[o.weeks.length-1]) : ''}</th>`).join('') + '</tr><tr>';
+  h += T.months.map(o => `<th class="wk" colspan="4" style="background:#${o.tint}">${o.wl}</th>`).join('') + '</tr><tr>';
   for (let k = 0; k < W; k++) h += `<th class="wkn${k === cur ? ' now' : ''}">${ar(k % 4 + 1)}</th>`;
   h += '</tr></thead><tbody>';
   R.forEach((r, i) => {
@@ -309,7 +310,7 @@ function renderTimeline(){
     h += '</tr>';
   });
   $('#tl').innerHTML = h + '</tbody>';
-  $('#tlNote').textContent = `خانات الأسابيع في كل شهر: ١ = الأيام ١–٧، ٢ = ٨–١٤، ٣ = ١٥–٢١، ٤ = ٢٢ إلى نهاية الشهر. تواريخ النهاية لا تتكرر، والبرامج التي تشترك في تاريخ البداية ${ar(T.shared)} من ${ar(R.length)} (${ar(Math.round(T.shared / R.length * 100))}٪، والحد ٣٥٪). الأسبوع الحالي والجزء المنفَّذ يُحسبان تلقائيًا من تاريخ اليوم.`;
+  $('#tlNote').textContent = 'خانات الأسابيع في كل شهر: ١ = الأيام ١–٧، ٢ = ٨–١٤، ٣ = ١٥–٢١، ٤ = ٢٢ إلى نهاية الشهر. الأسابيع الدراسية وفق توزيع الوزارة ١٤٤٨هـ: الفصل الأول من ١٠/٣ (إجازة ١٢–١٦/٦)، والفصل الثاني من ٩/٨ (إجازة الفطر ٢١/٩–٥/١٠، والأضحى ٢–١٦/١٢) وينتهي ٥/١/١٤٤٩هـ. الأسبوع الحالي والجزء المنفَّذ يُحسبان تلقائيًا من تاريخ اليوم.';
   // scroll so the current week is in view (RTL: the table starts at the right)
   requestAnimationFrame(() => {
     const wrap = $('.tl-wrap'), c = wrap.querySelector('th.now');
