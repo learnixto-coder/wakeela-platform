@@ -557,6 +557,7 @@ function route() {
     const rev = !mine && D.plan.some(p => p.rev) && (v === 'rev' || v === 'me');   // the review is her first page
     $('#view').innerHTML = v === 'x' && D.extra[+a] ? teacherExtra(+a)
       : rev ? tTabs('rev') + teacherReview()
+      : v === 'qa' && D.plan.length ? tTabs('qa') + teacherQa()
       : !mine ? (v === 'plan' && a !== undefined && a !== '' ? teacherProgram(+a) : tTabs('plan') + teacherPlan())
       : tTabs('mine') + (i >= 0 ? teacher(i) : `<h2 style="margin:6px 0 12px">اختاري اسمك</h2><div class="list">${D.teachers.map(teacherRow).join('')}</div>`);
     bind($('#view')); window.scrollTo(0, 0); return;
@@ -583,7 +584,7 @@ function bind(el) {
   const pd = el.querySelector('#pdel'); if (pd) bindPlanDel(pd);
   const ph = el.querySelector('#plansHost'); if (ph) mountPlansHere(ph);
   const qh = el.querySelector('#qaHost'); if (qh) mountQa(qh);
-  const qt = el.querySelector('#qaT'); if (qt) mountQaT(qt);
+  el.querySelectorAll('#qaT, .qaT').forEach(mountQaT);
   el.querySelectorAll('[data-qr]').forEach(drawQr);
   el.querySelectorAll('[data-srv]').forEach(fillSrv);
   el.querySelectorAll('[data-qf]').forEach(x => x.addEventListener('click', () => { state.qaF = x.dataset.qf; const h = $('#qaHost'); h.innerHTML = qaList(); bind(h); }));
@@ -1097,7 +1098,7 @@ function rvCard(p) {
       <button class="btn sm" data-go="plan/${p.k}">إرفاق شواهد للبرنامج ←</button></div></section>`;
 }
 // teacher top tabs: «تقييم برامجي» (landing when reviewed), «برامج الخطة التشغيلية» and «ملفاتي»
-const tTabs = cur => { const T = [D.plan.some(p => p.rev) && ['rev', 'تقييم برامجي'], D.plan.length && ['plan', 'برامج الخطة التشغيلية'], !D.planOnly && D.plan.length && ['mine', 'ملفاتي (سجلات الإنجاز)']].filter(Boolean);
+const tTabs = cur => { const T = [D.plan.some(p => p.rev) && ['rev', 'تقييم برامجي'], D.plan.length && ['plan', 'برامج الخطة التشغيلية'], D.plan.length && ['qa', 'تدقيق الجودة'], !D.planOnly && D.plan.length && ['mine', 'ملفاتي (سجلات الإنجاز)']].filter(Boolean);
   return T.length < 2 ? '' : `<div class="seg ttabs">${T.map(([g, l]) => `<button data-go="${g}" class="${cur === g ? 'on' : ''}">${l}</button>`).join('')}</div>`; };
 // her programs as buttons; each opens the program's own page (#plan/<k>)
 function teacherPlan() {
@@ -1562,6 +1563,13 @@ function qaPrint() {
   window.print();
 }
 
+// --- the teacher: tab «تدقيق الجودة» = every program of hers with the وكيلة's feedback, her reply, the interview and the survey
+function teacherQa() {
+  return `<div class="card hero"><span class="sec-ic">${planIcon}</span><div class="grow"><h2>تدقيق جودة برامجي</h2>
+    <p>هنا تصلك نتيجة تدقيق الوكيلة لكل برنامج وملاحظاتها، وتكتبين ردّك وخطة التحسين، وترسلين نموذج المقابلة.</p></div></div>
+  ${D.plan.map(p => `<div class="qaT" data-k="${p.k}" data-page="1"><h2>${esc(p.name)}</h2><div class="muted" style="padding:6px 0 14px">جارٍ التحميل…</div></div>`).join('')}`;
+}
+
 // --- the teacher: her program page gets «الجودة وقياس الأثر» (the survey for pilot programs, the interview, and the audit once sent)
 async function mountQaT(host) {
   const p = D.plan[+host.dataset.k]; if (!p) return;
@@ -1571,8 +1579,11 @@ async function mountQaT(host) {
     if (r.ok) { const box = (await r.json()).t?.[await teacherId(sessionCode)]; if (box) doc = await openBox(box, sessionCode); }
   } catch {}
   if (!host.isConnected) return;
-  if (!doc && !srvOn(p)) { host.innerHTML = ''; return; }
-  host.innerHTML = `<h2>الجودة وقياس الأثر</h2>${qaResT(p, doc)}${srvCard(p)}${qaIntT(p, doc)}`;
+  const page = host.dataset.page;
+  if (!doc && !srvOn(p) && !page) { host.innerHTML = ''; return; }
+  const wait = page && !(doc && QA_DONE.includes(doc.status)) ? `<div class="card pad qa-card"><div class="qa-h"><b>نتيجة تدقيق البرنامج</b><span class="chip s-na">لم تصل بعد</span></div>
+    <div class="muted" style="font-size:13.5px">حين تُنهي الوكيلة تدقيق البرنامج تظهر هنا النتيجة والعناصر التي تحتاج عناية، وتكتبين ردّك وخطة التحسين.</div></div>` : '';
+  host.innerHTML = `<h2>${page ? esc(p.name) : 'الجودة وقياس الأثر'}</h2>${wait}${qaResT(p, doc)}${srvCard(p)}${qaIntT(p, doc)}`;
   bind(host); bindQaT(host, p, doc);
 }
 function qaResT(p, d) {
@@ -1612,13 +1623,13 @@ function bindQaT(host, p) {
     catch { toast('تعذّر الإرسال، تحققي من الاتصال'); btn.disabled = false; btn.textContent = was; }
   };
   host.querySelector('#qaIGo')?.addEventListener('click', e => {
-    const iv = readInt($('#qaIntT'));
+    const iv = readInt(host.querySelector('#qaIntT'));
     if (!iv.count || iv.answers.filter(Boolean).length < 3) { toast('اكتبي عدد المشاركات ونتائج 3 عناصر على الأقل'); return; }
     send(e.currentTarget, { interview: iv }, 'wk-qa-int-' + p.no, 'أُرسلت المقابلة، وتصل للوكيلة خلال دقائق');
   });
   host.querySelector('#qaRGo')?.addEventListener('click', e => {
     const plan = [0, 1, 2].map(i => ({ act: host.querySelector(`[data-pa="${i}"]`).value.trim(), due: host.querySelector(`[data-pd="${i}"]`).value })).filter(x => x.act);
-    const text = $('#qaRT').value.trim(); if (!text && !plan.length) { toast('اكتبي ردّك أو إجراء تحسين واحدًا على الأقل'); return; }
+    const text = host.querySelector('#qaRT').value.trim(); if (!text && !plan.length) { toast('اكتبي ردّك أو إجراء تحسين واحدًا على الأقل'); return; }
     send(e.currentTarget, { reply: { text, plan } }, null, 'أُرسل ردّك، ويصل للوكيلة خلال دقائق');
   });
 }
