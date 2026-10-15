@@ -1959,12 +1959,16 @@ function alerts() {
   <div class="list">${msgs.map(teacherRow).join('')}</div>`;
 }
 
+// an admin's file as a thumbnail (previews.py key "@a|<her folder>|<file>"); opens all its pages like the وكيلة's files
+const aTile = (a, x) => `<button class="fv-tile" data-wkey="${esc('@a|' + a.name + '|' + x.n)}" data-key="${esc('@a|' + a.name + '|' + x.n)}" data-url="${esc(wFileUrl(a.url, x.n.split(' / ').join('/')))}" title="${esc(x.n)}">
+  <span class="th"><span class="ext">${esc(x.x || '—')}</span><span class="ph">…</span></span>
+  <span class="cap"><b>${esc(x.n)}</b><span>${x.f ? `<span class="warn">${esc(x.f.join('، '))}</span> · ` : ''}<span dir="ltr">${esc(x.d)}</span></span></span></button>`;
 function admins() {
   const A = D.admins || [];
   if (!A.length) return '<div class="empty">لا توجد مجلدات للإداريات</div>';
   return `<h2>مبادرات الإداريات <span class="muted" style="font-weight:400">· المطلوب ${nf(D.adminMin)} لكل إدارية</span></h2>
   <div class="list">${A.map((a, i) => { const s = status(a, D.adminMin); return `<details class="fold"><summary><div class="grow"><div class="t">${esc(a.name)}</div><div class="g">${nf(a.count)} ملف${a.last ? ' · آخر رفع ' + esc(a.last) : ''}</div></div>${chip(s)}</summary>
-    ${a.files.length ? `<ul class="files">${a.files.map(fileLi).join('')}</ul>` : '<div class="empty">المجلد فارغ</div>'}
+    ${a.files.length ? `<div class="fv-grid wv-grid" style="padding:4px 12px 12px">${a.files.map(x => aTile(a, x)).join('')}</div>` : '<div class="empty">المجلد فارغ</div>'}
     <div class="acts"><a class="btn sm ghost" href="${esc(a.url)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a></div></details>`; }).join('')}</div>`;
 }
 
