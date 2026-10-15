@@ -337,6 +337,37 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
   .pf td.q{background:#2a8eae;color:#fff;text-align:right}
   .pf-res{margin-top:10px;font-size:12.5px}
 }
+/* «تقييم برامجي» (teacher): evidence review per program, keys/review.json via export.js -> p.rev */
+.rv{padding:0;margin-bottom:16px;overflow:hidden}
+.rv-h{display:flex;gap:14px;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.rv-h .grow{flex:1;min-width:180px}.rv-h h3{margin:0 0 6px;font-size:18px}
+.rv-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:13px}
+.rv-bar{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:8px;max-width:340px}.rv-bar i{display:block;height:100%;border-radius:99px}
+.rv-g{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.rv-box{padding:14px 18px;border-inline-start:1px solid var(--line)}.rv-box:first-child{border-inline-start:0}
+.rv-box h4{margin:0 0 6px;font-size:14.5px;display:flex;align-items:center;gap:6px}
+.rv-box h4 .dot{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;flex:0 0 auto}
+.rv-box p{margin:0;font-size:14px;line-height:1.85}
+.rv-box.k h4{color:var(--ok)}.rv-box.k .dot{background:var(--ok-bg)}
+.rv-box.w h4{color:var(--none)}.rv-box.w .dot{background:var(--none-bg)}
+.rv-box.i h4{color:var(--brand-2)}.rv-box.i .dot{background:var(--soft)}
+.rv-sec{padding:14px 18px;border-top:1px solid var(--line)}
+.rv-sec>h4{margin:0 0 8px;font-size:14.5px}
+.rv-steps{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.rv-steps li{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:10px;font-size:14px}
+.rv-steps li.y{background:var(--ok-bg)}.rv-steps li.n{background:var(--none-bg)}
+.rv-steps .m{flex:0 0 auto;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff}
+.rv-steps li.y .m{background:var(--ok)}.rv-steps li.n .m{background:var(--none)}
+.rv-steps .st{margin-inline-start:auto;font-size:12.5px;font-weight:600;white-space:nowrap}
+.rv-steps li.y .st{color:var(--ok)}.rv-steps li.n .st{color:var(--none)}
+.rv details summary{cursor:pointer;font-weight:600;font-size:14.5px;list-style-position:inside}
+.rv-items{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.rv-items li{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px}
+.rv-items .top{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.rv-items .fn{direction:ltr;unicode-bidi:plaintext;color:var(--muted);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.rv-items .c{margin:4px 0 0}.rv-items .a,.rv-items .n{color:var(--muted);font-size:13px;margin:2px 0 0}
+.rv-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;background:var(--soft)}
+@media (max-width:760px){.rv-g{grid-template-columns:1fr}.rv-box{border-inline-start:0;border-top:1px solid var(--line)}.rv-box:first-child{border-top:0}.rv-steps .st{display:none}}
 </style>
 </head>
 <body>
@@ -504,7 +535,9 @@ function route() {
     const one = D.teachers.length === 1, i = one ? 0 : v === 't' && D.teachers[+a] ? +a : -1;
     // programs first: the programs page is the landing page; «ملفاتي» (#mine) is her folders page
     const mine = !D.planOnly && (v === 'mine' || v === 't' || !D.plan.length);
+    const rev = !mine && D.plan.some(p => p.rev) && (v === 'rev' || v === 'me');   // the review is her first page
     $('#view').innerHTML = v === 'x' && D.extra[+a] ? teacherExtra(+a)
+      : rev ? tTabs('rev') + teacherReview()
       : !mine ? (v === 'plan' && a !== undefined && a !== '' ? teacherProgram(+a) : tTabs('plan') + teacherPlan())
       : tTabs('mine') + (i >= 0 ? teacher(i) : `<h2 style="margin:6px 0 12px">اختاري اسمك</h2><div class="list">${D.teachers.map(teacherRow).join('')}</div>`);
     bind($('#view')); window.scrollTo(0, 0); return;
@@ -986,8 +1019,44 @@ function planUploadCard(k) {   // the upload card for one program (its page)
     <button class="btn wide" id="upGo" hidden>رفع</button>
     <div id="upPend"></div></div>`;
 }
-// teacher top tabs: «برامج الخطة التشغيلية» (landing) and «ملفاتي»
-const tTabs = cur => D.planOnly || !D.plan.length ? '' : `<div class="seg ttabs"><button data-go="plan" class="${cur === 'plan' ? 'on' : ''}">برامج الخطة التشغيلية</button><button data-go="mine" class="${cur === 'mine' ? 'on' : ''}">ملفاتي (سجلات الإنجاز)</button></div>`;
+/* ---------- «تقييم برامجي» (teacher landing when her programs have a review) ---------- */
+const RV_LEVEL = { 'متميز': 'ok', 'جيد': 'ok', 'يحتاج تحسين': 'part', 'ضعيف': 'none' };
+const RV_Q = { 'قوي': 'ok', 'متوسط': 'part', 'ضعيف': 'none' };
+const rvDate = iso => iso ? new Date(iso).toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+function teacherReview() {
+  const P = D.plan.filter(p => p.rev), sc = P.filter(p => p.rev.files);   // programs evaluated with evidence
+  const avg = sc.length ? Math.round(sc.reduce((s, p) => s + p.rev.score, 0) / sc.length) : 0;
+  const date = rvDate(P.find(p => p.rev.date)?.rev.date);
+  return `<div class="card hero">${sc.length ? ring(avg).replace('class="ring"', 'class="ring lg"') : ''}
+    <div class="grow"><h2>تقييم شواهد برامجي</h2>
+    <p>${!sc.length ? 'لم تُقيَّم شواهد برامجك بعد' : sc.length > 1 ? `متوسط تقييم برامجك (${nf(sc.length)} برامج) من 100` : 'تقييم شواهد برنامجك من 100'}${date ? ` · قُيّمت الشواهد المرفوعة حتى ${esc(date)}` : ''}</p>
+    <p class="muted" style="font-size:13px;margin-top:4px">لكل برنامج: جوانب القوة، وجوانب الضعف، وما يرفع التقييم، والإجراءات التي ينقصها شاهد. أرفقي الشواهد الناقصة من صفحة البرنامج، ويُعاد التقييم بعد مراجعتها.</p></div></div>
+  ${P.map(rvCard).join('')}`;
+}
+function rvCard(p) {
+  const r = p.rev, has = r.score != null && r.files, fresh = !r.files && p.n, lv = fresh ? 'part' : RV_LEVEL[r.level] || 'na';
+  const miss = r.steps.filter(s => !s.ok).length;
+  const cnt = q => r.items.filter(i => i.q === q).length;
+  const box = (cls, ic, t, txt) => `<div class="rv-box ${cls}"><h4><span class="dot">${ic}</span>${t}</h4><p>${esc(txt || '—')}</p></div>`;
+  return `<section class="card rv" id="rv${p.k}">
+    <div class="rv-h">${has ? ring(r.score) : ''}<div class="grow"><h3>${esc(p.name)}</h3>
+      <div class="rv-meta"><span class="chip s-${lv}">${fresh ? 'أُرفقت شواهد بعد التقييم — لم تُقيَّم بعد' : esc(r.level || 'لم يُقيَّم')}</span>
+        ${has ? `<span>${nf(r.files)} شاهد مقيَّم</span><span>· الإجراءات المغطاة ${nf(r.covered)} من ${nf(r.of)}</span>` : ''}</div>
+      ${r.steps.length ? `<div class="rv-bar"><i style="width:${Math.round(r.covered / r.of * 100)}%;background:${pctColor(r.covered / r.of * 100)}"></i></div>` : ''}</div></div>
+    <div class="rv-g">${box('k', '✓', 'جوانب القوة', r.strengths)}${box('w', '!', 'جوانب الضعف', r.gaps)}${box('i', '↑', 'للتحسين: أرفقي', r.recs)}</div>
+    ${r.steps.length ? `<div class="rv-sec"><h4>إجراءات البرنامج في الخطة${miss ? ` <span class="chip s-none">${nf(miss)} بلا شاهد</span>` : ' <span class="chip s-ok">كلها موثقة</span>'}</h4>
+      <ol class="rv-steps">${r.steps.map((s, i) => `<li class="${s.ok ? 'y' : 'n'}"><span class="m">${s.ok ? '✓' : nf(i + 1)}</span><span>${esc(s.t)}</span><span class="st">${s.ok ? 'يوجد شاهد' : 'لا يوجد شاهد'}</span></li>`).join('')}</ol></div>` : ''}
+    ${r.items.length ? `<div class="rv-sec"><details><summary>تقييم كل شاهد (${nf(r.items.length)}) — قوي ${nf(cnt('قوي'))} · متوسط ${nf(cnt('متوسط'))} · ضعيف ${nf(cnt('ضعيف'))}</summary>
+      <p class="muted" style="font-size:13px;margin:8px 0">قوي = تنفيذ فعلي واضح الصلة بهدف البرنامج · متوسط = صلة جزئية أو يحتاج توثيقًا أوضح · ضعيف = تخطيط فقط، أو غير مرتبط، أو مكرر</p>
+      <ul class="rv-items">${r.items.slice().sort((a, b) => (RV_Q[a.q] === 'none' ? 0 : RV_Q[a.q] === 'part' ? 1 : 2) - (RV_Q[b.q] === 'none' ? 0 : RV_Q[b.q] === 'part' ? 1 : 2)).map(i => `<li>
+        <div class="top"><span class="fn">${esc(i.f)}</span><span class="chip s-${RV_Q[i.q] || 'na'}">${esc(i.q || '—')}</span></div>
+        <p class="c">${esc(i.c)}</p>${i.a ? `<p class="a">الإجراء: ${esc(i.a)}</p>` : ''}${i.n ? `<p class="n">ملاحظة: ${esc(i.n)}</p>` : ''}</li>`).join('')}</ul></details></div>` : ''}
+    <div class="rv-foot"><span class="muted" style="font-size:13px">${miss ? 'ابدئي بالإجراءات التي لا يوجد لها شاهد' : 'استمري في التوثيق وأرفقي قياس الأثر'}</span>
+      <button class="btn sm" data-go="plan/${p.k}">إرفاق شواهد للبرنامج ←</button></div></section>`;
+}
+// teacher top tabs: «تقييم برامجي» (landing when reviewed), «برامج الخطة التشغيلية» and «ملفاتي»
+const tTabs = cur => { const T = [D.plan.some(p => p.rev) && ['rev', 'تقييم برامجي'], D.plan.length && ['plan', 'برامج الخطة التشغيلية'], !D.planOnly && D.plan.length && ['mine', 'ملفاتي (سجلات الإنجاز)']].filter(Boolean);
+  return T.length < 2 ? '' : `<div class="seg ttabs">${T.map(([g, l]) => `<button data-go="${g}" class="${cur === g ? 'on' : ''}">${l}</button>`).join('')}</div>`; };
 // her programs as buttons; each opens the program's own page (#plan/<k>)
 function teacherPlan() {
   const P = D.plan, done = P.filter(p => p.s === 'ok').length, pct = P.length ? Math.round(done / P.length * 100) : 0;
