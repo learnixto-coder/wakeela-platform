@@ -789,7 +789,7 @@ function teacher(i) {
       <div class="g">${c.f.group ? esc(c.f.group) + ' · ' : ''}${nf(c.info.count)} من ${nf(c.f.min)} مطلوب${c.info.last ? ' · آخر رفع ' + esc(c.info.last) : ''}${flagged ? ` · <span class="warn">${nf(flagged)} ملاحظة</span>` : ''}</div></div>${chip(c.s)}</summary>
       ${c.info.parentLoose ? `<div class="pad warn" style="padding-bottom:0">${nf(c.info.parentLoose)} ملف في «${esc(c.f.group)}» غير موزّع على المجلدات الفرعية</div>` : ''}
       ${c.info.files.length ? `<ul class="files">${c.info.files.map(fileLi).join('')}</ul>` : '<div class="empty">المجلد فارغ</div>'}
-      <div class="acts">${D.kind === 'teacher' && D.inbox ? `<button class="btn sm" data-attach="f:${c.f.i}">إرفاق شاهد هنا</button>` : ''}<a class="btn sm ghost" href="${esc(c.info.url)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a></div></details>`;
+      <div class="acts"><a class="btn sm ghost" href="${esc(c.info.url)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a></div></details>`;
   }).join('');
   if (D.kind === 'teacher') return teacherDash(t, folds);
   return `<button class="back" data-go="teachers">→ المعلمات</button>
@@ -1025,8 +1025,6 @@ function teacherDash(t, folds) {
       <span class="muted" style="font-size:12.5px">${diff > 0 ? `أعلى من متوسط المدرسة بفارق <span dir="ltr">${nf(diff)}%</span>` : diff < 0 ? `أقل من متوسط المدرسة بفارق <span dir="ltr">${nf(-diff)}%</span>` : 'مساوٍ لمتوسط المدرسة'}</span></div>` : ''}</div>
     <a class="btn sm" href="${esc(t.url)}" target="_blank" rel="noopener">فتح مجلدي في OneDrive</a></div>
   ${inbox(t)}
-  ${planLink()}
-  ${uploadCard(t)}
   <div class="kpis">
     <div class="card kpi"><b>${nf(t.done)} / ${nf(t.exist)}</b><span>مجلدات مكتملة</span></div>
     <div class="card kpi"><b>${nf(t.total)}</b><span>ملفًا مرفوعًا</span></div>
