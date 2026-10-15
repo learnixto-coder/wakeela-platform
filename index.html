@@ -241,7 +241,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .ck .n{flex:1;min-width:0;overflow-wrap:anywhere}
 .ck.pend{opacity:.55;cursor:default}
 .note-close{margin-inline-start:auto}
-.subtabs{display:flex;gap:10px;margin:0 0 16px;flex-wrap:wrap}.subtabs button{flex:1;min-width:130px;min-height:46px;padding:10px 14px;border-radius:12px;border:2px solid var(--brand);background:var(--card);color:var(--brand);font:inherit;font-size:15px;font-weight:700;cursor:pointer}.subtabs button:hover{background:var(--soft)}.subtabs button.on{background:var(--brand);color:var(--brand-ink)}.qa-ph{margin:18px 0 10px;font-size:16px}.ttabs{display:flex;margin:0 0 14px}.ttabs button{flex:1;padding:10px 8px;font-size:14.5px}
+.subtabs{display:flex;gap:10px;margin:0 0 16px;flex-wrap:wrap}.subtabs button{flex:1;min-width:130px;min-height:46px;padding:10px 14px;border-radius:12px;border:2px solid var(--brand);background:var(--card);color:var(--brand);font:inherit;font-size:15px;font-weight:700;cursor:pointer}.subtabs button:hover{background:var(--soft)}.subtabs button.on{background:var(--brand);color:var(--brand-ink)}.qa-ph{margin:18px 0 10px;font-size:16px}nav.tabs{display:none!important}.hub{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}.hub-b{display:flex;align-items:center;gap:14px;padding:18px;min-height:92px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:var(--shadow);cursor:pointer;text-align:start;font:inherit;color:var(--ink)}.hub-b:hover{border-color:var(--brand)}.hub-b .sec-ic{width:50px;height:50px}.hub-t{display:block;font-weight:700;font-size:16.5px}.hub-s{display:block;color:var(--muted);font-size:13px;margin-top:3px}@media (max-width:560px){.hub{grid-template-columns:1fr}.hub-b{min-height:76px;padding:14px}}.homebar{display:flex;align-items:center;gap:12px;margin:0 0 14px;flex-wrap:wrap}.homebar b{font-size:17px}.ttabs{display:flex;margin:0 0 14px}.ttabs button{flex:1;padding:10px 8px;font-size:14.5px}
 .btn.danger{background:var(--none);border-color:var(--none)}
 .foot{margin-top:28px;color:var(--muted);font-size:12.5px;text-align:center}
 
@@ -547,14 +547,15 @@ function go(h) { location.hash = h; }
 function route() {
   if (!D) return;
   if (D.kind === 'plans') { const el = $('#view'); el.innerHTML = plansW(); bind(el); return; }
-  const [v, a] = (location.hash.slice(1) || (D.kind === 'teacher' ? 'me' : 'plans')).split('/');
+  const [v, a] = (location.hash.slice(1) || (D.kind === 'teacher' ? (tList().length > 1 ? 'start' : 'me') : 'start')).split('/');
   if (D.kind === 'teacher') {   // a teacher sees only her own page(s)
     const one = D.teachers.length === 1, i = one ? 0 : v === 't' && D.teachers[+a] ? +a : -1;
     // programs first: the programs page is the landing page; «ملفاتي» (#mine) is her folders page
     const mine = !D.planOnly && (v === 'mine' || v === 't' || !D.plan.length);
     const rev = !mine && D.plan.some(p => p.rev) && v === 'rev';
     const qa = !mine && D.plan.length && (v === 'qa' || v === 'me');   // «تدقيق الجودة» is her first page
-    $('#view').innerHTML = v === 'x' && D.extra[+a] ? teacherExtra(+a)
+    $('#view').innerHTML = v === 'start' && tList().length > 1 ? hub('الرئيسية', tList())
+      : v === 'x' && D.extra[+a] ? teacherExtra(+a)
       : rev ? tTabs('rev') + teacherReview()
       : qa ? tTabs('qa') + teacherQa()
       : !mine ? (v === 'plan' && a !== undefined && a !== '' ? teacherProgram(+a) : tTabs('plan') + teacherPlan())
@@ -565,10 +566,17 @@ function route() {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === top));
   const el = $('#view');
   el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folders(+a),
-    plan: planW, plans: plansW, timeline: () => plansW('timeline'), qa: () => qaW(a) }[v] || me)();
+    plan: planW, plans: plansW, timeline: () => plansW('timeline'), qa: () => qaW(a), start: () => hub('الرئيسية', HUB) }[v] || me)();
   const sub = SUBTABS[top]; if (sub) el.insertAdjacentHTML('afterbegin', `<div class="subtabs">${sub.map(([g, l]) => `<button data-go="${g}" class="${(TAB_OF[v] ? SUB_OF[v] || v : v) === g ? 'on' : ''}">${l}</button>`).join('')}</div>`);
+  if (v !== 'start') { const h = HUB.find(x => x[0] === top); el.insertAdjacentHTML('afterbegin', homeBar(h ? h[1] : '')); }
   bind(el); window.scrollTo(0, 0);
 }
+// «الرئيسية»: big buttons instead of a tab bar (the user's choice, to keep the وكيلة and the teacher focused); every page gets a «الرئيسية» button
+const HUB = [['plans', 'الخطة التشغيلية وخطة التحسين', 'الخطتان وبطاقات البرامج ومؤشراتها'], ['me', 'مجلدات وكيلة المدرسة', 'أقسام ملفاتك وما فيها'],
+  ['timeline', 'الخطة الزمنية', 'مواعيد تنفيذ البرامج'], ['plan', 'برامج الخطة 1448هـ', 'شواهد البرامج وتدقيق الجودة'], ['dash', 'لوحة المؤشرات', 'مؤشرات إنجاز المعلمات'],
+  ['home', 'المعلمات', 'المتابعة والمجلدات والتنبيهات'], ['admins', 'الإداريات', 'مبادرات الإداريات']];
+const hub = (t, L) => `<h2 style="margin:4px 0 14px">${t}</h2><div class="hub">${L.map(([g, l, d]) => `<button class="hub-b" data-go="${g}"><span class="sec-ic">${['me', 'mine', 'home', 'admins'].includes(g) ? secIcon('') : planIcon}</span><span><span class="hub-t">${l}</span><span class="hub-s">${d}</span></span></button>`).join('')}</div>`;
+const homeBar = t => `<div class="homebar"><button class="btn sm" data-go="start">→ الرئيسية</button>${t ? `<b>${t}</b>` : ''}</div>`;
 // top tabs that hold sub-pages: «برامج الخطة 1448هـ» and «المعلمات»
 const SUBTABS = { plan: [['plan', 'البرامج'], ['qa', 'تدقيق الجودة']], home: [['home', 'متابعة المعلمات'], ['teachers', 'قائمة المعلمات'], ['folders', 'المجلدات'], ['alerts', 'التنبيهات']] };
 const TAB_OF = { qa: 'plan', plan: 'plan', home: 'home', board: 'home', teachers: 'home', t: 'home', folders: 'home', f: 'home', alerts: 'home', w: 'me' };
@@ -1098,8 +1106,9 @@ function rvCard(p) {
       <button class="btn sm" data-go="plan/${p.k}">إرفاق شواهد للبرنامج ←</button></div></section>`;
 }
 // teacher top tabs: «تقييم برامجي» (landing when reviewed), «برامج الخطة التشغيلية» and «ملفاتي»
-const tTabs = cur => { const T = [D.plan.length && ['qa', 'تدقيق الجودة'], D.plan.some(p => p.rev) && ['rev', 'جودة شواهد البرامج'], D.plan.length && ['plan', 'برامج الخطة التشغيلية'], !D.planOnly && D.plan.length && ['mine', 'ملفاتي (سجلات الإنجاز)']].filter(Boolean);
-  return T.length < 2 ? '' : `<div class="seg ttabs">${T.map(([g, l]) => `<button data-go="${g}" class="${cur === g ? 'on' : ''}">${l}</button>`).join('')}</div>`; };
+const tList = () => [D.plan.length && ['qa', 'تدقيق الجودة', 'نتيجة تدقيق برامجك وردّك وخطة التحسين'], D.plan.some(p => p.rev) && ['rev', 'جودة شواهد البرامج', 'تقييم الشواهد المرفقة لبرامجك'],
+  D.plan.length && ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها'], !D.planOnly && D.plan.length && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
+const tTabs = cur => { const T = tList(); return T.length < 2 ? '' : homeBar((T.find(x => x[0] === cur) || [])[1] || ''); };
 // her programs as buttons; each opens the program's own page (#plan/<k>)
 function teacherPlan() {
   const P = D.plan, A = P1(P), done = A.filter(p => p.s === 'ok').length, pct = A.length ? Math.round(done / A.length * 100) : 0;
