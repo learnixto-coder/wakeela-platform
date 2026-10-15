@@ -185,6 +185,7 @@ body.pmode nav.tabs,body.pmode #reload{display:none}
 .fold summary .grow{flex:1;min-width:0}
 .fold summary .t{font-weight:600}
 .fold summary .g{color:var(--muted);font-size:12.5px}
+.fth{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.th-i{width:34px;height:44px;border-radius:5px;background:var(--soft);border:1px solid var(--line);overflow:hidden;display:grid;place-items:center;font-size:9px;color:var(--muted);text-transform:uppercase}.th-i img{width:100%;height:100%;object-fit:cover;display:block}.th-i.nx::after{content:attr(data-x)}
 .fold[open] summary{border-bottom:1px solid var(--line)}
 .files{list-style:none;margin:0;padding:6px 0}
 .files li{display:flex;gap:10px;padding:7px 14px;font-size:13.5px;align-items:baseline}
@@ -600,6 +601,7 @@ const SUB_OF = { board: 'home', t: 'teachers', f: 'folders' };
 document.querySelector('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.v); });
 function bind(el) {
   el.querySelectorAll('[data-go]').forEach(x => x.addEventListener('click', () => go(x.dataset.go)));
+  if (el.querySelector('.th-i')) thumbsFill(el);
   el.querySelectorAll('[data-open]').forEach(x => x.addEventListener('click', () => {
     const d = el.querySelector(`details[data-fi="${x.dataset.open}"]`); if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }));
   const txt = id => { const n = document.getElementById(id); return n.value ?? n.innerText; };
@@ -795,7 +797,8 @@ function teacher(i) {
     if (c.s === 'na') return `<div class="fold"><summary style="cursor:default"><div class="grow"><div class="t">${esc(c.f.label)}</div>${c.f.group ? `<div class="g">${esc(c.f.group)}</div>` : ''}</div>${chip('na')}</summary></div>`;
     const flagged = c.info.files.filter(x => x.f).length;
     return `<details class="fold" data-fi="${c.f.i}"><summary><div class="grow"><div class="t">${esc(c.f.label)}</div>
-      <div class="g">${c.f.group ? esc(c.f.group) + ' · ' : ''}${nf(c.info.count)} من ${nf(c.f.min)} مطلوب${c.info.last ? ' · آخر رفع ' + esc(c.info.last) : ''}${flagged ? ` · <span class="warn">${nf(flagged)} ملاحظة</span>` : ''}</div></div>${chip(c.s)}</summary>
+      <div class="g">${c.f.group ? esc(c.f.group) + ' · ' : ''}${nf(c.info.count)} من ${nf(c.f.min)} مطلوب${c.info.last ? ' · آخر رفع ' + esc(c.info.last) : ''}${flagged ? ` · <span class="warn">${nf(flagged)} ملاحظة</span>` : ''}</div>
+      ${c.info.files.length ? `<div class="fth">${c.info.files.slice(0, 20).map(x => `<span class="th-i" data-key="${esc(t.name + '|' + c.f.key + '|' + x.n)}" data-x="${esc(x.x || '')}"></span>`).join('')}</div>` : ''}</div>${chip(c.s)}</summary>
       ${c.info.parentLoose ? `<div class="pad warn" style="padding-bottom:0">${nf(c.info.parentLoose)} ملف في «${esc(c.f.group)}» غير موزّع على المجلدات الفرعية</div>` : ''}
       ${c.info.files.length ? `<ul class="files">${c.info.files.map(fileLi).join('')}</ul>` : '<div class="empty">المجلد فارغ</div>'}
       <div class="acts"><a class="btn sm ghost" href="${esc(c.info.url)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a></div></details>`;
@@ -1887,13 +1890,33 @@ function dash() {
   </div>`;
 }
 
+// small thumbnails (up to 20) under each folder in «تفاصيل المجلدات»: the teacher reads her own set prev/t/<tid>.json
+// (tools/thumbs.py, sealed with her phone); the وكيلة uses the full previews (prev/i.bin)
+let tThumbs = null;
+const loadTThumbs = () => tThumbs ??= (async () => {
+  const ph = phoneOf(sessionCode), r = await fetch(`prev/t/${await teacherId(ph)}.json?t=${Date.now()}`, { cache: 'no-store' });
+  return r.ok ? openBox(await r.json(), ph) : {};
+})().catch(() => { tThumbs = null; return {}; });
+const thumbSet = (s, u) => { if (!u) return s.classList.add('nx'); const im = new Image(); im.alt = ''; im.src = u; s.append(im); };
+async function thumbsFill(el) {
+  const S = [...el.querySelectorAll('.th-i:not([data-done])')]; if (!S.length) return;
+  S.forEach(s => s.dataset.done = 1);
+  if (D.kind === 'teacher') { const T = await loadTThumbs(); S.forEach(s => thumbSet(s, T[s.dataset.key] && 'data:image/jpeg;base64,' + T[s.dataset.key])); return; }
+  let idx = {}; try { idx = await loadPrev(); } catch {}
+  const io = new IntersectionObserver(es => es.forEach(en => {
+    if (!en.isIntersecting) return; io.unobserve(en.target);
+    const e = idx[en.target.dataset.key];
+    if (e?.n) prevPage(e.id, 1).then(u => thumbSet(en.target, u)).catch(() => thumbSet(en.target, null)); else thumbSet(en.target, null);
+  }), { rootMargin: '200px' });
+  S.forEach(s => io.observe(s));
+}
 const fileLi = x =>`<li><span class="ext">${esc(x.x || '—')}</span><span class="n">${esc(x.n)}${x.f ? ` <span class="warn">(${esc(x.f.join('، '))})</span>` : ''}</span><span class="d">${esc(x.d)}</span></li>`;
 
 // --- المجلدات: the content of every file, folder by folder (previews built by tools/previews.py into site/prev/)
 const fvs = { fi: 0, t: 'all', k: 0, mode: 'grid' };   // mode: 'grid' = thumbnails of all files, 'one' = one file at a time
 let prevIdx = null, prevKey = null, prevLoading = null;
 const prevUrls = new Map();
-function prevReset() { prevIdx = null; prevKey = null; prevLoading = null; prevUrls.forEach(p => p.then(u => URL.revokeObjectURL(u)).catch(() => {})); prevUrls.clear(); }
+function prevReset() { prevIdx = null; prevKey = null; prevLoading = null; tThumbs = null; prevUrls.forEach(p => p.then(u => URL.revokeObjectURL(u)).catch(() => {})); prevUrls.clear(); }
 async function prevBin(url) {
   const r = await fetch(url, { cache: 'no-cache' }); if (!r.ok) throw new Error('net');
   const u = new Uint8Array(await r.arrayBuffer());
