@@ -663,8 +663,6 @@ function me() {
       ${lv.length ? `<span class="track"><i class="o" style="width:${p}%"></i></span>` : ""}
       ${linked ? `<span class="sec-l">${nf(linked)} مرتبط بمجلدات المعلمات</span>` : ''}</button>`;
   }).join('');
-  const recent = (function walk(n, path, dir) { return n.files.map(x => ({ x, path, dir, url: n.url })).concat(n.subs.flatMap(s => walk(s, path ? path + ' / ' + s.name : s.name, dir ? dir + '\\' + s.name : s.name))); })(W, '', '')
-    .sort((a, b) => b.x.d.localeCompare(a.x.d)).slice(0, 12);
   return `
   <div class="head" style="margin-bottom:6px"><h2 style="margin:4px 0">ملفات وكيلة المدرسة 1448هـ</h2><div style="flex:1"></div>
     <a class="btn sm ghost" href="${esc(W.url)}" target="_blank" rel="noopener">فتح في OneDrive</a></div>
@@ -676,7 +674,6 @@ function me() {
   </div>
   <h2>الأقسام</h2>
   <div class="secs">${secs}</div>
-  ${recent.length ? `<h2>آخر ما أُضيف</h2><div class="fv-grid wv-grid">${recent.map(r => wTile(r.x, r.dir, r.url, r.path.split(' / ').pop())).join('')}</div>` : ''}
   <p class="foot">ملفات الفاحص ولوحة المتابعة المولَّدة تلقائيًا لا تُحسب ضمن ملفات الوكيلة</p>`;
 }
 
