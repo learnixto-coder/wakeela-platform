@@ -95,7 +95,7 @@ h2:first-child{margin-top:4px}
 /* chips & lists */
 .chip{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap}
 .s-ok{background:var(--ok-bg);color:var(--ok)} .s-part{background:var(--part-bg);color:var(--part)}
-.s-none{background:var(--none-bg);color:var(--none)} .s-na{background:var(--na-bg);color:var(--na)}
+.s-none{background:var(--none-bg);color:var(--none)} .s-na{background:var(--na-bg);color:var(--na)} .s-later{background:#E8EEF7;color:#2F5597}
 .list{display:grid;gap:8px}
 .row{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;width:100%;text-align:start;background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
 .row:hover{border-color:var(--brand-2)}
@@ -529,7 +529,8 @@ function prep() {
     t.last = exist.map(c => c.info.last).filter(Boolean).sort().pop() || '';
   });
   D.plan = D.plan || []; D.extra = D.extra || []; D.extra.forEach((x, k) => x.k = k);
-  D.plan.forEach((p, k) => { p.k = k; p.n = p.ev?.count || 0; p.s = !p.ev ? 'na' : p.n ? 'ok' : 'none'; });
+  D.plan.forEach((p, k) => { p.k = k; p.n = p.ev?.count || 0; p.t2 = hnum(p.from) >= hnum(T2_FROM); p.dt = p.from ? `من ${hdate(p.from)} إلى ${hdate(p.to)}` : '';
+    p.s = p.t2 ? 'later' : !p.ev ? 'na' : p.n ? 'ok' : 'none'; });
   const tm = D.kind === 'teacher';
   document.body.classList.toggle('tmode', tm);
   $('#title').textContent = tm ? (D.teachers.length === 1 ? D.teachers[0].name : D.planOnly ? D.teachers.map(t => t.name).join(' · ') : 'متابعة إنجازي') : 'منصة مدرسة المتوسطة الحادية والعشرون';
@@ -1029,18 +1030,21 @@ function teacherDash(t, folds) {
 /* ---------- برامج الخطة التشغيلية لعام 1448هـ ----------
    D.plan: [{name, owner, people:[{label, t?}], url, ev:{count, files, url}, rep}] — a teacher's file holds only her programs.
    Evidence counts as attached when «الشواهد» has at least one file. */
-const P_LABEL = { ok: 'أُرفقت الشواهد', none: 'لم تُرفق بعد', na: 'لا يوجد مجلد' };
+const P_LABEL = { ok: 'أُرفقت الشواهد', none: 'لم تُرفق بعد', na: 'لا يوجد مجلد', later: 'تبدأ في الفصل الدراسي الثاني' };
+// programs that start in term 2 (from ≥ 9/8/1448) are listed with their dates but are not counted in the evidence totals
+const T2_FROM = '1448/8/9', hnum = s => s ? s.split('/').map(Number).reduce((a, x) => a * 100 + x, 0) : 0,
+  hdate = s => s.split('/').reverse().join('/') + 'هـ', P1 = P => P.filter(p => !p.t2);
 const pchip = s => `<span class="chip s-${s}">${P_LABEL[s]}</span>`;
 const people = p => `<div class="ppl">${p.people.map(x => `<span class="${x.t ? '' : 'nolog'}" title="${x.t ? '' : 'لا يوجد لها حساب في المنصة'}">${esc(x.label)}</span>`).join('') || '<span class="nolog">لم تُحدَّد</span>'}</div>`;
 const planIcon = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/></svg>';
 
 function planLink() {   // card on the teacher's home page
   if (!D.plan.length) return '';
-  const done = D.plan.filter(p => p.s === 'ok').length;
+  const A = P1(D.plan), done = A.filter(p => p.s === 'ok').length;
   return `<button class="card plan-link" data-go="plan"><span class="sec-ic">${planIcon}</span>
     <span class="grow"><b style="font-size:15.5px">برامج الخطة التشغيلية لعام 1448هـ</b><br>
-    <span class="muted">${nf(done)} من ${nf(D.plan.length)} ${D.plan.length > 1 ? 'برامج أُرفقت شواهدها' : 'برنامج أُرفقت شواهده'}</span></span>
-    ${done === D.plan.length ? chip('ok') : `<span class="chip s-none">${nf(D.plan.length - done)} بلا شواهد</span>`}
+    <span class="muted">${A.length ? `${nf(done)} من ${nf(A.length)} ${A.length > 1 ? 'برامج أُرفقت شواهدها' : 'برنامج أُرفقت شواهده'}` : P_LABEL.later}</span></span>
+    ${!A.length ? pchip('later') : done === A.length ? chip('ok') : `<span class="chip s-none">${nf(A.length - done)} بلا شواهد</span>`}
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--muted)"><path d="m15 18-6-6 6-6"/></svg></button>`;
 }
 
@@ -1097,15 +1101,15 @@ const tTabs = cur => { const T = [D.plan.some(p => p.rev) && ['rev', 'تقييم
   return T.length < 2 ? '' : `<div class="seg ttabs">${T.map(([g, l]) => `<button data-go="${g}" class="${cur === g ? 'on' : ''}">${l}</button>`).join('')}</div>`; };
 // her programs as buttons; each opens the program's own page (#plan/<k>)
 function teacherPlan() {
-  const P = D.plan, done = P.filter(p => p.s === 'ok').length, pct = P.length ? Math.round(done / P.length * 100) : 0;
+  const P = D.plan, A = P1(P), done = A.filter(p => p.s === 'ok').length, pct = A.length ? Math.round(done / A.length * 100) : 0;
   const one = D.teachers.length === 1 && D.teachers[0];
   const btns = P.map(p => `<button class="sec card" data-go="plan/${p.k}"><span class="sec-ic">${planIcon}</span>
       <span class="sec-t">${esc(p.name)}</span>${D.teachers.length > 1 ? people(p) : ''}
-      <span class="sec-s">${p.n ? `${nf(p.n)} شاهد${p.ev.last ? ' · آخر إضافة ' + esc(p.ev.last) : ''}` : 'لا توجد شواهد بعد'}</span>
+      <span class="sec-s">${p.dt ? esc(p.dt) + '<br>' : ''}${p.t2 ? '' : p.n ? `${nf(p.n)} شاهد${p.ev.last ? ' · آخر إضافة ' + esc(p.ev.last) : ''}` : 'لا توجد شواهد بعد'}</span>
       ${pchip(p.s)}<span class="sec-l">فتح البرنامج وإرفاق الشواهد ←</span></button>`).join('');
   return `<div class="card hero">${ring(pct).replace('class="ring"', 'class="ring lg"')}
     <div class="grow"><h2>برامج الخطة التشغيلية لعام 1448هـ</h2>
-    <p>${P.length ? `${nf(done)} من ${nf(P.length)} ${P.length > 1 ? 'برامج أُرفقت شواهدها' : 'برنامج أُرفقت شواهده'}` : 'لا توجد برامج مسندة إليك في الخطة التشغيلية.'}</p>
+    <p>${!P.length ? 'لا توجد برامج مسندة إليك في الخطة التشغيلية.' : A.length ? `${nf(done)} من ${nf(A.length)} ${A.length > 1 ? 'برامج أُرفقت شواهدها' : 'برنامج أُرفقت شواهده'} في الفصل الدراسي الأول` : 'برامجك تبدأ في الفصل الدراسي الثاني'}</p>
     <p class="muted" style="font-size:13px;margin-top:4px">اضغطي اسم البرنامج لإرفاق الشواهد (صور، فيديوهات، أو أي ملفات) أو فتحه في OneDrive.</p></div></div>
   ${one ? inbox(one) : ''}
   ${D.extra.length ? `<h2>مجلدات مسندة إليك</h2><div class="secs">${D.extra.map(x => `<button class="sec card" data-go="x/${x.k}"><span class="sec-ic">${planIcon}</span>
@@ -1140,7 +1144,7 @@ function teacherProgram(k) {
   return `<button class="back" data-go="plan">→ برامجي</button>
   <div class="card hero" style="margin-top:8px"><span class="sec-ic">${planIcon}</span>
     <div class="grow"><h2>${esc(p.name)}</h2>
-    <p>${p.n ? `${nf(p.n)} شاهد${p.ev.last ? ' · آخر إضافة ' + esc(p.ev.last) : ''}` : 'لم تُرفق شواهد بعد'}</p>${people(p)}</div>${pchip(p.s)}</div>
+    <p>${p.dt ? esc(p.dt) + ' · ' : ''}${p.t2 ? P_LABEL.later : p.n ? `${nf(p.n)} شاهد${p.ev.last ? ' · آخر إضافة ' + esc(p.ev.last) : ''}` : 'لم تُرفق شواهد بعد'}</p>${people(p)}</div>${pchip(p.s)}</div>
   ${p.share || D.planShare ? `<div class="card pad" style="margin-bottom:12px">
     <a class="btn wide" href="${esc(p.share || D.planShare)}" target="_blank" rel="noopener">${p.share ? 'فتح مجلد البرنامج في OneDrive' : 'فتح المجلد في OneDrive'}</a>
     <div class="muted" style="font-size:13px;margin-top:8px">يفتح من أي حساب دون تسجيل دخول. ${p.share ? '' : `بعد فتحه اضغطي مجلد «${esc(p.name)}»، ثم `}اضغطي «الشواهد» للإضافة، أو «قياس الأثر والتقرير» للاطلاع.</div></div>` : ''}
@@ -1181,7 +1185,8 @@ async function isPlansCode(code) {   // the evaluator's code unwraps the plans c
 }
 
 function planW() {
-  const P = D.plan; if (!P.length) return '<div class="empty">لا توجد بيانات لبرامج الخطة التشغيلية</div>';
+  if (!D.plan.length) return '<div class="empty">لا توجد بيانات لبرامج الخطة التشغيلية</div>';
+  const P = P1(D.plan), P2 = D.plan.filter(p => p.t2);   // الفصل الأول (يُحتسب) / الفصل الثاني (مؤرخ فقط)
   const done = P.filter(p => p.s === 'ok').length, files = P.reduce((s, p) => s + p.n, 0), pct = Math.round(done / P.length * 100);
   const flt = state.pFilter, shown = P.filter(p => flt === 'all' || (flt === 'ok' ? p.s === 'ok' : p.s !== 'ok'));
   // per teacher (accounts only): her programs and how many have evidence
@@ -1193,7 +1198,8 @@ function planW() {
     + miss.map(p => `• «${p.name}»: ${p.people.map(x => x.label).join('، ') || '—'}`).join('\n') + '\nجزاكن الله خيرًا' : '';
   return `<div class="card hero">${ring(pct).replace('class="ring"', 'class="ring lg"')}
     <div class="grow"><h2>برامج الخطة التشغيلية لعام 1448هـ</h2>
-    <p>${nf(done)} من ${nf(P.length)} برنامجًا أُرفقت شواهدها · ${nf(files)} شاهدًا</p></div>
+    <p>الفصل الدراسي الأول: ${nf(done)} من ${nf(P.length)} برنامجًا أُرفقت شواهدها · ${nf(files)} شاهدًا</p>
+    <p class="muted" style="font-size:13px;margin-top:4px">${nf(P2.length)} برامج تبدأ في الفصل الدراسي الثاني (مؤرخة أدناه، ولا تدخل في النسبة)</p></div>
     ${D.planUrl ? `<a class="btn sm" href="${esc(D.planUrl)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a>` : ''}</div>
   <div class="kpis">
     <div class="card kpi"><b style="color:${pctColor(pct)}">${nf(done)} / ${nf(P.length)}</b><span>برامج أُرفقت شواهدها</span></div>
@@ -1201,15 +1207,18 @@ function planW() {
     <div class="card kpi"><b>${nf(files)}</b><span>شاهدًا مرفوعًا</span></div>
     <div class="card kpi"><b>${nf(trows.filter(r => r.ok === r.ps.length).length)} / ${nf(trows.length)}</b><span>معلمات أكملن كل برامجهن</span></div>
   </div>
-  <h2>البرامج</h2>
+  <h2>برامج الفصل الدراسي الأول</h2>
   <div class="toolbar"><div class="seg">${[['all', 'الكل', P.length], ['ok', 'أُرفقت', done], ['miss', 'بلا شواهد', miss.length]]
     .map(([k, l, n]) => `<button data-pf="${k}" class="${flt === k ? 'on' : ''}">${l} (${nf(n)})</button>`).join('')}</div></div>
   <div class="list">${shown.map(p => `<details class="fold"><summary><div class="grow"><div class="t">${esc(p.name)}</div>
-      <div class="g">${esc(p.owner)} · ${p.ev ? `${nf(p.n)} شاهد${p.ev.last ? ' · آخر إضافة ' + esc(p.ev.last) : ''}` : 'مجلد الشواهد غير موجود'}</div>${people(p)}</div>${pchip(p.s)}</summary>
+      <div class="g">${esc(p.owner)}${p.dt ? ' · ' + esc(p.dt) : ''} · ${p.ev ? `${nf(p.n)} شاهد${p.ev.last ? ' · آخر إضافة ' + esc(p.ev.last) : ''}` : 'مجلد الشواهد غير موجود'}</div>${people(p)}</div>${pchip(p.s)}</summary>
     ${p.ev?.files.length ? `<ul class="files">${p.ev.files.map(fileLi).join('')}</ul>` : '<div class="empty">لا توجد شواهد بعد</div>'}
     <div class="acts">${p.ev ? `<a class="btn sm ghost" href="${esc(p.ev.url)}" target="_blank" rel="noopener">مجلد الشواهد</a>` : ''}
       ${p.rep ? `<a class="btn sm ghost" href="${esc(p.rep.url)}" target="_blank" rel="noopener">التقرير وقياس الأثر${p.rep.count ? ` (${nf(p.rep.count)})` : ''}</a>` : ''}
       </div></details>`).join('') || '<div class="empty card">لا يوجد</div>'}</div>
+  ${P2.length ? `<h2>برامج الفصل الدراسي الثاني</h2>
+  <div class="list">${P2.map(p => `<div class="fold"><div style="display:flex;gap:10px;align-items:center;padding:12px 14px"><div style="flex:1;min-width:0"><div style="font-weight:600">${esc(p.name)}</div>
+      <div style="color:var(--muted);font-size:12.5px">${esc(p.owner)} · ${esc(p.dt)}</div>${people(p)}</div>${pchip('later')}</div></div>`).join('')}</div>` : ''}
   <h2>حسب المعلمة</h2>
   <div class="list">${trows.map(r => { const ti = D.teachers.findIndex(t => t.name === r.name), p = Math.round(r.ok / r.ps.length * 100);
     return `<button class="row"${ti >= 0 ? ` data-go="t/${ti}"` : ''}>${ring(p)}<div class="grow"><div class="name">${esc(r.name)}</div>
