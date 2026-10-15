@@ -267,6 +267,24 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .fv-page{display:block;width:100%;max-width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:12px}
 .fv-page.loading{aspect-ratio:3/4;background:var(--soft)}
 .fv-more{margin-top:10px;font-size:13px}
+/* small thumbnails: the folder as a grid (10+ on screen), pages of one file as a grid; tap to enlarge */
+.fv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px;margin-top:10px}
+@media (max-width:560px){.fv-grid{grid-template-columns:repeat(3,1fr);gap:8px}}
+.fv-tile{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;min-width:0}
+.fv-tile:hover,.fv-tile:focus-visible{border-color:var(--brand-2);box-shadow:var(--shadow)}
+.fv-tile .th{aspect-ratio:3/4;background:var(--soft);display:grid;place-items:center;overflow:hidden;position:relative}
+.fv-tile .th img{width:100%;height:100%;object-fit:cover;display:block}
+.fv-tile .th .ext{position:absolute;top:6px;inset-inline-start:6px}
+.fv-tile .th .ph{font-size:12px;color:var(--muted);padding:6px;text-align:center}
+.fv-tile .cap{padding:5px 8px 7px;font-size:11.5px;line-height:1.35;min-width:0}
+.fv-tile .cap b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fv-tile .cap span{display:block;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fv-pages{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:12px}
+@media (max-width:560px){.fv-pages{grid-template-columns:repeat(2,1fr)}}
+.fv-pages .fv-page{margin-top:0;cursor:zoom-in}
+.fv-lb{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.82);display:grid;place-items:center;padding:16px;cursor:zoom-out}
+.fv-lb img{max-width:100%;max-height:100%;border-radius:8px;background:#fff}
+.fv-mode{display:inline-flex}
 
 /* تدقيق الجودة */
 :root{--mq:#0e6a80;--mq-bg:#d6eef4}
@@ -1699,7 +1717,7 @@ function dash() {
 const fileLi = x =>`<li><span class="ext">${esc(x.x || '—')}</span><span class="n">${esc(x.n)}${x.f ? ` <span class="warn">(${esc(x.f.join('، '))})</span>` : ''}</span><span class="d">${esc(x.d)}</span></li>`;
 
 // --- المجلدات: the content of every file, folder by folder (previews built by tools/previews.py into site/prev/)
-const fvs = { fi: 0, t: 'all', k: 0 };
+const fvs = { fi: 0, t: 'all', k: 0, mode: 'grid' };   // mode: 'grid' = thumbnails of all files, 'one' = one file at a time
 let prevIdx = null, prevKey = null, prevLoading = null;
 const prevUrls = new Map();
 function prevReset() { prevIdx = null; prevKey = null; prevLoading = null; prevUrls.forEach(p => p.then(u => URL.revokeObjectURL(u)).catch(() => {})); prevUrls.clear(); }
@@ -1734,7 +1752,7 @@ const fileUrl = (c, n) => c.info.url + encodeURIComponent('/' + n.split(' / ').j
 const KIND_NOTE = { video: 'مقطع فيديو، يُشغَّل من OneDrive.', office0: 'ملف Word أو PowerPoint أو Excel، تُجهَّز معاينته في التحديث القادم.', none: 'لا تتوفر معاينة لهذا النوع من الملفات.' };
 
 function folders(i) {
-  if (i !== undefined && D.folders[i] && i !== fvs.fi) Object.assign(fvs, { fi: i, t: 'all', k: 0 });
+  if (i !== undefined && D.folders[i] && i !== fvs.fi) Object.assign(fvs, { fi: i, t: 'all', k: 0, mode: 'grid' });
   const f = D.folders[fvs.fi], files = fvFiles(fvs.fi, fvs.t);
   fvs.k = Math.min(fvs.k, Math.max(0, files.length - 1));
   const cur = files[fvs.k];
@@ -1753,7 +1771,11 @@ function folders(i) {
       <h2>${esc(f.label)}${f.group ? ` <span class="muted" style="font-weight:400;font-size:14px">· ${esc(f.group)}</span>` : ''}</h2>
       <select class="search" id="fvT" aria-label="المعلمة" style="flex:0 1 260px"><option value="all">كل المعلمات (${nf(fvFiles(fvs.fi, 'all').length)} ملف)</option>${who.map(r => `<option value="${r.x.i}"${fvs.t === r.x.i ? ' selected' : ''}>${esc(r.x.short)} (${nf(r.n)})</option>`).join('')}</select>
     </div>
-    ${cur ? `<div class="fv-bar">
+    ${cur ? `<div class="seg fv-mode"><button id="fvGridBtn" class="${fvs.mode === 'grid' ? 'on' : ''}">كل الملفات (مصغّرة)</button><button id="fvOneBtn" class="${fvs.mode === 'one' ? 'on' : ''}">ملف واحد</button></div>` : ''}
+    ${cur && fvs.mode === 'grid' ? `<div class="fv-grid" id="fvGrid">${files.map((r, j) => `<button class="fv-tile" data-k="${j}" data-key="${esc(r.t.name + '|' + f.key + '|' + r.x.n)}" title="${esc(r.t.short + ' — ' + r.x.n)}">
+        <span class="th"><span class="ext">${esc(r.x.x || '—')}</span><span class="ph">…</span></span>
+        <span class="cap"><b>${esc(r.x.n.split(' / ').pop())}</b><span>${esc(r.t.short)} · <span dir="ltr">${esc(r.x.d)}</span></span></span></button>`).join('')}</div>`
+    : cur ? `<div class="fv-bar">
       <div class="fv-nav"><button class="btn ghost sm" id="fvPrev"${fvs.k ? '' : ' disabled'}>→ السابق</button><button class="btn ghost sm" id="fvNext"${fvs.k < files.length - 1 ? '' : ' disabled'}>التالي ←</button>
         <span class="muted" style="font-size:13.5px">الملف ${nf(fvs.k + 1)} من ${nf(files.length)}</span></div>
       <select class="search" id="fvK" aria-label="الملف" style="flex:1 1 260px;max-width:460px">${files.map((r, j) => `<option value="${j}"${j === fvs.k ? ' selected' : ''}>${esc(r.t.short)} — ${esc(r.x.n.split(' / ').pop())}</option>`).join('')}</select>
@@ -1773,11 +1795,33 @@ async function fvShow(box) {
   if (!box.isConnected || box.dataset.key !== key) return;
   if (!e) { box.innerHTML = '<div class="empty card">تُجهَّز معاينة هذا الملف في التحديث القادم. يمكنك فتحه الآن من زر «فتح في OneDrive».</div>'; return; }
   if (!e.n) { box.innerHTML = `<div class="empty card">${KIND_NOTE[e.k] || KIND_NOTE.none}</div>`; return; }
-  box.innerHTML = Array.from({ length: e.n }, (_, j) => `<img class="fv-page loading" alt="صفحة ${j + 1}" data-pg="${j + 1}">`).join('')
+  box.innerHTML = `<div class="fv-pages">${Array.from({ length: e.n }, (_, j) => `<img class="fv-page loading" alt="صفحة ${j + 1}" data-pg="${j + 1}">`).join('')}</div>`
     + (e.t ? `<p class="muted fv-more">تعرض المعاينة أول ${nf(e.n)} صفحات من ${nf(e.t)}، وبقية الصفحات في زر «فتح في OneDrive».</p>` : '');
   box.querySelectorAll('img[data-pg]').forEach(img => prevPage(e.id, +img.dataset.pg)
     .then(u => { img.src = u; img.classList.remove('loading'); })
     .catch(() => { img.replaceWith(Object.assign(document.createElement('div'), { className: 'warn', textContent: 'تعذّر تحميل هذه الصفحة' })); }));
+  box.querySelectorAll('img[data-pg]').forEach(img => img.addEventListener('click', () => img.src && fvZoom(img.src, img.alt)));
+}
+function fvZoom(src, alt) {   // full-size view of one page; tap anywhere or Esc to close
+  const lb = Object.assign(document.createElement('div'), { className: 'fv-lb', role: 'dialog' });
+  lb.innerHTML = `<img alt="${esc(alt || '')}">`; lb.querySelector('img').src = src;
+  const close = () => { lb.remove(); document.removeEventListener('keydown', esc$); };
+  const esc$ = e => { if (e.key === 'Escape') close(); };
+  lb.addEventListener('click', close); document.addEventListener('keydown', esc$); document.body.append(lb);
+}
+async function fvGrid(grid) {   // thumbnails = first page of each file, loaded as they scroll into view
+  let idx;
+  try { idx = await loadPrev(); } catch { grid.querySelectorAll('.ph').forEach(p => p.textContent = 'تعذّر التحميل'); return; }
+  const io = new IntersectionObserver(es => es.forEach(en => {
+    if (!en.isIntersecting) return;
+    io.unobserve(en.target);
+    const th = en.target.querySelector('.th'), ph = th.querySelector('.ph'), e = idx[en.target.dataset.key];
+    if (!e) { ph.textContent = 'تُجهَّز المعاينة'; return; }
+    if (!e.n) { ph.textContent = e.k === 'video' ? 'فيديو' : 'بلا معاينة'; return; }
+    prevPage(e.id, 1).then(u => { if (!th.isConnected) return; const im = new Image(); im.alt = ''; im.src = u; ph.replaceWith(im); })
+      .catch(() => { ph.textContent = 'تعذّر التحميل'; });
+  }), { rootMargin: '300px' });
+  grid.querySelectorAll('.fv-tile').forEach(t => io.observe(t));
 }
 function fvGo(k) { const n = fvFiles(fvs.fi, fvs.t).length; if (k < 0 || k >= n) return; fvs.k = k; route(); }
 function bindFv(el) {
@@ -1787,10 +1831,14 @@ function bindFv(el) {
   el.querySelector('#fvK')?.addEventListener('change', e => fvGo(+e.target.value));
   el.querySelector('#fvPrev')?.addEventListener('click', () => fvGo(fvs.k - 1));
   el.querySelector('#fvNext')?.addEventListener('click', () => fvGo(fvs.k + 1));
+  el.querySelector('#fvGridBtn')?.addEventListener('click', () => { fvs.mode = 'grid'; route(); });
+  el.querySelector('#fvOneBtn')?.addEventListener('click', () => { fvs.mode = 'one'; route(); });
+  el.querySelectorAll('.fv-tile').forEach(t => t.addEventListener('click', () => { fvs.mode = 'one'; fvs.k = +t.dataset.k; route(); }));
+  const grid = el.querySelector('#fvGrid'); if (grid) fvGrid(grid);
   const box = el.querySelector('#fvPages'); if (box) fvShow(box);
 }
 document.addEventListener('keydown', e => {   // ← → move between files on the folders page
-  if (!el$fv() || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+  if (!el$fv() || fvs.mode !== 'one' || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
   if (e.key === 'ArrowLeft') fvGo(fvs.k + 1);
   if (e.key === 'ArrowRight') fvGo(fvs.k - 1);
 });
