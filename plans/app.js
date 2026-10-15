@@ -105,7 +105,7 @@ const PRIO = {"عالية جدًا":"--s-crit","عالية":"--s-high","متوس
               "عالٍ":"--s-crit","منخفض":"--s-mid","لا يوجد احتياج":"--s-keep"};
 const chip = lvl => `<span class="chip"><i style="background:var(${PRIO[lvl]||'--faint'})"></i>${esc(lvl)}</span>`;
 const pchip = n => byName[n] ? `<button class="chip pchip" data-prog="${esc(n)}">${esc(n)}</button>` : `<span class="chip">${esc(n)}</span>`;
-const avg = a => a.length ? a.reduce((s,x)=>s+x,0)/a.length : 0;
+const avg = a => (a = a.filter(x => x != null)).length ? a.reduce((s,x)=>s+x,0)/a.length : 0;
 const from = hd(D.period.from), to = hd(D.period.to);
 const built = new Date(D.generated);
 const builtTxt = built.toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-arab', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
@@ -188,7 +188,7 @@ function renderRows(){
       <td data-l="المحور / المجال">${esc(p.axis)}<div class="small">${esc(p.field)}</div></td>
       <td data-l="المعلمات">${esc(p.teacher)}</td>
       <td class="num" data-l="الأساس ← المستهدف">${fx(p.base,2)}٪ ← ${fx(p.target,1)}٪</td>
-      <td data-l="نسبة التحقق"><div class="mini"><div class="track"><div class="fill" style="width:${p.goal_pct}%"></div></div><span class="num">${fx(p.goal_pct)}٪</span></div></td>
+      <td data-l="نسبة التحقق"><div class="mini"><div class="track"><div class="fill" style="width:${p.goal_pct || 0}%"></div></div><span class="num">${p.goal_pct == null ? 'لم يبدأ' : fx(p.goal_pct) + '٪'}</span></div></td>
       <td class="num ${p.evidence?'':'ev0'}" data-l="الشواهد">${p.evidence ? ar(p.evidence)+' ملف' : 'لا توجد بعد'}</td>
     </tr>`).join('') || `<tr><td colspan="7" class="small">لا توجد برامج تطابق البحث.</td></tr>`;
   ls.set('plansProg', JSON.stringify({axis:state.axis, sort:state.sort, dir:state.dir}));
@@ -210,8 +210,8 @@ function openProgram(name){
       <button class="btn ghost" data-open="op:${p.pages[0]}">عرض البطاقة في ملف الخطة</button>
     </div>
     <div class="kv">
-      <div><div class="k">نسبة تحقق الأهداف</div><div class="v num">${fx(p.goal_pct)}٪ <span class="small">مرحلية</span></div></div>
-      <div><div class="k">نسبة الأثر</div><div class="v num">${fx(p.impact_pct)}٪ <span class="small">${esc(p.impact)}</span></div></div>
+      <div><div class="k">نسبة تحقق الأهداف</div><div class="v num">${p.goal_pct == null ? 'لم يبدأ التنفيذ بعد' : fx(p.goal_pct) + '٪ <span class="small">مرحلية</span>'}</div></div>
+      <div><div class="k">نسبة الأثر</div><div class="v num">${p.impact_pct == null ? '—' : fx(p.impact_pct) + '٪ <span class="small">' + esc(p.impact) + '</span>'}</div></div>
       <div><div class="k">مستوى الأداء</div><div class="v">${esc(p.perf)}</div></div>
       <div><div class="k">ملفات الشواهد</div><div class="v num ${p.evidence ? '' : 'ev0'}">${p.evidence ? ar(p.evidence) : 'لا توجد بعد'}</div></div>
       <div><div class="k">خط الأساس ← المستهدف</div><div class="v num">${fx(p.base,2)}٪ ← ${fx(p.target,1)}٪</div></div>
