@@ -1080,15 +1080,19 @@ const RV_LEVEL = { 'متميز': 'ok', 'جيد': 'ok', 'يحتاج تحسين': 
 const RV_Q = { 'قوي': 'ok', 'متوسط': 'part', 'ضعيف': 'none' };
 const rvDate = iso => iso ? new Date(iso).toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 function teacherReview() {
-  const P = D.plan.filter(p => p.rev), sc = P.filter(p => p.rev.files);   // programs evaluated with evidence
+  const P = P1(D.plan).filter(p => p.rev), sc = P.filter(p => p.rev.files);   // programs evaluated with evidence (الفصل الثاني لا يُقيَّم قبل بدايته)
   const avg = sc.length ? Math.round(sc.reduce((s, p) => s + p.rev.score, 0) / sc.length) : 0;
-  const date = rvDate(P.find(p => p.rev.date)?.rev.date);
+  const date = rvDate(P.find(p => p.rev.date)?.rev.date), P2 = D.plan.filter(p => p.t2);
   return `<div class="card hero">${sc.length ? ring(avg).replace('class="ring"', 'class="ring lg"') : ''}
     <div class="grow"><h2>جودة شواهد البرامج</h2>
-    <p>${!D.plan.length ? 'لا توجد برامج مسندة إليك في الخطة التشغيلية' : !sc.length ? 'لم تُقيَّم شواهد برامجك بعد' : sc.length > 1 ? `متوسط تقييم برامجك (${nf(sc.length)} برامج) من 100` : 'تقييم شواهد برنامجك من 100'}${date ? ` · قُيّمت الشواهد المرفوعة حتى ${esc(date)}` : ''}</p>
+    <p>${!D.plan.length ? 'لا توجد برامج مسندة إليك في الخطة التشغيلية' : !P1(D.plan).length ? 'لم يبدأ البرنامج بعد · تبدأ برامجك في الفصل الدراسي الثاني' : !sc.length ? 'لم تُقيَّم شواهد برامجك بعد' : sc.length > 1 ? `متوسط تقييم برامجك (${nf(sc.length)} برامج) من 100` : 'تقييم شواهد برنامجك من 100'}${date ? ` · قُيّمت الشواهد المرفوعة حتى ${esc(date)}` : ''}</p>
     <p class="muted" style="font-size:13px;margin-top:4px">لكل برنامج: جوانب القوة، وجوانب الضعف، وما يرفع التقييم، والإجراءات التي ينقصها شاهد. أرفقي الشواهد الناقصة من صفحة البرنامج، ويُعاد التقييم بعد مراجعتها.</p></div></div>
-  ${P.map(rvCard).join('')}`;
+  ${P.map(rvCard).join('')}${P2.map(rvLater).join('')}`;
 }
+// a second-semester program: no score, no messages — only that it has not started
+const rvLater = p => `<section class="card rv" id="rv${p.k}"><div class="rv-h"><div class="grow"><h3>${esc(p.name)}</h3>
+    <div class="rv-meta"><span class="chip s-later">لم يبدأ البرنامج</span>${p.dt ? `<span>${esc(p.dt)}</span>` : ''}</div></div></div>
+    <p class="muted" style="font-size:13.5px;margin:6px 0 0">يبدأ هذا البرنامج في الفصل الدراسي الثاني، ويُقيَّم بعد بدء تنفيذه.</p></section>`;
 function rvCard(p) {
   const r = p.rev, has = r.score != null && r.files, fresh = !r.files && p.n, lv = fresh ? 'part' : RV_LEVEL[r.level] || 'na';
   const miss = r.steps.filter(s => !s.ok).length;
@@ -1127,10 +1131,11 @@ const T_IC = { qa: '<path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/
   dash: '<circle cx="12" cy="13" r="8"/><path d="M12 13l4-4M12 5v1"/>',
   admins: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/>' };
 function tHub() {
-  const P = D.plan, A = P1(P), done = A.filter(p => p.s === 'ok').length, sc = P.filter(p => p.rev?.files);
+  const P = D.plan, A = P1(P), done = A.filter(p => p.s === 'ok').length, sc = A.filter(p => p.rev?.files);
   const avg = sc.length ? Math.round(sc.reduce((s, p) => s + p.rev.score, 0) / sc.length) : null, t = D.teachers.length === 1 && D.teachers[0];
   const progs = !P.length ? 'لا توجد برامج مسندة إليك' : P.length === 1 ? 'برنامج واحد' : P.length === 2 ? 'برنامجان' : `${nf(P.length)} ${P.length <= 10 ? 'برامج' : 'برنامجًا'}`;
-  const meta = { qa: progs, rev: !P.length ? progs : avg == null ? 'لم تُقيَّم بعد' : `متوسط التقييم ${nf(avg)} من 100`,
+  const meta = { qa: P.length && !A.length ? 'لم يبدأ البرنامج · الفصل الدراسي الثاني' : progs,
+    rev: !P.length ? progs : !A.length ? 'لم يبدأ البرنامج · الفصل الدراسي الثاني' : avg == null ? 'لم تُقيَّم بعد' : `متوسط التقييم ${nf(avg)} من 100`,
     plan: !P.length ? progs : A.length ? `${nf(done)} من ${nf(A.length)} أُرفقت شواهدها` : 'تبدأ في الفصل الدراسي الثاني', mine: t ? `الإنجاز ${nf(t.pct)}٪` : '' };
   return thHero(`مرحبًا بكِ${t ? '، أ. ' + esc(t.short) : ''}`, 'اختاري القسم الذي تريدين العمل عليه.') + `<div class="th-hub">${tList().map(([g, l, d], i) => thBtn(g, l, d, meta[g], i)).join('')}</div>`;
 }
@@ -1482,19 +1487,21 @@ function phase(p) {
 }
 function qaList() {
   const docs = qaDocs || {}, rows = D.plan.map(p => ({ p, d: docs[p.no]?.doc || { status: 'none' } }));
-  const done = rows.filter(r => QA_DONE.includes(r.d.status)), pct = Math.round(done.length / rows.length * 100);
+  const R1 = rows.filter(r => !r.p.t2), done = R1.filter(r => QA_DONE.includes(r.d.status)), pct = R1.length ? Math.round(done.length / R1.length * 100) : 0;   // الفصل الثاني خارج النسبة
   const lv = k => done.filter(r => r.d.level === k).length;
-  const F = { all: () => true, todo: r => !QA_DONE.includes(r.d.status), sent: r => r.d.status === 'sent', replied: r => r.d.status === 'replied',
+  const F = { all: () => true, todo: r => !r.p.t2 && !QA_DONE.includes(r.d.status), sent: r => r.d.status === 'sent', replied: r => r.d.status === 'replied',
     run: r => QA_DONE.includes(r.d.status) && r.d.running, closed: r => r.d.status === 'closed' };
   const flt = F[state.qaF] ? state.qaF : 'all', shown = rows.filter(F[flt]);
   const row = ({ p, d }) => { const sc = qaScore(obsPct(d.obs), null);
+    if (p.t2) return `<div class="row" style="cursor:default"><div class="ring" style="--v:0">—</div><div class="grow"><div class="name">${esc(p.name)}</div>
+      <div class="sub">${esc(p.people.map(x => x.label).join('، ') || '—')}${p.dt ? ' · ' + esc(p.dt) : ''}</div></div><div class="qa-chips"><span class="chip s-later">لم يبدأ البرنامج</span></div></div>`;
     return `<button class="row" data-go="qa/${p.k}">${sc == null ? `<div class="ring" style="--v:0">—</div>` : ring(sc)}<div class="grow"><div class="name">${esc(p.name)}</div>
       <div class="sub">${esc(p.people.map(x => x.label).join('، ') || '—')} · ${p.n ? nf(p.n) + ' شاهد' : 'بلا شواهد'}${srvOn(p) ? ' · استبانة مفعّلة' : ''}${d.interview?.state === 'pending' ? ' · <b style="color:var(--part)">مقابلة بانتظار اعتمادك</b>' : ''}</div></div>
       <div class="qa-chips">${qaChip(d.status)}${lvChip(d.level, d.running)}</div></button>`;  };
   const due = rows.filter(r => r.d.running && r.d.recheck && r.d.recheck <= D.generated.slice(0, 10) && r.d.status !== 'none');
   return `<div class="card hero">${ring(pct).replace('class="ring"', 'class="ring lg"')}
     <div class="grow"><h2>تدقيق جودة برامج الخطة التشغيلية 1448هـ</h2>
-    <p>${nf(done.length)} من ${nf(rows.length)} برنامجًا دُققت وأُرسلت نتيجتها</p>
+    <p>${nf(done.length)} من ${nf(R1.length)} برنامجًا من برامج الفصل الأول دُققت وأُرسلت نتيجتها${rows.length > R1.length ? ` · ${nf(rows.length - R1.length)} برامج لم تبدأ (الفصل الثاني) لا تُحتسب` : ''}</p>
     <div class="lv-sum">${Object.entries(QA_LV).map(([k, l]) => `<span class="chip lv-${k}">${l} ${nf(lv(k))}</span>`).join('')}
       <span class="chip s-part">⏳ قيد التنفيذ ${nf(done.filter(r => r.d.running).length)}</span></div></div></div>
   ${due.length ? `<div class="card pad warnbox"><b>حان موعد إعادة التدقيق:</b> ${due.map(r => `<a href="#qa/${r.p.k}">${esc(r.p.name)}</a>`).join('، ')}</div>` : ''}
@@ -1688,12 +1695,15 @@ function teacherQa() {
   return `<div class="card hero"><span class="sec-ic">${planIcon}</span><div class="grow"><h2>تدقيق جودة برامجي</h2>
     <p>هنا تصلك نتيجة تدقيق الوكيلة لكل برنامج وملاحظاتها، وتكتبين ردّك وخطة التحسين، وترسلين نموذج المقابلة.</p></div></div>
   ${D.plan.length ? '' : '<div class="empty">لا توجد برامج مسندة إليك في الخطة التشغيلية، فلا يوجد تدقيق جودة لكِ حاليًا.</div>'}
-  ${D.plan.map(p => `<div class="qaT" data-k="${p.k}" data-page="1"><h2>${esc(p.name)}</h2><div class="muted" style="padding:6px 0 14px">جارٍ التحميل…</div></div>`).join('')}`;
+  ${D.plan.map(p => p.t2 ? `<div><h2>${esc(p.name)}</h2><div class="card pad qa-card"><div class="qa-h"><b>نتيجة تدقيق البرنامج</b><span class="chip s-later">لم يبدأ البرنامج</span></div>
+    <div class="muted" style="font-size:13.5px">${p.dt ? esc(p.dt) + ' · ' : ''}يبدأ هذا البرنامج في الفصل الدراسي الثاني، ويُدقَّق بعد بدء تنفيذه.</div></div></div>`
+    : `<div class="qaT" data-k="${p.k}" data-page="1"><h2>${esc(p.name)}</h2><div class="muted" style="padding:6px 0 14px">جارٍ التحميل…</div></div>`).join('')}`;
 }
 
 // --- the teacher: her program page gets «الجودة وقياس الأثر» (the survey for pilot programs, the interview, and the audit once sent)
 async function mountQaT(host) {
   const p = D.plan[+host.dataset.k]; if (!p) return;
+  if (p.t2) { host.innerHTML = ''; return; }   // الفصل الثاني: لا تدقيق ولا رسائل قبل بدايته
   let doc = null;
   try {
     const r = await fetch(`data/q/p${p.no}.json?t=${Date.now()}`, { cache: 'no-store' });
