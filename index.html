@@ -730,8 +730,7 @@ function home() {
     <div class="card kpi"><b style="color:${zero ? 'var(--none)' : 'inherit'}">${nf(zero)}</b><span>معلمات لم يرفعن شيئًا</span></div>
   </div>
   <h2>الأقل إنجازًا</h2>
-  <div class="list">${low.map(teacherRow).join('')}</div>
-  <p class="foot">تُحدَّث البيانات تلقائيًا من مجلدات OneDrive · المعايير من «معايير الفحص.xlsx»</p>`;
+  <div class="list">${low.map(teacherRow).join('')}</div>`;
 }
 
 function teacherRow(t) {
