@@ -412,17 +412,13 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
     <button class="icon-btn" id="logout" title="خروج" aria-label="خروج"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17 5 12l5-5"/><path d="M5 12h12"/></svg></button>
   </div></header>
   <nav class="tabs"><div class="tabs-in" id="tabs">
-    <button data-v="plans">لوحة الخطط</button>
+    <button data-v="plans">الخطة التشغيلية وخطة التحسين</button>
+    <button data-v="me">مجلدات وكيلة المدرسة</button>
     <button data-v="timeline">الخطة الزمنية</button>
-    <button data-v="me">ملفات الوكيلة</button>
-    <button data-v="dash">لوحة المؤشرات</button>
-    <button data-v="home">متابعة المعلمات</button>
-    <button data-v="teachers">المعلمات</button>
-    <button data-v="folders">المجلدات</button>
-    <button data-v="alerts">التنبيهات</button>
-    <button data-v="admins">الإداريات</button>
     <button data-v="plan">برامج الخطة 1448هـ</button>
-    <button data-v="qa">تدقيق الجودة</button>
+    <button data-v="dash">لوحة المؤشرات</button>
+    <button data-v="home">المعلمات</button>
+    <button data-v="admins">الإداريات</button>
   </div></nav>
   <main id="view"></main>
 </div>
@@ -562,12 +558,18 @@ function route() {
       : tTabs('mine') + (i >= 0 ? teacher(i) : `<h2 style="margin:6px 0 12px">اختاري اسمك</h2><div class="list">${D.teachers.map(teacherRow).join('')}</div>`);
     bind($('#view')); window.scrollTo(0, 0); return;
   }
-  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === (v === 't' ? 'teachers' : v === 'f' ? 'folders' : v === 'w' ? 'me' : v === 'board' ? 'home' : v)));
+  const top = TAB_OF[v] || v;
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === top));
   const el = $('#view');
   el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folders(+a),
     plan: planW, plans: plansW, timeline: () => plansW('timeline'), qa: () => qaW(a) }[v] || me)();
+  const sub = SUBTABS[top]; if (sub) el.insertAdjacentHTML('afterbegin', `<div class="seg ttabs">${sub.map(([g, l]) => `<button data-go="${g}" class="${(TAB_OF[v] ? SUB_OF[v] || v : v) === g ? 'on' : ''}">${l}</button>`).join('')}</div>`);
   bind(el); window.scrollTo(0, 0);
 }
+// top tabs that hold sub-pages: «برامج الخطة 1448هـ» and «المعلمات»
+const SUBTABS = { plan: [['plan', 'البرامج'], ['qa', 'تدقيق الجودة']], home: [['home', 'متابعة المعلمات'], ['teachers', 'قائمة المعلمات'], ['folders', 'المجلدات'], ['alerts', 'التنبيهات']] };
+const TAB_OF = { qa: 'plan', plan: 'plan', home: 'home', board: 'home', teachers: 'home', t: 'home', folders: 'home', f: 'home', alerts: 'home', w: 'me' };
+const SUB_OF = { board: 'home', t: 'teachers', f: 'folders' };
 document.querySelector('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.v); });
 function bind(el) {
   el.querySelectorAll('[data-go]').forEach(x => x.addEventListener('click', () => go(x.dataset.go)));
