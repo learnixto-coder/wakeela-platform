@@ -178,7 +178,7 @@ $$('th button[data-sort]').forEach(b => b.addEventListener('click', () => {
 function renderRows(){
   const q = state.q, m = state.dir==='asc' ? 1 : -1;
   const rows = P.filter(p => (state.axis==='الكل' || p.axis===state.axis) && (!q || [p.name,p.teacher,p.owner,p.field].join(' ').includes(q)))
-    .sort((a,b) => (a[state.sort]-b[state.sort])*m || a.i-b.i);
+    .sort((a,b) => (a.goal_pct==null)-(b.goal_pct==null) || (a[state.sort]-b[state.sort])*m || a.i-b.i);   // not started: always last
   $$('th button[data-sort]').forEach(b => b.dataset.dir = b.dataset.sort===state.sort ? state.dir : '');
   $('#shown').textContent = rows.length===P.length ? '' : `يظهر ${ar(rows.length)} من ${ar(P.length)}`;
   $('#progRows').innerHTML = rows.map(p => `
@@ -189,7 +189,7 @@ function renderRows(){
       <td data-l="المعلمات">${esc(p.teacher)}</td>
       <td class="num" data-l="الأساس ← المستهدف">${fx(p.base,2)}٪ ← ${fx(p.target,1)}٪</td>
       <td data-l="نسبة التحقق"><div class="mini"><div class="track"><div class="fill" style="width:${p.goal_pct || 0}%"></div></div><span class="num">${p.goal_pct == null ? 'لم يبدأ' : fx(p.goal_pct) + '٪'}</span></div></td>
-      <td class="num ${p.evidence?'':'ev0'}" data-l="الشواهد">${p.evidence ? ar(p.evidence)+' ملف' : 'لا توجد بعد'}</td>
+      <td class="num ${p.evidence||p.goal_pct==null?'':'ev0'}" data-l="الشواهد">${p.goal_pct==null ? '<span class="small">—</span>' : p.evidence ? ar(p.evidence)+' ملف' : 'لا توجد بعد'}</td>
     </tr>`).join('') || `<tr><td colspan="7" class="small">لا توجد برامج تطابق البحث.</td></tr>`;
   ls.set('plansProg', JSON.stringify({axis:state.axis, sort:state.sort, dir:state.dir}));
 }
@@ -213,7 +213,7 @@ function openProgram(name){
       <div><div class="k">نسبة تحقق الأهداف</div><div class="v num">${p.goal_pct == null ? 'لم يبدأ التنفيذ بعد' : fx(p.goal_pct) + '٪ <span class="small">مرحلية</span>'}</div></div>
       <div><div class="k">نسبة الأثر</div><div class="v num">${p.impact_pct == null ? '—' : fx(p.impact_pct) + '٪ <span class="small">' + esc(p.impact) + '</span>'}</div></div>
       <div><div class="k">مستوى الأداء</div><div class="v">${esc(p.perf)}</div></div>
-      <div><div class="k">ملفات الشواهد</div><div class="v num ${p.evidence ? '' : 'ev0'}">${p.evidence ? ar(p.evidence) : 'لا توجد بعد'}</div></div>
+      <div><div class="k">ملفات الشواهد</div><div class="v num ${p.evidence || p.goal_pct == null ? '' : 'ev0'}">${p.goal_pct == null ? '—' : p.evidence ? ar(p.evidence) : 'لا توجد بعد'}</div></div>
       <div><div class="k">خط الأساس ← المستهدف</div><div class="v num">${fx(p.base,2)}٪ ← ${fx(p.target,1)}٪</div></div>
       <div><div class="k">دورة القياس</div><div class="v">${esc(p.cycle)}</div></div>
       <div><div class="k">التكلفة</div><div class="v num">${p.cost ? ar(p.cost)+' ر.س' : 'بدون تكلفة'}</div></div>
