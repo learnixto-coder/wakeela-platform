@@ -17,6 +17,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "IBM Plex San
 header{background:var(--brand);color:var(--on);padding:calc(env(safe-area-inset-top,0px) + 18px) 16px 18px;text-align:center}
 header small{display:block;opacity:.9;font-size:13px}
 header h1{margin:4px 0 2px;font-size:19px}
+header .hp{display:inline-block;margin-top:10px;padding:6px 16px;border-radius:999px;background:rgba(255,255,255,.18);font-weight:700;font-size:16px}
 main{max-width:640px;margin:0 auto;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 40px)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
 .prog{font-size:18px;font-weight:700;margin:0}
@@ -43,17 +44,16 @@ main{max-width:640px;margin:0 auto;padding:16px 16px calc(env(safe-area-inset-bo
 </head>
 <body>
 <header>
-  <small>وزارة التعليم · المتوسطة الحادية والعشرون بالخميس</small>
-  <h1>استبانة قياس أثر البرامج المدرسية</h1>
-  <small>إجابتك سرّية ولا يُطلب اسمك</small>
+  <small>المتوسطة الحادية والعشرون</small>
+  <h1>استبانة قياس أثر البرامج</h1>
+  <div class="hp" id="hprog" hidden></div>
 </header>
 <main>
   <div id="load" class="card muted">جارٍ التحميل…</div>
   <div id="bad" class="card" hidden><b>الرابط غير صحيح أو أن الاستبانة مغلقة.</b><div class="muted">اطلبي الرابط من معلمة البرنامج.</div></div>
   <form id="f" hidden>
     <div class="card">
-      <div class="muted">اسم البرنامج</div>
-      <p class="prog" id="pname"></p>
+      <div class="muted">إجابتك سرّية ولا يُطلب اسمك.</div>
       <div id="tbox" hidden><div class="muted" style="margin-top:12px">أنا:</div><div class="types" id="types"></div></div>
       <div class="muted" style="margin-top:12px">ضعي اختيارك أمام درجة الموافقة المناسبة لكل عبارة.</div>
     </div>
@@ -66,9 +66,8 @@ main{max-width:640px;margin:0 auto;padding:16px 16px calc(env(safe-area-inset-bo
 <script>
 'use strict';
 const API = 'https://script.google.com/macros/s/AKfycbzx13vLUF31MrEScmb-JsdrOs78cIpZEf4TucFH5dLTW9SmdrTFVIp9XwBRFfVzjMLQ/exec';
-const ITEMS = ['حقق البرنامج أهدافه المخطط لها.', 'ساهم البرنامج في تحسين مستوى الأداء.', 'كانت أنشطة البرنامج مناسبة للفئة المستهدفة.',
-  'أسهم البرنامج في تنمية المعارف والمهارات المستهدفة.', 'تم تنفيذ البرنامج بصورة منظمة وفعالة.', 'استفدت من محتوى البرنامج وأنشطته.',
-  'ساهم البرنامج في معالجة احتياج فعلي.', 'أظهر البرنامج أثرًا إيجابيًا ملموسًا.', 'أوصي بالاستمرار في تنفيذ البرنامج مستقبلًا.', 'مستوى رضاي العام عن البرنامج مرتفع.'];
+const ITEMS = ['حقق البرنامج أهدافه المخطط لها.', 'أسهم البرنامج في تنمية معارفي ومهاراتي.', 'كانت أنشطة البرنامج مناسبة ومنظمة.',
+  'أظهر البرنامج أثرًا إيجابيًا ملموسًا.', 'أنا راضية عن البرنامج وأوصي باستمراره.'];
 const SCALE = [[5, 'أوافق بشدة'], [4, 'أوافق'], [3, 'محايد'], [2, 'لا أوافق'], [1, 'لا أوافق بشدة']];
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -87,7 +86,7 @@ async function init() {
   let info;
   try { info = await (await fetch(`${API}?a=info&p=${p}`)).json(); } catch { info = null; }
   if (!info || !info.ok) return show('bad');
-  $('#pname').textContent = info.name;
+  $('#hprog').textContent = info.name; $('#hprog').hidden = false;
   if (info.types.length === 1) type = info.types[0];
   else {
     $('#tbox').hidden = false;
