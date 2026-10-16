@@ -577,7 +577,7 @@ function route() {
     const mine = !D.planOnly && (v === 'mine' || v === 't');
     const rev = !mine && v === 'rev';
     const qa = !mine && (v === 'qa' || v === 'me');
-    $('#view').innerHTML = v === 'start' ? tHub()
+    $('#view').innerHTML = v === 'start' || rev ? tHub()
       : v === 'x' && D.extra[+a] ? teacherExtra(+a)
       : rev ? tTabs('rev') + teacherReview()
       : qa ? tTabs('qa') + teacherQa()
@@ -1201,7 +1201,8 @@ function rvCard(p) {
       <button class="btn sm" data-go="plan/${p.k}">إرفاق شواهد للبرنامج ←</button></div></section>`;
 }
 // the teacher's «الرئيسية»: the same 4 buttons for every teacher (plan-only accounts have no «ملفاتي»)
-const tList = () => [['qa', 'تدقيق الجودة', 'نتيجة تدقيق برامجك وردّك وخطة التحسين'], ['rev', 'جودة شواهد البرامج', 'تقييم الشواهد المرفقة لبرامجك'],
+// «جودة شواهد البرامج» (rev) disabled 2026-10-17 at the user's request: no button, #rev → الرئيسية; teacherReview() kept unused
+const tList = () => [['qa', 'تدقيق الجودة', 'نتيجة تدقيق برامجك وردّك وخطة التحسين'],
   ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها'], !D.planOnly && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
 const tTabs = cur => homeBar((tList().find(x => x[0] === cur) || [])[1] || '');
 const T_IC = { qa: '<path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
