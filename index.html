@@ -401,7 +401,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .th-b:hover{transform:translateY(-2px);filter:brightness(1.04);border:0}.th-ic{width:52px;height:52px;color:var(--brand);background:rgba(255,255,255,.5)}
 .th-t{font-size:18px}.th-s{display:block;color:inherit;opacity:.82}.th-m{color:#2a2c33;background:var(--card)}.th-go{display:block;color:inherit}
 @media (max-width:900px){.th-hub>.th-b{flex-basis:calc((100% - 14px) / 2)}}@media (max-width:520px){.th-hub,.th-hub.w{gap:10px}.th-hub>.th-b{flex-basis:100%}.th-b{min-height:0;padding:14px 16px}.th-t{font-size:16px}.th-ic{width:44px;height:44px}}
-.fv-tile,.th-i{position:relative}.seen-b{position:absolute;top:6px;inset-inline-start:6px;z-index:2;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.95);border:2px solid #9aa08a;display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.18)}.seen-b::before{content:'✓';font-weight:800;font-size:16px;color:#b9bdaa}.seen-b.seen{background:var(--ok);border-color:var(--ok)}.seen-b.seen::before{color:#fff}.th-i .seen-b{top:3px;inset-inline-start:3px;width:22px;height:22px}.th-i .seen-b::before{font-size:12px}.fv-tile.seen,.th-i.seen{outline:3px solid var(--ok);outline-offset:-2px}.seen-btn{background:var(--card);color:var(--ink);border:1px solid var(--line)}.seen-btn.seen{background:var(--ok);color:#fff;border-color:var(--ok)}
+.fv-tile,.th-i{position:relative}.seen-b{position:absolute;top:6px;inset-inline-start:6px;z-index:2;padding:1px 9px;border-radius:999px;font-size:11px;font-weight:700;line-height:1.7;white-space:nowrap;cursor:pointer;background:rgba(255,255,255,.92);color:#7a7f72;border:1px dashed #b9bdaa;opacity:0;transition:opacity .15s}.seen-b::before{content:'تم الاطلاع'}.fv-tile:hover .seen-b,.th-i:hover .seen-b,.seen-b:focus-visible{opacity:.85}@media (hover:none){.seen-b{opacity:.6}}.seen-b.seen{opacity:1;background:var(--ok);color:#fff;border:1px solid var(--ok)}.th-i .seen-b{top:3px;inset-inline-start:3px;padding:0;width:12px;height:12px;border-radius:50%}.th-i .seen-b::before{content:none}.fv-tile.seen{border-color:var(--ok)}.th-i.seen{outline:2px solid var(--ok);outline-offset:-2px}.seen-btn{background:var(--card);color:var(--ink);border:1px solid var(--line)}.seen-btn.seen{background:var(--ok);color:#fff;border-color:var(--ok)}
 </style>
 </head>
 <body>
@@ -2024,6 +2024,9 @@ function folders(i) {
   fvs.k = Math.min(fvs.k, Math.max(0, files.length - 1));
   const cur = files[fvs.k];
   let grp = '';
+  // «ملفات المعلمة»: all files of one teacher in this folder together; السابق/التالي move between teachers
+  const starts = files.map((r, j) => j).filter(j => !j || files[j].t !== files[j - 1].t);
+  const ti = starts.filter(j => j <= fvs.k).length - 1, mine = cur ? files.filter(r => r.t === cur.t) : [];
   const toc = D.folders.map(x => {
     const n = fvFiles(x.i, 'all').length, head = x.group && x.group !== grp ? `<div class="grp">${esc(x.group)}</div>` : '';
     grp = x.group;
@@ -2038,19 +2041,19 @@ function folders(i) {
       <h2>${esc(f.label)}${f.group ? ` <span class="muted" style="font-weight:400;font-size:14px">· ${esc(f.group)}</span>` : ''}</h2>
       <select class="search" id="fvT" aria-label="المعلمة" style="flex:0 1 260px"><option value="all">كل المعلمات (${nf(fvFiles(fvs.fi, 'all').length)} ملف)</option>${who.map(r => `<option value="${r.x.i}"${fvs.t === r.x.i ? ' selected' : ''}>${esc(r.x.short)} (${nf(r.n)})</option>`).join('')}</select>
     </div>
-    ${cur ? `<div class="seg fv-mode"><button id="fvGridBtn" class="${fvs.mode === 'grid' ? 'on' : ''}">كل الملفات (مصغّرة)</button><button id="fvOneBtn" class="${fvs.mode === 'one' ? 'on' : ''}">ملف واحد</button></div>` : ''}
+    ${cur ? `<div class="seg fv-mode"><button id="fvGridBtn" class="${fvs.mode === 'grid' ? 'on' : ''}">كل الملفات (مصغّرة)</button><button id="fvOneBtn" class="${fvs.mode === 'one' ? 'on' : ''}">ملفات المعلمة</button></div>` : ''}
     ${cur && fvs.mode === 'grid' ? `<div class="fv-grid" id="fvGrid">${files.map((r, j) => `<button class="fv-tile" data-k="${j}" data-key="${esc(r.t.name + '|' + f.key + '|' + r.x.n)}" title="${esc(r.t.short)}">${seenMark(r.t.name + '|' + f.key + '|' + r.x.n)}
         <span class="th"><span class="ext">${esc(r.x.x || '—')}</span><span class="ph">…</span></span>
         <span class="cap"><b>${esc(r.t.short)}</b></span></button>`).join('')}</div>`
     : cur ? `<div class="fv-bar">
-      <div class="fv-nav"><button class="btn ghost sm" id="fvPrev"${fvs.k ? '' : ' disabled'}>→ السابق</button><button class="btn ghost sm" id="fvNext"${fvs.k < files.length - 1 ? '' : ' disabled'}>التالي ←</button>
-        <span class="muted" style="font-size:13.5px">الملف ${nf(fvs.k + 1)} من ${nf(files.length)}</span></div>
-      <select class="search" id="fvK" aria-label="الملف" style="flex:1 1 260px;max-width:460px">${files.map((r, j) => `<option value="${j}"${j === fvs.k ? ' selected' : ''}>${esc(r.t.short)} — الملف ${nf(j + 1)}</option>`).join('')}</select>
+      <div class="fv-nav"><button class="btn ghost sm" id="fvPrev"${ti ? '' : ' disabled'}>→ السابقة</button><button class="btn ghost sm" id="fvNext"${ti < starts.length - 1 ? '' : ' disabled'}>التالية ←</button>
+        <span class="muted" style="font-size:13.5px">المعلمة ${nf(ti + 1)} من ${nf(starts.length)} · ${nf(mine.length)} ${mine.length === 1 ? 'ملف' : mine.length <= 10 ? 'ملفات' : 'ملفًا'}</span></div>
+      <select class="search" id="fvK" aria-label="المعلمة" style="flex:1 1 260px;max-width:460px">${starts.map((j, i) => `<option value="${j}"${i === ti ? ' selected' : ''}>${esc(files[j].t.short)} (${nf(files.filter(r => r.t === files[j].t).length)})</option>`).join('')}</select>
     </div>
-    <div class="card fv-file"><span class="ext">${esc(cur.x.x || '—')}</span>
-      <div class="grow"><b>${esc(cur.t.name)}</b></div>${seenBtn(cur.t.name + '|' + f.key + '|' + cur.x.n)}
-      <a class="btn sm" href="${esc(fileUrl(cur.c, cur.x.n))}" target="_blank" rel="noopener">فتح في OneDrive</a></div>
-    <div id="fvPages" data-key="${esc(cur.t.name + '|' + f.key + '|' + cur.x.n)}"><div class="muted" style="padding:16px 0">جارٍ تحميل المحتوى…</div></div>`
+    ${mine.map((r, j) => { const key = r.t.name + '|' + f.key + '|' + r.x.n; return `<div class="card fv-file"${j ? ' style="margin-top:18px"' : ''}><span class="ext">${esc(r.x.x || '—')}</span>
+      <div class="grow"><b>${esc(r.t.name)}</b>${mine.length > 1 ? ` <span class="muted" style="font-size:13px">· الملف ${nf(j + 1)} من ${nf(mine.length)}</span>` : ''}</div>${seenBtn(key)}
+      <a class="btn sm" href="${esc(fileUrl(r.c, r.x.n))}" target="_blank" rel="noopener">فتح في OneDrive</a></div>
+    <div class="fv-box" data-key="${esc(key)}"><div class="muted" style="padding:16px 0">جارٍ تحميل المحتوى…</div></div>`; }).join('')}`
     : '<div class="empty card">لا توجد ملفات في هذا المجلد بعد</div>'}
   </div></div>`;
 }
@@ -2092,22 +2095,26 @@ async function fvGrid(grid) {   // thumbnails = first page of each file, loaded 
 }
 function fvGo(k) { const n = fvFiles(fvs.fi, fvs.t).length; if (k < 0 || k >= n) return; fvs.k = k; route(); }
 function bindFv(el) {
+function fvStep(d) {   // jump to the first file of the previous/next teacher
+  const fs = fvFiles(fvs.fi, fvs.t), s = fs.map((r, j) => j).filter(j => !j || fs[j].t !== fs[j - 1].t), i = s.filter(j => j <= fvs.k).length - 1;
+  if (s[i + d] !== undefined) fvGo(s[i + d]);
+}
   el.querySelectorAll('[data-fv]').forEach(b => b.addEventListener('click', () => go('f/' + b.dataset.fv)));
   el.querySelector('#fvF')?.addEventListener('change', e => go('f/' + e.target.value));
   el.querySelector('#fvT')?.addEventListener('change', e => { fvs.t = e.target.value === 'all' ? 'all' : +e.target.value; fvs.k = 0; route(); });
   el.querySelector('#fvK')?.addEventListener('change', e => fvGo(+e.target.value));
-  el.querySelector('#fvPrev')?.addEventListener('click', () => fvGo(fvs.k - 1));
-  el.querySelector('#fvNext')?.addEventListener('click', () => fvGo(fvs.k + 1));
+  el.querySelector('#fvPrev')?.addEventListener('click', () => fvStep(-1));
+  el.querySelector('#fvNext')?.addEventListener('click', () => fvStep(1));
   el.querySelector('#fvGridBtn')?.addEventListener('click', () => { fvs.mode = 'grid'; route(); });
   el.querySelector('#fvOneBtn')?.addEventListener('click', () => { fvs.mode = 'one'; route(); });
   el.querySelectorAll('.fv-tile').forEach(t => t.addEventListener('click', () => { fvs.mode = 'one'; fvs.k = +t.dataset.k; route(); }));
   const grid = el.querySelector('#fvGrid'); if (grid) fvGrid(grid);
-  const box = el.querySelector('#fvPages'); if (box) fvShow(box);
+  el.querySelectorAll('.fv-box').forEach(box => fvShow(box));
 }
 document.addEventListener('keydown', e => {   // ← → move between files on the folders page
   if (!el$fv() || fvs.mode !== 'one' || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
-  if (e.key === 'ArrowLeft') fvGo(fvs.k + 1);
-  if (e.key === 'ArrowRight') fvGo(fvs.k - 1);
+  if (e.key === 'ArrowLeft') fvStep(1);
+  if (e.key === 'ArrowRight') fvStep(-1);
 });
 const el$fv = () => document.querySelector('#view .fv');
 
