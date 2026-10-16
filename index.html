@@ -589,13 +589,13 @@ function route() {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === top));
   const el = $('#view');
   el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folders(+a),
-    plan: planW, plans: plansW, timeline: () => plansW('timeline'), qa: () => qaW(a), start: wHub }[v] || me)();
+    plan: planW, plans: plansW, timeline: () => plansW('timeline'), qa: () => qaW(a), quality: qualityW, start: wHub }[v] || me)();
   if (v !== 'start') { const h = HUB.find(x => x[0] === (SUB_OF[v] || (v === 'w' ? 'me' : v))); el.insertAdjacentHTML('afterbegin', homeBar(h ? h[1] : '')); }
   bind(el); window.scrollTo(0, 0);
 }
 // «الرئيسية»: big buttons instead of a tab bar (the user's choice, to keep the وكيلة and the teacher focused); every page gets a «الرئيسية» button
 const HUB_G = [['الخطط والبرامج', [['plans', 'الخطة التشغيلية وخطة التحسين', 'الخطتان وبطاقات البرامج ومؤشراتها'], ['timeline', 'الخطة الزمنية', 'مواعيد تنفيذ البرامج'],
-    ['plan', 'برامج الخطة 1448هـ', 'شواهد البرامج ومجلداتها'], ['qa', 'تدقيق الجودة', 'تدقيق البرامج ونتائجها']]],
+    ['plan', 'برامج الخطة 1448هـ', 'شواهد البرامج ومجلداتها'], ['qa', 'تدقيق الجودة', 'تدقيق البرامج ونتائجها'], ['quality', 'لوحة مؤشرات الجودة', 'جودة صور الشواهد ومحتواها لكل برنامج ومعلمة']]],
   ['ملفات الوكيلة', [['me', 'مجلدات وكيلة المدرسة', 'أقسام ملفاتك وما فيها']]],
   ['المعلمات', [['home', 'متابعة المعلمات', 'لوحة التتبع والإنجاز حسب المجلد'], ['teachers', 'قائمة المعلمات', 'صفحة كل معلمة'], ['folders', 'المجلدات', 'محتوى ملفات المعلمات'],
     ['alerts', 'التنبيهات', 'الملفات المكررة والفارغة والتذكير'], ['dash', 'لوحة المؤشرات', 'مؤشرات إنجاز المعلمات']]],
@@ -624,6 +624,7 @@ function bind(el) {
   el.querySelectorAll('[data-close]').forEach(x => x.addEventListener('click', () => closeNote(x.dataset.close, +x.dataset.t)));
   const pd = el.querySelector('#pdel'); if (pd) bindPlanDel(pd);
   const ph = el.querySelector('#plansHost'); if (ph) mountPlansHere(ph);
+  const qlh = el.querySelector('#qualityHost'); if (qlh) mountQualityHere(qlh);
   const qh = el.querySelector('#qaHost'); if (qh) mountQa(qh);
   el.querySelectorAll('#qaT, .qaT').forEach(mountQaT);
   el.querySelectorAll('[data-qr]').forEach(drawQr);
@@ -1200,6 +1201,7 @@ const T_IC = { qa: '<path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/
   folders: '<path d="M2 9a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M6 7V5a1 1 0 0 1 1-1h4l2 2h7a1 1 0 0 1 1 1v8"/>',
   alerts: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>',
   dash: '<circle cx="12" cy="13" r="8"/><path d="M12 13l4-4M12 5v1"/>',
+  quality: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 15-5-5-9 9"/><path d="m14 3 1 2 2 .3-1.5 1.4.4 2.1L14 7.8"/>',
   admins: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/>' };
 function tHub() {
   const P = D.plan, A = P1(P), done = A.filter(p => p.s === 'ok').length, sc = A.filter(p => p.rev?.files);
@@ -1287,6 +1289,16 @@ function teacherProgram(k) {
 /* ---------- لوحة الخطط (site/plans, built by «لوحة الخطط 1448/build_dashboard.py») ---------- */
 function plansW(only) {   // only = one view of the plans app as its own page ('timeline' = «الخطة الزمنية»)
   return '<div id="plansHost"' + (only ? ` data-only="${only}"` : '') + '><div class="muted" style="padding:24px 0">جارٍ فتح لوحة الخطط…</div></div>';
+}
+/* ---------- لوحة مؤشرات الجودة (site/quality, built by tools/quality.py) ---------- */
+const qualityW = () => '<div id="qualityHost"><div class="muted" style="padding:24px 0">جارٍ تحميل لوحة مؤشرات الجودة…</div></div>';
+let qualityApp = null;
+function mountQualityHere(host) {
+  (qualityApp ??= fetch('quality/app.ver?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.text() : '').catch(() => '')
+    .then(v => new Promise((ok, bad) => { const sc = document.createElement('script'); sc.src = 'quality/app.js?v=' + v.trim(); sc.onload = ok; sc.onerror = bad; document.head.append(sc); }))
+    .catch(e => { qualityApp = null; throw e; }))
+    .then(() => window.mountQuality(host, { code: sessionCode, base: 'quality/' }))
+    .catch(() => { if (host.isConnected) host.innerHTML = '<div class="empty card">تعذّر تحميل لوحة مؤشرات الجودة، تحققي من الاتصال ثم اضغطي «تحديث».</div>'; });
 }
 let plansApp = null;   // plans/app.js (built by «لوحة الخطط 1448/build_dashboard.py»), loaded once
 function loadPlansApp() {
