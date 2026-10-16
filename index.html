@@ -1109,7 +1109,7 @@ function teacherDash(t, folds) {
 const P_LABEL = { ok: 'أُرفقت الشواهد', none: 'لم تُرفق بعد', na: 'لا يوجد مجلد', later: 'تبدأ في الفصل الدراسي الثاني' };
 // programs that start in term 2 (from ≥ 9/8/1448) are listed with their dates but are not counted in the evidence totals
 const T2_FROM = '1448/8/9', hnum = s => s ? s.split('/').map(Number).reduce((a, x) => a * 100 + x, 0) : 0,
-  hdate = s => s.split('/').reverse().join('/') + 'هـ', P1 = P => P.filter(p => !p.t2);
+  hdate = s => s.split('/').reverse().join('‏/') + 'هـ', P1 = P => P.filter(p => !p.t2);
 const pchip = s => `<span class="chip s-${s}">${P_LABEL[s]}</span>`;
 const people = p => `<div class="ppl">${p.people.map(x => `<span class="${x.t ? '' : 'nolog'}" title="${x.t ? '' : 'لا يوجد لها حساب في المنصة'}">${esc(x.label)}</span>`).join('') || '<span class="nolog">لم تُحدَّد</span>'}</div>`;
 const planIcon = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/></svg>';
@@ -1486,7 +1486,7 @@ async function qaLoadAll() {
   return qaDocs = out;
 }
 // the program's period in the timeline (programs_1448.json from/to, y/m/d) as «17/3/1448هـ – 6/4/1448هـ»
-const planDate = p => { const f = s => s ? s.split('/').reverse().join('/') + 'هـ' : ''; return !p.from ? '' : p.from === p.to ? f(p.from) : `${f(p.from)} – ${f(p.to)}`; };
+const planDate = p => { const f = s => s ? s.split('/').reverse().join('‏/') + 'هـ' : ''; return !p.from ? '' : p.from === p.to ? f(p.from) : `${f(p.from)} – ${f(p.to)}`; };
 let qaD = null;   // the open program: {p, doc (working copy), tab, dirty, intTouched, intAt, statusSet, srv}
 function qaOpen(p, doc) {
   const keep = qaD?.p === p ? qaD.tab : 'obs';
@@ -1558,7 +1558,7 @@ function qaList() {
       <div class="sub">${esc(p.people.map(x => x.label).join('، ') || '—')}${p.dt ? ' · ' + esc(p.dt) : ''}</div></div><div class="qa-chips"><span class="chip s-later">لم يبدأ البرنامج</span></div></div>`;
     return `<button class="row" data-go="qa/${p.k}">${sc == null ? `<div class="ring" style="--v:0">—</div>` : ring(sc)}<div class="grow"><div class="name">${esc(p.name)}</div>
       <div class="sub">${esc(p.people.map(x => x.label).join('، ') || '—')} · ${p.n ? nf(p.n) + ' شاهد' : 'بلا شواهد'}${srvOn(p) ? ' · استبانة مفعّلة' : ''}${d.interview?.state === 'pending' ? ' · <b style="color:var(--part)">مقابلة بانتظار اعتمادك</b>' : ''}</div></div>
-      <div class="qa-chips">${qaChip(d.status)}${lvChip(d.level, d.running)}</div></button>`;  };
+      <div class="qa-chips">${endChip(p)}${qaChip(d.status)}${lvChip(d.level, d.running)}</div></button>`;  };
   const due = rows.filter(r => r.d.running && r.d.recheck && r.d.recheck <= D.generated.slice(0, 10) && r.d.status !== 'none');
   return `<div class="card hero">${ring(pct).replace('class="ring"', 'class="ring lg"')}
     <div class="grow"><h2>تدقيق جودة برامج الخطة التشغيلية 1448هـ</h2>
@@ -1576,7 +1576,7 @@ function qaProgram() {
   return `<button class="back" data-go="qa">→ كل البرامج</button>
   <div class="card hero" style="margin-top:8px"><span class="sec-ic">${planIcon}</span>
     <div class="grow"><h2>${esc(p.name)}</h2><p>${esc(p.owner)} · ${p.n ? nf(p.n) + ' شاهد' : 'لا توجد شواهد'}</p>${people(p)}</div>
-    <div class="qa-chips">${qaChip(d.status)}${lvChip(d.level, d.running)}</div></div>
+    <div class="qa-chips">${endChip(p)}${qaChip(d.status)}${lvChip(d.level, d.running)}</div></div>
   <div class="qa-grid"><div>
     <div class="seg qa-tabs" id="qaTabs">${[['obs', 'بطاقة الملاحظة'], ['int', 'المقابلة'], ['srv', 'الاستبانة'], ['res', 'النتيجة والإرسال']]
       .map(([k, l]) => `<button data-qt="${k}" class="${qaD.tab === k ? 'on' : ''}">${l}${k === 'int' && d.interview?.state === 'pending' ? ' <i class="dot"></i>' : ''}</button>`).join('')}</div>
@@ -1652,7 +1652,8 @@ function qaResW() {
       <div><span>المستوى المقترح</span><b>${sug ? QA_LV[sug] : '—'}</b><small>90+ متميز · 75+ متقدم · 60+ مقبول</small></div></div></div>
     <div class="card pad qa-card"><div class="qa-h"><b>مستوى الجودة</b><span class="muted">القرار لكِ، والمقترح للاسترشاد فقط</span></div>
       <div class="qa-lv">${Object.entries(QA_LV).map(([k, l]) => `<button data-lv="${k}" class="lv-${k}${d.level === k ? ' on' : ''}">${l}${k === sug ? '<small>مقترح</small>' : ''}</button>`).join('')}</div>
-      <label class="qa-run"><input type="checkbox" id="qaRun"${d.running ? ' checked' : ''}> البرنامج لا يزال يُنفَّذ (تقييم مرحلي)</label>
+      ${qaEnded(qaD.p) && !d.running ? `<div class="qa-run"><span class="chip s-ok">✓ البرنامج منتهي</span> انتهى في ${esc(qaD.p.to.split('/').reverse().join('‏/'))}هـ</div>`
+      : `<label class="qa-run"><input type="checkbox" id="qaRun"${d.running ? ' checked' : ''}> البرنامج لا يزال يُنفَّذ (تقييم مرحلي)</label>`}
       <label class="up-l" id="qaRecL"${d.running ? '' : ' hidden'}>موعد إعادة التدقيق (يظهر لكِ تذكير في قائمة البرامج)<input type="date" class="search" data-f="recheck" value="${esc(d.recheck || '')}" style="display:block;margin-top:4px"></label>
       <div class="qa-sgw"><label class="up-l" style="margin-top:12px">توجيه للمعلمة</label>
       <textarea class="msg note-in" rows="3" data-f="guide" placeholder="مثال: أضيفي صور التنفيذ الفعلي، ووثّقي عدد المستفيدات…">${esc(d.guide || '')}</textarea>
@@ -1663,6 +1664,17 @@ function qaResW() {
     <div class="card pad qa-card">${act}</div>`;
 }
 function qaMarkDirty() { qaD.dirty = true; const x = $('#qaDirty'); if (x) x.textContent = 'تغييرات غير محفوظة'; }
+// '1448/5/18' (أم القرى) → '2026-10-29' ؛ موعد إعادة التدقيق الافتراضي = نهاية البرنامج في الخطة الزمنية
+const hijriToIso = h => { const m = /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/.exec(h || ''); if (!m) return '';
+  const f = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  const want = `${+m[2]}/${+m[3]}/${+m[1]}`, d = new Date(Date.UTC(+m[1] - 1448 + 2026, 5, 1));
+  for (let i = 0; i < 420; i++, d.setUTCDate(d.getUTCDate() + 1)) {
+    const p = Object.fromEntries(f.formatToParts(d).map(x => [x.type, x.value]));
+    if (`${p.month}/${p.day}/${parseInt(p.year)}` === want) return d.toISOString().slice(0, 10); }
+  return ''; };
+// انتهى البرنامج = مرّ تاريخ نهايته في الخطة الزمنية (يوم النهاية نفسه لا يزال يُنفَّذ)
+const qaEnded = p => { const e = hijriToIso(p.to); return !!e && e < new Date().toLocaleDateString('en-CA'); };
+const endChip = p => qaEnded(p) ? '<span class="chip s-ok">البرنامج منتهي</span>' : '';
 function qaSet(path, val) { const ks = path.split('.'); let o = qaD.doc; ks.slice(0, -1).forEach(k => o = o[k] ??= {}); o[ks.at(-1)] = val; qaMarkDirty(); }
 function qaRedraw(host) { host.innerHTML = qaProgram(); bind(host); }
 async function qaSaveNow(host, okMsg) {
@@ -1676,7 +1688,9 @@ async function qaSaveNow(host, okMsg) {
 }
 function bindQa(host) {
   host.addEventListener('input', e => { const f = e.target.closest('[data-f]'); if (f) qaSet(f.dataset.f, f.value); });
-  host.addEventListener('change', e => { if (e.target.id === 'qaRun') { qaSet('running', e.target.checked); const l = $('#qaRecL'); if (l) l.hidden = !e.target.checked; } });
+  host.addEventListener('change', e => { if (e.target.id === 'qaRun') { qaSet('running', e.target.checked); const l = $('#qaRecL'); if (l) l.hidden = !e.target.checked;
+    const end = hijriToIso(qaD.p.to), inp = l && l.querySelector('[data-f="recheck"]');
+    if (e.target.checked && end && inp && !inp.value) { inp.value = end; qaSet('recheck', end); } } });
   host.addEventListener('click', async e => {
     const t = e.target.closest('button'); if (!t || !host.contains(t)) return;
     if (t.dataset.qt) { qaD.tab = t.dataset.qt; host.querySelectorAll('#qaTabs button').forEach(b => b.classList.toggle('on', b === t)); $('#qaBody').innerHTML = qaBody(); bind($('#qaBody')); return; }
@@ -1726,7 +1740,7 @@ window.addEventListener('beforeunload', e => { if (qaD?.dirty && location.hash.s
 // the three ministry forms, filled, for printing / saving as PDF
 // «10/4/1448هـ», the same form as the observation and interview dates
 const hijriNum = d => { const g = t => new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(d).find(x => x.type === t).value;
-  return `${g('day')}/${g('month')}/${g('year')}هـ`; };
+  return `${g('day')}‏/${g('month')}‏/${g('year')}هـ`; };   // ‏ يُبقي الترتيب من اليمين: اليوم ثم الشهر ثم السنة
 function qaPrint() {
   const { p, doc: d, srv: s } = qaD, o = d.obs, iv = d.interview, ck = on => on ? '☑' : '☐';
   // d/m/yyyy is shown as an isolated «1448/4/9هـ» (read right to left: day, month, year); a range as «من … إلى …»
