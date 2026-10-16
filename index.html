@@ -175,6 +175,7 @@ select.search{flex:0 1 auto}
 /* teacher detail */
 body.tmode nav.tabs{display:none}
 body.pmode nav.tabs,body.pmode #reload{display:none}
+body.lmode nav.tabs,body.lmode #reload{display:none}
 #plansHost{min-height:60vh}
 .lock .hint{font-size:13px;margin:-12px 0 16px}
 .back{background:none;border:0;color:var(--brand-2);cursor:pointer;padding:4px 0;font-weight:600}
@@ -494,7 +495,8 @@ async function unlock(code, remember) {
   $('#err').textContent = ''; $('#go').disabled = true; $('#go').textContent = 'جارٍ الفتح…';
   try {
     const c = phoneOf(code) || code.trim().toUpperCase();
-    D = await load(c).catch(async e => { if (e.message === 'code' && await isPlansCode(c)) return { kind: 'plans' }; throw e; });
+    D = await load(c).catch(async e => { if (e.message === 'code' && await isPlansCode(c)) return { kind: 'plans' };
+      if (e.message === 'code') { const L = await leaderData(c); if (L) return L; } throw e; });
     if (remember) store.set(c);
     sessionCode = c;
     if (location.hash) history.replaceState(null, '', location.pathname + location.search);   // opening the platform always starts at «الرئيسية» (the buttons)
@@ -506,7 +508,7 @@ async function unlock(code, remember) {
 }
 let sessionCode = null;
 $('#lockForm').addEventListener('submit', e => { e.preventDefault(); if ($('#code').value.trim()) unlock($('#code').value, $('#remember').checked); });
-$('#logout').onclick = () => { store.set(null); sessionCode = null; D = null; $('#app').hidden = true; $('#lock').hidden = false; $('#code').value = ''; document.body.classList.remove('tmode', 'pmode');
+$('#logout').onclick = () => { store.set(null); sessionCode = null; D = null; $('#app').hidden = true; $('#lock').hidden = false; $('#code').value = ''; document.body.classList.remove('tmode', 'pmode', 'lmode');
   try { sessionStorage.removeItem('wk-plans-code'); localStorage.removeItem('wk-plans-code'); } catch {} window.__plansCache = null; prevReset(); location.hash = ''; };
 $('#reload').onclick = async () => {
   const b = $('#reload'), lbl = b.querySelector('span'), before = D && D.generated;
@@ -533,6 +535,9 @@ const folderTitle = f => f.group ? `${f.label}` : f.label;
 
 function prep() {
   document.body.classList.toggle('pmode', D.kind === 'plans');
+  document.body.classList.toggle('lmode', D.kind === 'leader');
+  if (D.kind === 'leader') { document.body.classList.remove('tmode'); $('#title').textContent = 'بوابة رائدة النشاط'; const g = new Date(D.generated);
+    $('#meta').textContent = `أ. منى العمري · الأنشطة الصفية · آخر تحديث ${g.toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'long' })} ${g.toLocaleTimeString('ar-SA-u-nu-latn', { hour: 'numeric', minute: '2-digit' })} · العام الدراسي 1448هـ`; return; }
   if (D.kind === 'plans') { $('#title').textContent = 'لوحة الخطة التشغيلية وخطة التحسين 1448هـ'; $('#meta').textContent = 'المتوسطة الحادية والعشرون'; return; }
   D.folders.forEach((f, i) => f.i = i);
   D.teachers.forEach((t, i) => {
@@ -562,6 +567,9 @@ function go(h) { location.hash = h; }
 function route() {
   if (!D) return;
   if (D.kind === 'plans') { const el = $('#view'); el.innerHTML = plansW(); bind(el); return; }
+  if (D.kind === 'leader') {   // بوابة رائدة النشاط (leader.js): الرئيسية · المعلمة · الفصل · المجال · كل البرامج · لوحة المؤشرات
+    const [lv, la] = (location.hash.slice(1) || 'start').split('/'), el = $('#view');
+    el.innerHTML = (lv === 'start' ? '' : homeBar('')) + LEADER.render(D, lv, la); bind(el); window.scrollTo(0, 0); return; }
   const [v, a] = (location.hash.slice(1) || 'start').split('/');
   if (D.kind === 'teacher') {   // a teacher sees only her own page(s)
     const one = D.teachers.length === 1, i = one ? 0 : v === 't' && D.teachers[+a] ? +a : -1;
@@ -1290,6 +1298,15 @@ function mountPlansHere(host) {
   loadPlansApp().then(() => { if (host.isConnected) { host.textContent = ''; window.mountPlans(host, { embed: true, base: 'plans/', code: sessionCode, only: host.dataset.only,
     offset: () => $('header.top').offsetHeight + ($('nav.tabs').offsetHeight || 0) }); } })
     .catch(() => { host.innerHTML = '<div class="empty card">تعذّر تحميل لوحة الخطط، تحققي من الاتصال ثم اضغطي «تحديث».</div>'; });
+}
+// رمز رائدة النشاط يفتح data/l.json (يبنيه tools/leader.js) ويحمّل leader.js؛ غير ذلك ← null
+async function leaderData(code) {
+  try {
+    const r = await fetch('data/l.json?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return null;
+    const d = await openBox(await r.json(), code);
+    if (!window.LEADER) await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'leader.js?t=' + Date.now(); s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+    return Object.assign(d, { kind: 'leader' });
+  } catch { return null; }
 }
 async function isPlansCode(code) {   // the evaluator's code unwraps the plans content key (plans/lock.json), nothing else
   try {
