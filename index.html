@@ -11,15 +11,16 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f4f6f5; --card:#fff; --ink:#17201d; --muted:#5f6b67; --line:#e2e7e5; --soft:#eef2f0;
-  --brand:#0f5c4d; --brand-2:#13786a; --brand-ink:#fff;
+  /* palette colorhunt f9f8f6 · efe9e3 · d9cfc7 · c9b59c; brand = a deeper shade of c9b59c for contrast */
+  --bg:#f9f8f6; --card:#fff; --ink:#2b241e; --muted:#6e6259; --line:#d9cfc7; --soft:#efe9e3;
+  --brand:#6f5a43; --brand-2:#8a6f52; --brand-ink:#fff;
   --ok:#1e7f4f; --ok-bg:#dcf2e5; --part:#8a5a00; --part-bg:#fdf0cf; --none:#b3261e; --none-bg:#fbe1de; --na:#6b7280; --na-bg:#eceef0;
   --shadow:0 1px 2px rgba(16,24,20,.06),0 4px 14px rgba(16,24,20,.05);
   --r:14px; color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root{
-  --bg:#0f1513; --card:#18201d; --ink:#e8eeec; --muted:#9aa8a3; --line:#2a3531; --soft:#1f2925;
-  --brand:#2fa58c; --brand-2:#3bbfa3; --brand-ink:#06201a;
+  --bg:#1c1814; --card:#25201b; --ink:#efe9e3; --muted:#b3a596; --line:#3a3129; --soft:#2d2620;
+  --brand:#c9b59c; --brand-2:#d9c7ad; --brand-ink:#2b241e;
   --ok:#5fd39a; --ok-bg:#163a29; --part:#f2c25b; --part-bg:#3b2f12; --none:#ff8a80; --none-bg:#41201d; --na:#a3abb3; --na-bg:#262c31;
   --shadow:none; color-scheme:dark;
 }}
@@ -242,7 +243,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .ck .n{flex:1;min-width:0;overflow-wrap:anywhere}
 .ck.pend{opacity:.55;cursor:default}
 .note-close{margin-inline-start:auto}
-.subtabs{display:flex;gap:10px;margin:0 0 16px;flex-wrap:wrap}.subtabs button{flex:1;min-width:130px;min-height:46px;padding:10px 14px;border-radius:12px;border:2px solid var(--brand);background:var(--card);color:var(--brand);font:inherit;font-size:15px;font-weight:700;cursor:pointer}.subtabs button:hover{background:var(--soft)}.subtabs button.on{background:var(--brand);color:var(--brand-ink)}.qa-ph{margin:18px 0 10px;font-size:16px}nav.tabs{display:none!important}.hub{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}.hub-b{display:flex;align-items:center;gap:14px;padding:18px;min-height:92px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:var(--shadow);cursor:pointer;text-align:start;font:inherit;color:var(--ink)}.hub-b:hover{border-color:var(--brand)}.hub-b .sec-ic{width:50px;height:50px}.hub-t{display:block;font-weight:700;font-size:16.5px}.hub-s{display:block;color:var(--muted);font-size:13px;margin-top:3px}@media (max-width:560px){.hub{grid-template-columns:1fr}.hub-b{min-height:76px;padding:14px}}.hub-h{margin:18px 0 10px;font-size:15px;color:var(--muted)}.homebar{display:flex;align-items:center;gap:12px;margin:0 0 14px;flex-wrap:wrap}.homebar b{font-size:17px}:root{--th-0:#13786a;--th-1:#b7791f;--th-2:#2f6fb0;--th-3:#7a4fb5}.th-hero{border-inline-start:5px solid var(--brand)}.th-hero .sec-ic{width:52px;height:52px;border-radius:50%}.th-hub{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.th-hub.w{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}.th-b{display:flex;align-items:center;gap:16px;padding:20px;min-height:128px;border:1px solid var(--line);border-top:4px solid var(--a);border-radius:16px;background:var(--card);box-shadow:var(--shadow);cursor:pointer;text-align:start;font:inherit;color:var(--ink);transition:transform .15s,border-color .15s}.th-b:hover{transform:translateY(-2px);border-color:var(--a)}.th-b:focus-visible{outline:3px solid var(--a);outline-offset:2px}.th-ic{width:60px;height:60px;border-radius:16px;display:grid;place-items:center;flex:0 0 auto;color:var(--a);background:color-mix(in srgb,var(--a) 14%,transparent)}.th-x{flex:1;min-width:0}.th-t{display:block;font-weight:800;font-size:18px}.th-s{display:block;color:var(--muted);font-size:13.5px;margin-top:4px}.th-m{display:inline-block;margin-top:8px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;color:var(--a);background:color-mix(in srgb,var(--a) 12%,transparent)}.th-go{font-size:20px;color:var(--a)}@media (prefers-color-scheme:dark){:root{--th-0:#3bbfa3;--th-1:#f2c25b;--th-2:#6aa8ee;--th-3:#b48cf0}}@media (max-width:640px){.th-hub,.th-hub.w{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.th-b{flex-direction:column;align-items:center;text-align:center;gap:8px;min-height:0;padding:14px 8px}.th-ic{width:48px;height:48px}.th-t{font-size:14.5px;line-height:1.4}.th-s,.th-go{display:none}.th-m{margin-top:6px;font-size:11.5px;padding:2px 8px}.th-hero{padding:14px}.th-hero h2{font-size:17px}.hub-h{margin:14px 0 8px}}@media (prefers-reduced-motion:reduce){.th-b{transition:none}.th-b:hover{transform:none}}.ttabs{display:flex;margin:0 0 14px}.ttabs button{flex:1;padding:10px 8px;font-size:14.5px}
+.subtabs{display:flex;gap:10px;margin:0 0 16px;flex-wrap:wrap}.subtabs button{flex:1;min-width:130px;min-height:46px;padding:10px 14px;border-radius:12px;border:2px solid var(--brand);background:var(--card);color:var(--brand);font:inherit;font-size:15px;font-weight:700;cursor:pointer}.subtabs button:hover{background:var(--soft)}.subtabs button.on{background:var(--brand);color:var(--brand-ink)}.qa-ph{margin:18px 0 10px;font-size:16px}nav.tabs{display:none!important}.hub{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}.hub-b{display:flex;align-items:center;gap:14px;padding:18px;min-height:92px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:var(--shadow);cursor:pointer;text-align:start;font:inherit;color:var(--ink)}.hub-b:hover{border-color:var(--brand)}.hub-b .sec-ic{width:50px;height:50px}.hub-t{display:block;font-weight:700;font-size:16.5px}.hub-s{display:block;color:var(--muted);font-size:13px;margin-top:3px}@media (max-width:560px){.hub{grid-template-columns:1fr}.hub-b{min-height:76px;padding:14px}}.hub-h{margin:18px 0 10px;font-size:15px;color:var(--muted)}.homebar{display:flex;align-items:center;gap:12px;margin:0 0 14px;flex-wrap:wrap}.homebar b{font-size:17px}:root{--th-0:#8a6f52;--th-1:#b7791f;--th-2:#2f6fb0;--th-3:#7a4fb5}.th-hero{border-inline-start:5px solid var(--brand)}.th-hero .sec-ic{width:52px;height:52px;border-radius:50%}.th-hub{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.th-hub.w{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}.th-b{display:flex;align-items:center;gap:16px;padding:20px;min-height:128px;border:1px solid var(--line);border-top:4px solid var(--a);border-radius:16px;background:var(--card);box-shadow:var(--shadow);cursor:pointer;text-align:start;font:inherit;color:var(--ink);transition:transform .15s,border-color .15s}.th-b:hover{transform:translateY(-2px);border-color:var(--a)}.th-b:focus-visible{outline:3px solid var(--a);outline-offset:2px}.th-ic{width:60px;height:60px;border-radius:16px;display:grid;place-items:center;flex:0 0 auto;color:var(--a);background:color-mix(in srgb,var(--a) 14%,transparent)}.th-x{flex:1;min-width:0}.th-t{display:block;font-weight:800;font-size:18px}.th-s{display:block;color:var(--muted);font-size:13.5px;margin-top:4px}.th-m{display:inline-block;margin-top:8px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;color:var(--a);background:color-mix(in srgb,var(--a) 12%,transparent)}.th-go{font-size:20px;color:var(--a)}@media (prefers-color-scheme:dark){:root{--th-0:#c9b59c;--th-1:#f2c25b;--th-2:#6aa8ee;--th-3:#b48cf0}}@media (max-width:640px){.th-hub,.th-hub.w{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.th-b{flex-direction:column;align-items:center;text-align:center;gap:8px;min-height:0;padding:14px 8px}.th-ic{width:48px;height:48px}.th-t{font-size:14.5px;line-height:1.4}.th-s,.th-go{display:none}.th-m{margin-top:6px;font-size:11.5px;padding:2px 8px}.th-hero{padding:14px}.th-hero h2{font-size:17px}.hub-h{margin:14px 0 8px}}@media (prefers-reduced-motion:reduce){.th-b{transition:none}.th-b:hover{transform:none}}.ttabs{display:flex;margin:0 0 14px}.ttabs button{flex:1;padding:10px 8px;font-size:14.5px}
 .btn.danger{background:var(--none);border-color:var(--none)}
 .foot{margin-top:28px;color:var(--muted);font-size:12.5px;text-align:center}
 
@@ -797,18 +798,18 @@ function home() {
   }).join('');
   const low = [...T].filter(t => t.exist >= 5).sort((a, b) => a.pct - b.pct).slice(0, 5);
   return `
-  <h2>لوحة التتبع · كل معلمة وكل مجلد</h2>
-  ${board()}
-  <h2>الإنجاز حسب المجلد</h2>
-  <div class="card pad"><div class="bars">${bars}</div>
-    <div class="legend"><span><i style="background:var(--ok)"></i>مكتمل</span><span><i style="background:#e0a526"></i>ناقص</span><span><i style="background:var(--none);opacity:.55"></i>لم ترفع</span><span class="muted">· اضغطي المجلد لعرض المعلمات</span></div>
-  </div>
   <h2>نظرة عامة · ${esc(D.week)}</h2>
   <div class="kpis">
     <div class="card kpi"><b style="color:${pctColor(pct)}">${nf(pct)}%</b><span>نسبة إنجاز المجلدات</span></div>
     <div class="card kpi"><b>${nf(full)} / ${nf(T.length)}</b><span>معلمات أكملن كل المجلدات</span></div>
     <div class="card kpi"><b>${nf(files)}</b><span>ملفًا مرفوعًا</span></div>
     <div class="card kpi"><b style="color:${zero ? 'var(--none)' : 'inherit'}">${nf(zero)}</b><span>معلمات لم يرفعن شيئًا</span></div>
+  </div>
+  <h2>لوحة التتبع · كل معلمة وكل مجلد</h2>
+  ${board()}
+  <h2>الإنجاز حسب المجلد</h2>
+  <div class="card pad"><div class="bars">${bars}</div>
+    <div class="legend"><span><i style="background:var(--ok)"></i>مكتمل</span><span><i style="background:#e0a526"></i>ناقص</span><span><i style="background:var(--none);opacity:.55"></i>لم ترفع</span><span class="muted">· اضغطي المجلد لعرض المعلمات</span></div>
   </div>
   <h2>الأقل إنجازًا</h2>
   <div class="list">${low.map(teacherRow).join('')}</div>`;
@@ -1148,13 +1149,13 @@ function teacherReview() {
   return `<div class="card hero">${sc.length ? ring(avg).replace('class="ring"', 'class="ring lg"') : ''}
     <div class="grow"><h2>جودة شواهد البرامج</h2>
     <p>${!D.plan.length ? 'لا توجد برامج مسندة إليك في الخطة التشغيلية' : !P1(D.plan).length ? 'لم يبدأ البرنامج بعد · تبدأ برامجك في الفصل الدراسي الثاني' : !sc.length ? 'لم تُقيَّم شواهد برامجك بعد' : sc.length > 1 ? `متوسط تقييم برامجك (${nf(sc.length)} برامج) من 100` : 'تقييم شواهد برنامجك من 100'}${date ? ` · قُيّمت الشواهد المرفوعة حتى ${esc(date)}` : ''}</p>
-    <p class="muted" style="font-size:13px;margin-top:4px">لكل برنامج: جوانب القوة، وجوانب الضعف، وما يرفع التقييم، والإجراءات التي ينقصها شاهد. أرفقي الشواهد الناقصة من صفحة البرنامج، ويُعاد التقييم بعد مراجعتها.</p></div></div>
+    ${sc.length ? '<p class="muted" style="font-size:13px;margin-top:4px">لكل برنامج: جوانب القوة، وجوانب الضعف، وما يرفع التقييم، والإجراءات التي ينقصها شاهد. أرفقي الشواهد الناقصة من صفحة البرنامج، ويُعاد التقييم بعد مراجعتها.</p>' : ''}</div></div>
   ${P.map(rvCard).join('')}${P2.map(rvLater).join('')}`;
 }
 // a second-semester program: no score, no messages — only that it has not started
 const rvLater = p => `<section class="card rv" id="rv${p.k}"><div class="rv-h"><div class="grow"><h3>${esc(p.name)}</h3>
     <div class="rv-meta"><span class="chip s-later">لم يبدأ البرنامج</span>${p.dt ? `<span>${esc(p.dt)}</span>` : ''}</div></div></div>
-    <p class="muted" style="font-size:13.5px;margin:6px 0 0">يبدأ هذا البرنامج في الفصل الدراسي الثاني، ويُقيَّم بعد بدء تنفيذه.</p></section>`;
+    <p class="muted" style="font-size:13.5px;margin:0;padding:12px 18px 14px">يبدأ هذا البرنامج في الفصل الدراسي الثاني، ويُقيَّم بعد بدء تنفيذه.</p></section>`;
 function rvCard(p) {
   const r = p.rev, has = r.score != null && r.files, fresh = !r.files && p.n, lv = fresh ? 'part' : RV_LEVEL[r.level] || 'na';
   const miss = r.steps.filter(s => !s.ok).length;
@@ -1202,9 +1203,9 @@ function tHub() {
   return thHero(`مرحبًا بكِ${t ? '، أ. ' + esc(t.short) : ''}`, 'اختاري القسم الذي تريدين العمل عليه.') + `<div class="th-hub">${tList().map(([g, l, d], i) => thBtn(g, l, d, meta[g], i)).join('')}</div>`;
 }
 // shared by both «الرئيسية» pages: the welcome card and the big coloured buttons
-const thHero = (h, p) => `<div class="card hero th-hero"><span class="sec-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>
+const thHero = (h, p) => `<div class="card hero th-hero">
     <div class="grow"><h2>${h}</h2><p class="muted">${p}</p></div></div>`;
-const thBtn = (g, l, d, m, c) => `<button class="th-b" data-go="${g}" style="--a:var(--th-${c % 4})"><span class="th-ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${T_IC[g] || T_IC.mine}</svg></span>
+const thBtn = (g, l, d, m, c) => `<button class="th-b" data-go="${g}" style="--a:var(--th-${c % 4})">
     <span class="th-x"><span class="th-t">${l}</span><span class="th-s">${d}</span>${m ? `<span class="th-m">${m}</span>` : ''}</span><span class="th-go">←</span></button>`;
 // the وكيلة's «الرئيسية»: the same design, one colour per group, a live status under each button
 function wHub() {
