@@ -141,7 +141,7 @@
   async function api(body) {   // POST نص JSON (بلا طلب تمهيدي)؛ إعادة المحاولة لأن خادم Google يفشل أحيانًا
     let last = 'تعذر الاتصال';
     for (let i = 0; i < 3; i++) {
-      try { const r = await fetch(window.__LD.api, { method: 'POST', headers: { 'content-type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ code: code() }, body)) });
+      try { const r = await fetch(window.__LD.api, { method: 'POST', signal: AbortSignal.timeout ? AbortSignal.timeout(45000) : undefined, headers: { 'content-type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ code: code() }, body)) });
         const t = await r.text(); if (t[0] !== '{') throw new Error('رد غير متوقع'); const j = JSON.parse(t); if (!j.ok) throw new Error(j.error); return j; }
       catch (e) { last = e.message; if (/غير مصرح|غير معروف|ليس من مجلدات|فارغ/.test(last)) break; await new Promise(o => setTimeout(o, 800)); }
     }
@@ -241,7 +241,7 @@
           const f = typeof shrinkImage === 'function' ? await shrinkImage(f0) : f0;
           if (f.size > 25 * 1048576) throw new Error('الملف أكبر من 25 م.ب');
           const b64 = await new Promise((o, x) => { const fr = new FileReader(); fr.onload = () => o(String(fr.result).split(',')[1]); fr.onerror = x; fr.readAsDataURL(f); });
-          const j = await api({ a: 'upload', key: r.key, folder, name: f.name, mime: f.type || 'application/octet-stream', b64 });
+          const j = await api({ a: 'upload', uid: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + k, key: r.key, folder, name: f.name, mime: f.type || 'application/octet-stream', b64 });
           r.P.forEach(p => { if (p.ids && p.ids.ev === folder) p.ev.push(j.file); else if (p.ids && p.ids.rep === folder) p.rep.push(j.file); else (p.more || []).forEach(m => { if (m.id === folder) m.files.push(j.file); }); });
           ok++;
         } catch (e) { msg.textContent = `تعذر رفع «${f0.name}»: ${e.message}`; msg.className = 'ld-msg err'; }
