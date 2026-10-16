@@ -1216,7 +1216,7 @@ function wHub() {
     qa: P.length ? cnt(P.length, 'برنامج واحد', 'برنامجان', 'برامج', 'برنامجًا') : '', home: `متوسط الإنجاز ${nf(avg)}٪`, teachers: cnt(T.length, 'معلمة واحدة', 'معلمتان', 'معلمات', 'معلمة'),
     folders: cnt(D.folders.length, 'مجلد واحد', 'مجلدان', 'مجلدات', 'مجلدًا'), alerts: flags ? `${nf(flags)} ملاحظة على الملفات` : '', dash: `${nf(full)} من ${nf(T.length)} أكملن مجلداتهن`,
     admins: D.admins?.length ? cnt(D.admins.length, 'إدارية واحدة', 'إداريتان', 'إداريات', 'إدارية') : '' };
-  return thHero('مرحبًا بكِ، وكيلة المدرسة', `${cnt(T.length, 'معلمة واحدة', 'معلمتان', 'معلمات', 'معلمة')} · متوسط إنجاز المعلمات ${nf(avg)}٪${A.length ? ` · ${nf(done)} من ${nf(A.length)} برامج الفصل الأول أُرفقت شواهدها` : ''}`)
+  return thHero('مرحبًا بكِ، فوزية الدوسري', `${cnt(T.length, 'معلمة واحدة', 'معلمتان', 'معلمات', 'معلمة')} · متوسط إنجاز المعلمات ${nf(avg)}٪${A.length ? ` · ${nf(done)} من ${nf(A.length)} برامج الفصل الأول أُرفقت شواهدها` : ''}`)
     + HUB_G.map(([gt, gl], gi) => `<h3 class="hub-h">${gt}</h3><div class="th-hub w">${gl.map(([g, l, d]) => thBtn(g, l, d, meta[g], gi)).join('')}</div>`).join('');
 }
 // her programs as buttons; each opens the program's own page (#plan/<k>)
