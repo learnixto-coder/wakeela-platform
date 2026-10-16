@@ -37,6 +37,10 @@
 .ld-bars{display:grid;gap:8px}.ld-bar{display:grid;grid-template-columns:minmax(90px,150px) 1fr 44px;gap:10px;align-items:center;font-size:13px}.ld-bar .tr{height:12px;background:var(--soft);border-radius:999px;overflow:hidden}.ld-bar .fl{height:100%;display:block;background:var(--brand);border-radius:999px}.ld-bar .v{font-weight:700;text-align:end}.ld-bar .nm{display:flex;gap:6px;align-items:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ld-sw{width:10px;height:10px;border-radius:3px;flex:0 0 auto}
 .ld-cols{display:flex;align-items:flex-end;gap:4px;height:140px;padding-top:8px;border-bottom:1px solid var(--line)}.ld-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;height:100%;min-width:0}.ld-col i{display:block;width:100%;max-width:26px;background:var(--brand);border-radius:4px 4px 0 0}.ld-col.now i{background:var(--part)}.ld-col b{font-size:11px}.ld-xl{display:flex;gap:4px}.ld-xl span{flex:1;text-align:center;font-size:10.5px;color:var(--muted)}
 .ld-lv{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:700}.ld-lv.a,.ld-lv.b{background:var(--ok-bg);color:var(--ok)}.ld-lv.c{background:var(--part-bg);color:var(--part)}.ld-lv.d{background:var(--none-bg);color:var(--none)}.ld-lv.n{background:var(--na-bg);color:var(--na)}
+.ld-nav{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 14px}.ld-nav .bc{display:flex;flex-wrap:wrap;gap:4px;align-items:center;color:var(--muted);font-size:13.5px}.ld-nav .bc button{all:unset;cursor:pointer;color:var(--brand-2);font-weight:600}.ld-nav .bc button:hover{text-decoration:underline}.ld-nav .bc b{color:var(--ink)}
+.ld-hub{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:16px}.ld-hb{display:flex;flex-direction:column;gap:4px;padding:18px;min-height:96px;border:1px solid var(--line);border-top:5px solid var(--c);border-radius:16px;background:var(--card);box-shadow:var(--shadow);cursor:pointer;text-align:start;font:inherit;color:var(--ink)}.ld-hb:hover{border-color:var(--c)}.ld-hb:focus-visible{outline:3px solid var(--c);outline-offset:2px}.ld-hb b{font-size:17px}.ld-hb small{color:var(--muted);font-size:13px}
+.ld-fo{display:grid;gap:10px}.ld-fo details{padding:12px 16px}.ld-fo summary{cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center;font-weight:700}.ld-fo ul{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}.ld-fo li{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 10px;border:1px solid var(--line);border-radius:10px;font-size:13.5px}
+@media (max-width:560px){.ld-hub{grid-template-columns:repeat(2,minmax(0,1fr))}.ld-hb{padding:14px 12px;min-height:84px}.ld-hb b{font-size:15px}}
 .ld-f{display:grid;gap:6px;margin-top:8px}.ld-f a{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;text-decoration:none;color:var(--ink);background:var(--card)}
 .ld-f a span{color:var(--muted);font-size:12px;white-space:nowrap}.ld-empty{color:var(--muted);font-size:13px;padding:6px 0}`;
   function style() { if (document.getElementById('ld-css')) return; const s = document.createElement('style'); s.id = 'ld-css'; s.textContent = CSS; document.head.appendChild(s); }
@@ -46,6 +50,10 @@
     D.teachers.forEach((t, i) => { t.i = i; t.p.forEach(p => { p.s = stateOf(p); p.t = t; }); });
     D.all = D.teachers.flatMap(t => t.p);
     D.cls = [...new Set(D.teachers.map(t => t.cls))].map(c => ({ c, T: D.teachers.filter(t => t.cls === c) }));
+    const GR = ['أول متوسط', 'ثاني متوسط', 'ثالث متوسط'];
+    D.cls.forEach((c, k) => { c.k = k; c.g = GR.find(g => c.c.startsWith(g)) || c.c; c.no = +(c.c.match(/(\d+)\s*$/) || [0, 0])[1]; });
+    D.grades = GR.map(g => ({ g, C: D.cls.filter(c => c.g === g).sort((a, b) => a.no - b.no) })).filter(x => x.C.length);
+    D.weeks = D.weeks || []; D.folders = D.folders || []; D.reports = D.reports || [];
     D.teachers.forEach(t => { t.mates = D.teachers.filter(x => x.cls === t.cls && x !== t); });
     D.doms = Object.keys(DOM).filter(d => D.all.some(p => p.dom === d)).concat([...new Set(D.all.map(p => p.dom))].filter(d => !DOM[d]));
   }
@@ -59,16 +67,73 @@
     <td>${btn(p.evUrl, 'الشواهد')} ${btn(p.repUrl, 'قياس الأثر والتقرير', 1)}</td></tr>`;
   const table = (rows, withTeacher) => `<div class="card ld-tw"><table class="ld-t"><thead><tr>${withTeacher ? '<th>المعلمة</th>' : ''}<th>البرنامج</th><th>عدد الحصص</th><th>البداية</th><th>النهاية</th><th>الحالة</th><th>الشواهد</th><th>المجلدات</th></tr></thead><tbody>${rows.map(p => progRow(p, withTeacher)).join('')}</tbody></table></div>`;
 
+  const NUM = ['', 'واحد', 'اثنين', 'ثلاثة', 'أربعة', 'خمسة'];
+  const clsName = c => `فصل ${c.g} ${NUM[c.no] || ar(c.no)}`;
+  // شريط التنقل: «→ رجوع» إلى الصفحة الأعلى + مسار الصفحات
+  const nav = (...L) => `<div class="ld-nav"><button class="btn sm" data-go="${L.length > 1 ? L[L.length - 2][0] : 'start'}">→ رجوع</button><span class="bc">${[['start', 'الرئيسية']].concat(L).map(([h, t], i, A) => i === A.length - 1 ? `<b>${esc(t)}</b>` : `<button data-go="${h}">${esc(t)}</button>`).join(' ‹ ')}</span></div>`;
+  const hubBtn = (go, t, sub, c) => `<button class="ld-hb" style="--c:${c}" data-go="${go}"><b>${t}</b><small>${sub}</small></button>`;
+  function grades(D) {
+    return nav(['lg', 'الأنشطة الصفية']) + `<div class="card ld-h"><h2>الأنشطة الصفية</h2><p>اختاري الصف الدراسي</p></div><div class="ld-hub">${D.grades.map((g, i) => {
+      const L = g.C.flatMap(c => c.T.flatMap(t => t.p));
+      return hubBtn('lg/' + i, 'الصف ' + esc(g.g), `${ar(g.C.length)} فصول · ${ar(L.length)} نشاطًا · ${ar(L.filter(p => p.s === 'run').length)} جارٍ`, 'var(--brand)'); }).join('')}</div>`;
+  }
+  function grade(D, i) {
+    const g = D.grades[i]; if (!g) return grades(D);
+    return nav(['lg', 'الأنشطة الصفية'], ['lg/' + i, 'الصف ' + g.g]) + `<div class="card ld-h"><h2>الصف ${esc(g.g)}</h2><p>اختاري الفصل</p></div><div class="ld-hub">${g.C.map(c => {
+      const L = c.T.flatMap(t => t.p);
+      return hubBtn('lc/' + c.k, esc(clsName(c)), `${c.T.map(t => esc(t.name)).join(' و ')} · ${ar(new Set(L.map(p => p.n)).size)} أنشطة · ${ar(c.T[0].students)} طالبة`, 'var(--brand)'); }).join('')}</div>`;
+  }
+  const fileLink = f => `<a href="https://drive.google.com/file/d/${esc(f.id)}/view" target="_blank" rel="noopener"><b>${esc(f.n)}</b><span>${new Date(f.t).toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-arab', { day: 'numeric', month: 'long' })}</span></a>`;
+  function nonClass(D) {
+    const n = D.weeks.reduce((a, w) => a + w.files.length + w.subs.reduce((b, s) => b + s.files.length, 0), 0);
+    return nav(['ln', 'الأنشطة اللاصفية']) + `<div class="card ld-h"><h2>الأنشطة اللاصفية</h2><p>الفترات اللاصفية (الإذاعة والاصطفاف الصباحي والصلاة) حسب الأسبوع · ${ar(n)} تقريرًا · من «1. التقارير / التقارير اللاصفية (الفترات)»</p></div>
+    <div class="ld-fo">${D.weeks.map(w => { const c = w.files.length + w.subs.reduce((b, s) => b + s.files.length, 0);
+      return `<details class="card"${c ? ' open' : ''}><summary><span>${esc(w.n)}</span><span class="chip ${c ? 's-ok' : 's-na'}">${ar(c)} تقرير</span></summary>
+        ${w.files.length ? `<div class="ld-f">${w.files.map(fileLink).join('')}</div>` : ''}
+        ${w.subs.map(s => `<p class="ld-empty" style="margin:10px 0 4px">${esc(s.n)}</p>${s.files.length ? `<div class="ld-f">${s.files.map(fileLink).join('')}</div>` : '<p class="ld-empty">لا تقارير.</p>'}`).join('')}
+        <div class="ld-links" style="margin-top:8px">${btn(w.url, 'فتح مجلد الأسبوع', 1)}</div></details>`; }).join('') || '<p class="ld-empty">لا توجد أسابيع.</p>'}</div>`;
+  }
+  function teachersPage(D) {
+    return nav(['lts', 'الأنشطة حسب المعلمات']) + `<div class="card ld-h"><h2>الأنشطة حسب المعلمات</h2><p>كل معلمة مع زميلتها في الفصل؛ اضغطي اسم المعلمة لعرض أنشطتها</p></div>` + classCards(D);
+  }
+  function domainsPage(D) {
+    return nav(['ld', 'الأنشطة حسب المجالات']) + `<div class="card ld-h"><h2>الأنشطة حسب المجالات</h2><p>المجالات المعتمدة في سجل خطة النشاط</p></div>` + domCards(D);
+  }
+  function foldersPage(D) {
+    return nav(['lf', 'المجلدات']) + `<div class="card ld-h"><h2>المجلدات</h2><p>أقسام أرشيف «الفصل الدراسي الأول 1448هـ» كما هي في Drive، وعدد الملفات في كل قسم</p></div>
+    <div class="ld-links">${btn(D.archive, 'فتح الأرشيف كاملًا')} ${btn(D.db, 'قاعدة الأنشطة الصفية', 1)}</div>
+    <div class="ld-fo">${D.folders.map(f => `<details class="card"><summary><span>${esc(f.n)}</span><span class="chip s-na">${ar(f.count)} ملف</span></summary>
+      <ul>${f.subs.map(x => `<li><span>${esc(x.n)}</span><span style="display:flex;gap:8px;align-items:center"><span class="muted">${ar(x.count)} ملف</span>${btn(x.url, 'فتح', 1)}</span></li>`).join('') || '<li>لا مجلدات فرعية</li>'}</ul>
+      <div class="ld-links" style="margin-top:8px">${btn(f.url, 'فتح القسم')}</div></details>`).join('')}</div>`;
+  }
+  function reportsPage(D) {
+    const R = D.reports.slice().sort((a, b) => a.p.localeCompare(b.p, 'ar') || a.n.localeCompare(b.n, 'ar'));
+    const groups = [...new Set(R.map(r => r.p))];
+    const z = D.zip;
+    return nav(['lr', 'التقارير']) + `<div class="card ld-h"><h2>التقارير (${ar(R.length)})</h2><p>كل تقارير PDF في الأرشيف: التقارير الصفية واللاصفية، والجاهزة للختم، وتقارير البرامج</p></div>
+    <div class="ld-links">${z ? `<a class="btn" href="https://drive.google.com/uc?export=download&id=${esc(z.id)}" target="_blank" rel="noopener">تحميل كل التقارير دفعة واحدة (ZIP)</a> <a class="btn ghost" href="https://drive.google.com/file/d/${esc(z.id)}/view" target="_blank" rel="noopener">عرض الملف المضغوط</a>
+      <span class="ld-empty">آخر تجميع: ${new Date(z.t).toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-arab', { day: 'numeric', month: 'long' })}</span>` : '<span class="ld-empty">يُجهَّز ملف التحميل الكامل مع التحديث القادم.</span>'}</div>
+    ${groups.map(g => `<h3 class="ld-sec">${esc(g)}</h3><div class="ld-f">${R.filter(r => r.p === g).map(fileLink).join('')}</div>`).join('') || '<p class="ld-empty">لا توجد تقارير بعد.</p>'}`;
+  }
   function home(D) {
     const c = s => D.all.filter(p => p.s === s).length, noEv = D.all.filter(p => (p.s === 'done' || p.s === 'run') && !p.ev.length).length;
     const run = D.all.filter(p => p.s === 'run');
     return `<div class="card ld-h"><h2>بوابة رائدة النشاط — أ. منى العمري</h2><p>الأنشطة الصفية · الفصل الدراسي الأول ١٤٤٨هـ · من سجل خطة النشاط المعتمد</p></div>
     <div class="ld-k">${[[D.teachers.length, 'معلمة'], [D.all.length, 'برنامجًا'], [c('run'), 'جارٍ الآن'], [c('done'), 'انتهى'], [c('wait'), 'لم يبدأ'], [noEv, 'بدأ أو انتهى بلا شواهد']]
       .map(([n, l]) => `<div class="card"><b>${ar(n)}</b><span>${l}</span></div>`).join('')}</div>
-    <div class="ld-links">${btn(D.db, 'قاعدة الأنشطة الصفية')} ${btn(D.archive, 'أرشيف الفصل الدراسي الأول', 1)} <button class="btn sm ghost" data-go="lp">كل البرامج</button> <button class="btn sm ghost" data-go="ld/0">البرامج حسب المجال</button> <button class="btn sm" data-go="lm">لوحة المؤشرات</button></div>
+    <div class="ld-hub">
+      ${hubBtn('lg', 'الأنشطة الصفية', `الصفوف ← الفصول ← الأنشطة · ${ar(D.all.length)} نشاطًا`, '#0f6b63')}
+      ${hubBtn('ln', 'الأنشطة اللاصفية', `الفترات حسب الأسبوع · ${ar(D.weeks.length)} أسبوعًا`, '#7a4fb5')}
+      ${hubBtn('lts', 'الأنشطة حسب المعلمات', `${ar(D.teachers.length)} معلمة مع زميلاتهن`, '#2f6fb0')}
+      ${hubBtn('ld', 'الأنشطة حسب المجالات', `${ar(D.doms.length)} مجالات`, '#b7791f')}
+      ${hubBtn('lf', 'المجلدات', `أقسام الأرشيف · ${ar(D.folders.length)} أقسام`, '#6b7280')}
+      ${hubBtn('lr', 'التقارير', `${ar(D.reports.length)} تقريرًا · تحميل الكل دفعة واحدة`, '#b3261e')}
+      ${hubBtn('lm', 'لوحة المؤشرات', 'قوة الشواهد وتحقق التنفيذ', '#8a6f52')}
+      ${hubBtn('lp', 'كل البرامج', 'مرتبة حسب تاريخ البداية', '#1e7f4f')}
+    </div>
+    <div class="ld-links">${btn(D.db, 'قاعدة الأنشطة الصفية', 1)} ${btn(D.archive, 'أرشيف الفصل الدراسي الأول', 1)}</div>
     <h3 class="ld-sec">برامج جارية الآن (${ar(run.length)})</h3>${run.length ? table(run, true) : '<p class="ld-empty">لا يوجد برنامج جارٍ اليوم.</p>'}
-    <h3 class="ld-sec">حسب المجال</h3>${domCards(D)}
-    <h3 class="ld-sec">المعلمات مع زميلاتهن (حسب الفصل)</h3>${classCards(D)}`;
+`;
   }
   const same = (a, b) => a.p.map(p => p.n).sort().join('|') === b.p.map(p => p.n).sort().join('|');
   function classCards(D) {
@@ -82,23 +147,24 @@
   function klass(D, k) {
     const c = D.cls[k]; if (!c) return home(D);
     const L = c.T.flatMap(t => t.p).sort((a, b) => a.n.localeCompare(b.n, 'ar') || a.t.i - b.t.i);
-    return `<div class="card ld-h"><h2>${esc(c.c)}</h2><p>${c.T.map(t => esc(t.name) + ' (' + esc(t.subj) + ')').join(' · ')} · عدد الطالبات ${ar(c.T[0].students)}</p></div>` + table(L, true);
+    const gi = D.grades.findIndex(g => g.g === c.g);
+    return nav(['lg', 'الأنشطة الصفية'], ['lg/' + gi, 'الصف ' + c.g], ['lc/' + k, clsName(c)]) + `<div class="card ld-h"><h2>${esc(clsName(c))}</h2><p>${c.T.map(t => esc(t.name) + ' (' + esc(t.subj) + ')').join(' · ')} · عدد الطالبات ${ar(c.T[0].students)}</p></div>` + table(L, true);
   }
-  /* مؤشر قوة الشواهد والتنفيذ (لكل برنامج بدأ أو انتهى):
-     تحقق التنفيذ 40 = الشواهد مقابل الحصص المنقضية (شاهد لكل حصة) · انتظام الرفع 20 = المرفوع خلال مدة البرنامج (+7 أيام)
-     تنوع الشواهد 15 = صورة/فيديو/مستند (نوعان = كامل) · التقرير وقياس الأثر 25 = ملف في «قياس الأثر والتقرير» (للمنتهي فقط) */
-  const W = [['تحقق التنفيذ', 40], ['انتظام الرفع', 20], ['تنوع الشواهد', 15], ['التقرير وقياس الأثر', 25]];
+  /* مؤشر قوة الشواهد والتنفيذ (لكل برنامج بدأ أو انتهى) — صيغة ميسّرة بطلب رائدة النشاط:
+     تحقق التنفيذ 50 = شاهد لكل حصتين منقضيتين · انتظام الرفع 20 = المرفوع خلال مدة البرنامج (+14 يومًا)
+     تنوع الشواهد 15 = نوع واحد ثلاثة أرباع، ونوعان كامل · التقرير وقياس الأثر 15 = ملف في «قياس الأثر والتقرير» (للمنتهي فقط) */
+  const W = [['تحقق التنفيذ', 50], ['انتظام الرفع', 20], ['تنوع الشواهد', 15], ['التقرير وقياس الأثر', 15]];
   const kindOf = m => /^image\//.test(m) ? 'img' : /^video\//.test(m) ? 'vid' : 'doc';
   function score(p) {
     if (p.s !== 'run' && p.s !== 'done') return null;
     const a = day(p.from.g), b = day(p.to.g), f = p.s === 'done' ? 1 : Math.min(1, Math.max(0, (today - a + 864e5) / (b - a + 864e5)));
-    const E = Math.max(1, Math.ceil(p.need * f)), n = p.ev.length;
-    const inWin = n ? p.ev.filter(x => { const t = Date.parse(x.t); return t >= a - 864e5 && t <= b + 8 * 864e5; }).length / n : 0;
-    const c = [Math.min(1, n / E), inWin, Math.min(1, new Set(p.ev.map(x => kindOf(x.m))).size / 2), p.s === 'done' ? (p.rep.length ? 1 : 0) : null];
+    const E = Math.max(1, Math.ceil(p.need * f / 2)), n = p.ev.length;
+    const inWin = n ? p.ev.filter(x => { const t = Date.parse(x.t); return t >= a - 864e5 && t <= b + 15 * 864e5; }).length / n : 0;
+    const c = [Math.min(1, n / E), inWin, (n ? (new Set(p.ev.map(x => kindOf(x.m))).size >= 2 ? 1 : 0.75) : 0), p.s === 'done' ? (p.rep.length ? 1 : 0) : null];
     let sw = 0, sv = 0; c.forEach((v, i) => { if (v !== null) { sw += W[i][1]; sv += v * W[i][1]; } });
     return { v: Math.round(sv / sw * 100), c, E, n };
   }
-  const LV = v => v === null || v === undefined ? ['لا بيانات', 'n'] : v >= 85 ? ['متميز', 'a'] : v >= 70 ? ['متقدم', 'b'] : v >= 50 ? ['مقبول', 'c'] : ['يحتاج تحسين', 'd'];
+  const LV = v => v === null || v === undefined ? ['لا بيانات', 'n'] : v >= 80 ? ['متميز', 'a'] : v >= 65 ? ['متقدم', 'b'] : v >= 50 ? ['مقبول', 'c'] : ['يحتاج تحسين', 'd'];
   const avg = L => { const x = L.filter(v => v !== null && v !== undefined); return x.length ? Math.round(x.reduce((a, b) => a + b, 0) / x.length) : null; };
   const pc = v => v === null || v === undefined ? '—' : ar(v) + '٪';
   const bars = rows => `<div class="ld-bars">${rows.map(([nm, v, sw, title]) => `<div class="ld-bar" title="${esc(title || nm)}: ${v === null ? 'لا بيانات' : pc(v)}"><span class="nm">${sw ? `<i class="ld-sw" style="background:${sw}"></i>` : ''}${esc(nm)}</span><span class="tr"><span class="fl" style="width:${v || 0}%"></span></span><span class="v">${pc(v)}</span></div>`).join('')}</div>`;
@@ -113,11 +179,11 @@
     const need = st.filter(p => p.sc.v < 50).sort((a, b) => a.sc.v - b.sc.v);
     const noRep = D.all.filter(p => p.s === 'done' && !p.rep.length).length;
     const lv = LV(ov);
-    return `<div class="card ld-h"><h2>لوحة مؤشرات الشواهد والتنفيذ</h2><p>تقيس قوة الشواهد وتحقق التنفيذ لكل برنامج بدأ أو انتهى، وتُحدَّث تلقائيًا مع كل شاهد يُرفع.</p></div>
+    return nav(['lm', 'لوحة المؤشرات']) + `<div class="card ld-h"><h2>لوحة مؤشرات الشواهد والتنفيذ</h2><p>تقيس قوة الشواهد وتحقق التنفيذ لكل برنامج بدأ أو انتهى، وتُحدَّث تلقائيًا مع كل شاهد يُرفع.</p></div>
     ${ev ? '' : '<div class="ld-m-note">لم تُرفع شواهد بعد؛ تكتمل المؤشرات تلقائيًا عندما تبدأ المعلمات رفع الصور من زر «برامج الأنشطة الصفية» في المنصة.</div>'}
     <div class="card ld-hero"><div class="ld-ring" style="--v:${ov || 0}"><div>${pc(ov)}</div></div>
       <div><span class="ld-lv ${lv[1]}">${lv[0]}</span><p>المؤشر العام لـ ${ar(st.length)} برنامجًا بدأت أو انتهت من ${ar(D.all.length)} برنامجًا</p></div></div>
-    <div class="ld-k">${[[ar(ev), 'شاهدًا مرفوعًا'], [ar(st.filter(p => p.sc.n > 0).length) + ' من ' + ar(st.length), 'برامج بدأت ولها شواهد'], [ar(st.filter(p => !p.sc.n).length), 'بدأت بلا شواهد'], [ar(noRep), 'انتهت بلا تقرير أو قياس أثر'], [ar(st.filter(p => p.sc.v >= 85).length), 'برامج متميزة']]
+    <div class="ld-k">${[[ar(ev), 'شاهدًا مرفوعًا'], [ar(st.filter(p => p.sc.n > 0).length) + ' من ' + ar(st.length), 'برامج بدأت ولها شواهد'], [ar(st.filter(p => !p.sc.n).length), 'بدأت بلا شواهد'], [ar(noRep), 'انتهت بلا تقرير أو قياس أثر'], [ar(st.filter(p => p.sc.v >= 80).length), 'برامج متميزة']]
       .map(([n, l]) => `<div class="card"><b>${n}</b><span>${l}</span></div>`).join('')}</div>
     <div class="ld-2">
       <div class="card"><h4>مكونات المؤشر (متوسط البرامج)</h4>${bars(W.map(([nm, w], i) => [nm + ' (' + ar(w) + '٪)', avg(st.map(p => p.sc.c[i] === null ? null : Math.round(p.sc.c[i] * 100)))]))}</div>
@@ -134,11 +200,11 @@
       <td><span class="chip s-${ST[p.s][1]}">${ST[p.s][0]}</span></td><td>${ar(p.sc.n)} / ${ar(p.sc.E)}</td><td><span class="ld-lv ${LV(p.sc.v)[1]}">${pc(p.sc.v)} · ${LV(p.sc.v)[0]}</span></td><td>${btn(p.evUrl, 'الشواهد')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="ld-empty">لا يوجد.</p>'}
     <details class="card" style="padding:12px 16px;margin-top:14px"><summary style="cursor:pointer;font-weight:700">كيف يُحسب المؤشر؟</summary>
       <ul style="margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.9">
-        <li><b>تحقق التنفيذ (٤٠٪):</b> عدد الشواهد مقابل الحصص التي انقضت من البرنامج (شاهد لكل حصة على الأقل).</li>
-        <li><b>انتظام الرفع (٢٠٪):</b> نسبة الشواهد المرفوعة خلال مدة البرنامج أو بعدها بأسبوع.</li>
-        <li><b>تنوع الشواهد (١٥٪):</b> صور وفيديو ومستندات؛ نوعان أو أكثر = كامل.</li>
-        <li><b>التقرير وقياس الأثر (٢٥٪):</b> وجود ملف في مجلد «قياس الأثر والتقرير» بعد انتهاء البرنامج (لا يُحسب للبرنامج الجاري).</li>
-        <li>المستويات: متميز ٨٥٪ فأكثر · متقدم ٧٠٪ · مقبول ٥٠٪ · يحتاج تحسين أقل من ٥٠٪. البرامج التي لم تبدأ لا تدخل في الحساب.</li></ul></details>`;
+        <li><b>تحقق التنفيذ (٥٠٪):</b> شاهد واحد لكل حصتين انقضتا من البرنامج يكفي للدرجة الكاملة.</li>
+        <li><b>انتظام الرفع (٢٠٪):</b> نسبة الشواهد المرفوعة خلال مدة البرنامج أو خلال أسبوعين بعد نهايته.</li>
+        <li><b>تنوع الشواهد (١٥٪):</b> نوع واحد (صور مثلًا) = ٧٥٪ من الدرجة، ونوعان أو أكثر = كاملة.</li>
+        <li><b>التقرير وقياس الأثر (١٥٪):</b> وجود ملف في مجلد «قياس الأثر والتقرير» بعد انتهاء البرنامج (لا يُحسب للبرنامج الجاري).</li>
+        <li>المستويات: متميز ٨٠٪ فأكثر · متقدم ٦٥٪ · مقبول ٥٠٪ · يحتاج تحسين أقل من ٥٠٪. البرامج التي لم تبدأ لا تدخل في الحساب.</li></ul></details>`;
   }
   function domCards(D) {
     return `<div class="ld-dg">${D.doms.map((d, k) => { const L = D.all.filter(p => p.dom === d), n = s => L.filter(p => p.s === s).length;
@@ -149,23 +215,23 @@
     const d = D.doms[k]; if (d === undefined) return home(D);
     const L = D.all.filter(p => p.dom === d).sort((a, b) => a.n.localeCompare(b.n, 'ar') || (a.from ? day(a.from.g) : 9e15) - (b.from ? day(b.from.g) : 9e15));
     const names = [...new Set(L.map(p => p.n))];
-    return `<div class="ld-dn">${D.doms.map((x, j) => `<button style="--c:${DOM[x] || 'var(--brand)'}" class="${j === k ? 'on' : ''}" data-go="ld/${j}">${esc(x)}</button>`).join('')}</div>
+    return nav(['ld', 'الأنشطة حسب المجالات'], ['ld/' + k, d]) + `<div class="ld-dn">${D.doms.map((x, j) => `<button style="--c:${DOM[x] || 'var(--brand)'}" class="${j === k ? 'on' : ''}" data-go="ld/${j}">${esc(x)}</button>`).join('')}</div>
     <div class="card ld-h" style="border-inline-start-color:${DOM[d] || 'var(--brand)'}"><h2>مجال ${esc(d)}</h2><p>${ar(L.length)} برنامجًا لدى ${ar(new Set(L.map(p => p.t.name)).size)} معلمة · ${names.map(esc).join('، ')}</p></div>
     ${names.map(n => { const G = L.filter(p => p.n === n); return `<h3 class="ld-sec">${esc(n)} (${ar(G.length)})</h3>` + table(G, true); }).join('')}`;
   }
   function teacher(D, i) {
     const t = D.teachers[i]; if (!t) return home(D);
-    return `<div class="card ld-h"><h2>${esc(t.name)}</h2><p>${esc(t.cls)} · مادة ${esc(t.subj)} · عدد الطالبات ${ar(t.students)} · ${ar(t.p.length)} برامج</p></div>
+    return nav(['lts', 'الأنشطة حسب المعلمات'], ['lt/' + i, t.name]) + `<div class="card ld-h"><h2>${esc(t.name)}</h2><p>${esc(t.cls)} · مادة ${esc(t.subj)} · عدد الطالبات ${ar(t.students)} · ${ar(t.p.length)} برامج</p></div>
     <div class="ld-links">${btn(t.url, 'مجلد المعلمة')} ${t.mates.map(m => `<button class="btn sm ghost" data-go="lt/${m.i}">زميلتها: ${esc(m.name)}</button>`).join(' ')} <button class="btn sm ghost" data-go="lc/${D.cls.findIndex(c => c.c === t.cls)}">برامج الفصل</button></div>
     ${t.mates.length ? `<p class="ld-mate">${t.mates.map(m => same(t, m) ? `تنفذ البرامج نفسها مع زميلتها ${esc(m.name)}.` : `برامجها في جدول الإسناد تختلف عن زميلتها ${esc(m.name)}.`).join(' ')}</p>` : '<p class="ld-mate">لا زميلة لها في الفصل.</p>'}${table(t.p, false)}
     ${t.p.map(p => `<h3 class="ld-sec">${esc(p.n)} — الشواهد (${ar(p.ev.length)})</h3>${p.ev.length ? `<div class="ld-f">${p.ev.map(f =>
       `<a href="https://drive.google.com/file/d/${esc(f.id)}/view" target="_blank" rel="noopener"><b>${esc(f.n)}</b><span>${new Date(f.t).toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-arab', { day: 'numeric', month: 'long' })}</span></a>`).join('')}</div>` : '<p class="ld-empty">لم تُرفع شواهد بعد.</p>'}`).join('')}`;
   }
   function all(D) {
-    return `<div class="card ld-h"><h2>كل البرامج (${ar(D.all.length)})</h2><p>مرتبة حسب تاريخ البداية</p></div>` + table(D.all.slice().sort((a, b) => (a.from ? day(a.from.g) : 9e15) - (b.from ? day(b.from.g) : 9e15)), true);
+    return nav(['lp', 'كل البرامج']) + `<div class="card ld-h"><h2>كل البرامج (${ar(D.all.length)})</h2><p>مرتبة حسب تاريخ البداية</p></div>` + table(D.all.slice().sort((a, b) => (a.from ? day(a.from.g) : 9e15) - (b.from ? day(b.from.g) : 9e15)), true);
   }
   window.LEADER = {
-    render(D, v, a) { style(); prep(D); return v === 'lt' ? teacher(D, +a) : v === 'ld' ? domain(D, +a) : v === 'lc' ? klass(D, +a) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : home(D); },
+    render(D, v, a) { style(); prep(D); return v === 'lt' ? teacher(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? grades(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : home(D); },
     title: 'بوابة رائدة النشاط',
   };
 })();

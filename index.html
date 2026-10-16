@@ -569,7 +569,7 @@ function route() {
   if (D.kind === 'plans') { const el = $('#view'); el.innerHTML = plansW(); bind(el); return; }
   if (D.kind === 'leader') {   // بوابة رائدة النشاط (leader.js): الرئيسية · المعلمة · الفصل · المجال · كل البرامج · لوحة المؤشرات
     const [lv, la] = (location.hash.slice(1) || 'start').split('/'), el = $('#view');
-    el.innerHTML = (lv === 'start' ? '' : homeBar('')) + LEADER.render(D, lv, la); bind(el); window.scrollTo(0, 0); return; }
+    el.innerHTML = LEADER.render(D, lv, la); bind(el); window.scrollTo(0, 0); return; }
   const [v, a] = (location.hash.slice(1) || 'start').split('/');
   if (D.kind === 'teacher') {   // a teacher sees only her own page(s)
     const one = D.teachers.length === 1, i = one ? 0 : v === 't' && D.teachers[+a] ? +a : -1;
@@ -1001,7 +1001,21 @@ function uploadCard(t) {
     <button class="btn wide" id="upGo" hidden>رفع</button>
     <div id="upPend"></div></div>`;
 }
+// الصور تُصغَّر وتُضغط في المتصفح قبل الرفع (طلب رائدة النشاط): أطول ضلع 1280 بكسل، JPEG بجودة 0.6 (عادة 100–250 ك.ب)
+async function shrinkImage(file) {
+  if (!/^image\/(jpeg|png|webp)$/i.test(file.type) || file.size < 200 * 1024 || typeof createImageBitmap !== 'function') return file;
+  try {
+    const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const k = Math.min(1, 1280 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(bmp, 0, 0, c.width, c.height); bmp.close && bmp.close();
+    const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.6));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.(png|webp|jpe?g)$/i, '') + '.jpg', { type: 'image/jpeg', lastModified: file.lastModified });
+  } catch { return file; }
+}
 async function sealUpload(file, folderKey, t) {
+  file = await shrinkImage(file);
   await sealSend({ name: t.name, folder: folderKey, file: file.name, type: file.type, size: file.size }, new Uint8Array(await file.arrayBuffer()));
 }
 // one encrypted message to the PC inbox: an upload, or {kind:'dismiss', ids} when she closes alerts
