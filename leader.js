@@ -84,15 +84,25 @@
     ${withTeacher ? `<td><button class="btn sm ghost" data-go="lt/${p.t.i}">${esc(p.t.name)}</button><span class="ld-d">${esc(p.t.cls)}</span></td>` : ''}
     <td class="ld-p" style="--c:${DOM[p.dom] || 'var(--line)'}">${p.rec ? `<button class="ld-pg" data-go="lb/${p.rec.i}">${esc(p.n)}</button>` : esc(p.n)}<span class="ld-d">${esc(p.dom)}</span></td>
     <td>${per(p.need)}</td><td class="ld-w">${when(p.from)}</td><td class="ld-w">${when(p.to)}</td>
-    <td><span class="chip s-${ST[p.s][1]}">${ST[p.s][0]}</span></td><td>${evChip(p)}</td><td>${p.rec ? seenChip(evOf(p.rec)) + ' ' + gradeChip(evOf(p.rec)) : ''}</td>
+    <td><span class="chip s-${ST[p.s][1]}">${ST[p.s][0]}</span></td><td>${evChip(p)}</td>
     <td>${btn(p.evUrl, 'الشواهد')} ${btn(p.repUrl, 'قياس الأثر والتقرير', 1)}</td></tr>`;
-  const table = (rows, withTeacher) => `<div class="card ld-tw"><table class="ld-t"><thead><tr>${withTeacher ? '<th>المعلمة</th>' : ''}<th>البرنامج</th><th>عدد الحصص</th><th>البداية</th><th>النهاية</th><th>الحالة</th><th>الشواهد</th><th>الاطلاع والدرجة</th><th>المجلدات</th></tr></thead><tbody>${rows.map(p => progRow(p, withTeacher)).join('')}</tbody></table></div>`;
+  const table = (rows, withTeacher) => `<div class="card ld-tw"><table class="ld-t"><thead><tr>${withTeacher ? '<th>المعلمة</th>' : ''}<th>البرنامج</th><th>عدد الحصص</th><th>البداية</th><th>النهاية</th><th>الحالة</th><th>الشواهد</th><th>المجلدات</th></tr></thead><tbody>${rows.map(p => progRow(p, withTeacher)).join('')}</tbody></table></div>`;
 
   const NUM = ['', 'واحد', 'اثنين', 'ثلاثة', 'أربعة', 'خمسة'];
   const clsName = c => `فصل ${c.g} ${NUM[c.no] || ar(c.no)}`;
   // شريط التنقل: «→ رجوع» إلى الصفحة الأعلى + مسار الصفحات
   const nav = (...L) => `<div class="ld-nav"><button class="btn sm" data-go="${L.length > 1 ? L[L.length - 2][0] : 'start'}">→ رجوع</button><span class="bc">${[['start', 'الرئيسية']].concat(L).map(([h, t], i, A) => i === A.length - 1 ? `<b>${esc(t)}</b>` : `<button data-go="${h}">${esc(t)}</button>`).join(' ‹ ')}</span></div>`;
   const hubBtn = (go, t, sub, c) => `<button class="ld-hb" style="--c:${c}" data-go="${go}"><b>${t}</b><small>${sub}</small></button>`;
+  // «الأنشطة الصفية»: أربعة أزرار فقط (طلب رائدة النشاط)
+  function classHub(D) {
+    return nav(['lg', 'الأنشطة الصفية']) + `<div class="card ld-h"><h2>الأنشطة الصفية</h2><p>${ar(D.all.length)} نشاطًا · ${ar(D.teachers.length)} معلمة · الفصل الدراسي الأول ١٤٤٨هـ</p></div>
+    <div class="ld-hub">
+      ${hubBtn('lts', 'المعلمات', `${ar(D.teachers.length)} معلمة مع زميلاتهن في الفصل`, '#2f6fb0')}
+      ${hubBtn('ld', 'المجالات', `${ar(D.doms.length)} مجالات`, '#b7791f')}
+      ${hubBtn('lf', 'المجلدات', `أقسام الأرشيف · ${ar(D.folders.length)} أقسام`, '#6b7280')}
+      ${hubBtn('lm', 'لوحة المؤشرات', 'قوة الشواهد وتحقق التنفيذ', '#8a6f52')}
+    </div>`;
+  }
   function grades(D) {
     return nav(['lg', 'الأنشطة الصفية']) + `<div class="card ld-h"><h2>الأنشطة الصفية</h2><p>اختاري الصف الدراسي</p></div><div class="ld-hub">${D.grades.map((g, i) => {
       const L = g.C.flatMap(c => c.T.flatMap(t => t.p));
@@ -115,13 +125,13 @@
         <div class="ld-links" style="margin-top:8px">${btn(w.url, 'فتح مجلد الأسبوع', 1)}</div></details>`; }).join('') || '<p class="ld-empty">لا توجد أسابيع.</p>'}</div>`;
   }
   function teachersPage(D) {
-    return nav(['lts', 'الأنشطة حسب المعلمات']) + `<div class="card ld-h"><h2>الأنشطة حسب المعلمات</h2><p>كل معلمة مع زميلتها في الفصل؛ اضغطي اسم المعلمة لعرض أنشطتها</p></div>` + classCards(D);
+    return nav(['lg', 'الأنشطة الصفية'], ['lts', 'المعلمات']) + `<div class="card ld-h"><h2>المعلمات</h2><p>كل معلمة مع زميلتها في الفصل؛ اضغطي اسم المعلمة لعرض أنشطتها</p></div>` + classCards(D);
   }
   function domainsPage(D) {
-    return nav(['ld', 'الأنشطة حسب المجالات']) + `<div class="card ld-h"><h2>الأنشطة حسب المجالات</h2><p>المجالات المعتمدة في سجل خطة النشاط</p></div>` + domCards(D);
+    return nav(['lg', 'الأنشطة الصفية'], ['ld', 'المجالات']) + `<div class="card ld-h"><h2>المجالات</h2><p>المجالات المعتمدة في سجل خطة النشاط</p></div>` + domCards(D);
   }
   function foldersPage(D) {
-    return nav(['lf', 'المجلدات']) + `<div class="card ld-h"><h2>المجلدات</h2><p>أقسام أرشيف «الفصل الدراسي الأول 1448هـ» كما هي في Drive، وعدد الملفات في كل قسم</p></div>
+    return nav(['lg', 'الأنشطة الصفية'], ['lf', 'المجلدات']) + `<div class="card ld-h"><h2>المجلدات</h2><p>أقسام أرشيف «الفصل الدراسي الأول 1448هـ» كما هي في Drive، وعدد الملفات في كل قسم</p></div>
     <div class="ld-links">${btn(D.archive, 'فتح الأرشيف كاملًا')} ${btn(D.db, 'قاعدة الأنشطة الصفية', 1)}</div>
     <div class="ld-fo">${D.folders.map(f => `<details class="card"><summary><span>${esc(f.n)}</span><span class="chip s-na">${ar(f.count)} ملف</span></summary>
       <ul>${f.subs.map(x => `<li><span>${esc(x.n)}</span><span style="display:flex;gap:8px;align-items:center"><span class="muted">${ar(x.count)} ملف</span>${btn(x.url, 'فتح', 1)}</span></li>`).join('') || '<li>لا مجلدات فرعية</li>'}</ul>
@@ -163,9 +173,9 @@
     <td class="ld-p" style="--c:${DOM[r.dom] || 'var(--line)'}"><button class="ld-pg" data-go="lb/${r.i}">${esc(r.n)}</button><span class="ld-d">${esc(r.dom)}</span></td>
     <td>${esc(r.cls)}<span class="ld-d">${r.T.map(t => esc(t.name)).join(' و ')}</span></td>
     <td class="ld-w">${when(r.from)}</td><td class="ld-w">${when(r.to)}</td>
-    <td><span class="chip s-${ST[r.s][1]}">${ST[r.s][0]}</span></td><td>${upChip(n)}</td><td>${seenChip(e)}</td><td>${gradeChip(e)}</td>
+    <td><span class="chip s-${ST[r.s][1]}">${ST[r.s][0]}</span></td><td>${upChip(n)}</td>
     <td><button class="btn sm" data-go="lb/${r.i}">فتح</button></td></tr>`; };
-  const recTable = R => R.length ? `<div class="card ld-tw"><table class="ld-t"><thead><tr><th>البرنامج</th><th>الفصل والمعلمات</th><th>البداية</th><th>النهاية</th><th>التنفيذ</th><th>الشواهد</th><th>الاطلاع</th><th>الدرجة</th><th></th></tr></thead><tbody>${R.map(recRow).join('')}</tbody></table></div>` : '<p class="ld-empty">لا برامج.</p>';
+  const recTable = R => R.length ? `<div class="card ld-tw"><table class="ld-t"><thead><tr><th>البرنامج</th><th>الفصل والمعلمات</th><th>البداية</th><th>النهاية</th><th>التنفيذ</th><th>الشواهد</th><th></th></tr></thead><tbody>${R.map(recRow).join('')}</tbody></table></div>` : '<p class="ld-empty">لا برامج.</p>';
   const thumb = f => /^image\//.test(f.m) ? `<img loading="lazy" src="https://drive.google.com/thumbnail?id=${esc(f.id)}&sz=w400" alt="" onerror="this.replaceWith(document.createTextNode('صورة'))">` : esc((f.n.split('.').pop() || 'ملف').toUpperCase());
   const grid = F => F.length ? `<div class="ld-grid">${F.map(f => `<a class="ld-it" href="https://drive.google.com/file/d/${esc(f.id)}/view" target="_blank" rel="noopener" title="${esc(f.n)}"><span class="th">${thumb(f)}</span><span>${esc(f.n)}</span></a>`).join('')}</div>` : '<p class="ld-empty">لا ملفات في هذا المجلد.</p>';
 
@@ -177,19 +187,15 @@
       { id: p.ids && p.ids.ev, n: 'الشواهد', who: p.t.name, url: p.evUrl, files: p.ev },
       { id: p.ids && p.ids.rep, n: 'قياس الأثر والتقرير', who: p.t.name, url: p.repUrl, files: p.rep }]
       .concat((p.more || []).map(m => ({ id: m.id, n: m.n, who: p.t.name, url: m.url, files: m.files, mine: 1 }))));
-    return nav(['lb', 'البرامج'], ['lb/' + i, r.n + ' — ' + r.cls])
+    return nav(['lg', 'الأنشطة الصفية'], ['lb/' + i, r.n + ' — ' + r.cls])
     + `<div class="card ld-h" style="border-inline-start-color:${DOM[r.dom] || 'var(--brand)'}"><h2>${esc(r.n)}</h2><p>${esc(r.dom)} · ${esc(r.cls)} · ${per(r.need)} · من ${r.from ? esc(r.from.d) + ' ' + hd(r.from.h) : '—'} إلى ${r.to ? esc(r.to.d) + ' ' + hd(r.to.h) : '—'}</p></div>
     <div class="ld-st">
       <div class="card"><small>حالة التنفيذ (حسب التاريخ)</small><b><span class="chip s-${ST[r.s][1]}">${ST[r.s][0]}</span></b></div>
-      <div class="card"><small>رفع الشواهد</small><b>${upChip(n)}</b></div>
-      <div class="card"><small>الاطلاع</small><b>${seenChip(e)}</b></div>
-      <div class="card"><small>درجة التقييم</small><b>${gradeChip(e)}</b></div></div>
+      <div class="card"><small>رفع الشواهد</small><b>${upChip(n)}</b></div></div>
     <div class="ld-links">${r.T.map(t => `<button class="btn sm ghost" data-go="lt/${t.i}">${esc(t.name)}</button>`).join(' ')} <button class="btn sm ghost" data-go="lc/${D.cls.findIndex(c => c.c === r.cls)}">برامج الفصل</button> <button class="btn sm ghost" data-go="ld/${D.doms.indexOf(r.dom)}">مجال ${esc(r.dom)}</button></div>
-    <div class="card ld-ev" data-rec="${i}"><h4>الاطلاع والتقييم</h4>
-      <div class="row2"><button class="ld-seen${e.seen ? ' on' : ''}" data-act="seen">${e.seen ? '✓ تم الاطلاع' : 'تم الاطلاع'}</button>${e.seenAt ? `<span class="ld-msg">آخر اطلاع: ${esc(e.seenAt)}</span>` : ''}</div>
-      <div class="row2"><label for="ldG">الدرجة من ١٠٠</label><input type="number" id="ldG" min="0" max="100" step="1" value="${e.grade ?? ''}" placeholder="—"><input type="range" id="ldGR" min="0" max="100" step="1" value="${e.grade ?? 0}" aria-label="الدرجة"></div>
+    <div class="card ld-ev" data-rec="${i}"><h4>ملاحظات رائد النشاط</h4>
       <label for="ldN">ملاحظات على الشواهد أو البرنامج</label><textarea id="ldN" placeholder="تكتب ما يلاحظ على التنفيذ أو الشواهد">${esc(e.notes || '')}</textarea>
-      <div class="row2"><button class="btn" data-act="save">حفظ التقييم</button><span class="ld-msg" id="ldMsg">${e.at ? 'آخر تحديث: ' + esc(e.at) : 'لم يُقيَّم بعد'}</span></div></div>
+      <div class="row2"><button class="btn" data-act="save">حفظ الملاحظات</button><span class="ld-msg" id="ldMsg">${e.at ? 'آخر تحديث: ' + esc(e.at) : 'لا ملاحظات بعد'}</span></div></div>
     <div class="card ld-tools" data-rec="${i}"><h4>إضافة شواهد أو مجلد</h4>
       <div class="row2"><select id="ldF" aria-label="المجلد">${folders.filter(f => f.id).map(f => `<option value="${esc(f.id)}">${esc(f.who)} / ${esc(f.n)}</option>`).join('')}</select>
         <label class="btn sm ghost" style="cursor:pointer">اختيار ملفات<input type="file" id="ldU" multiple hidden></label><span class="ld-msg" id="ldUM">الصور تُصغَّر قبل الرفع</span></div>
@@ -210,7 +216,7 @@
       <select id="lbD"><option value="">كل المجالات</option>${D.doms.map(d => `<option>${esc(d)}</option>`).join('')}</select>
       <select id="lbT"><option value="">كل المعلمات</option>${D.teachers.map(t => `<option>${esc(t.name)}</option>`).join('')}</select>
       <select id="lbM"><option value="">كل الأشهر (البداية)</option>${ms.map(m => `<option value="${m}">${MONTHS[m]}</option>`).join('')}</select>
-      <select id="lbS"><option value="">كل الحالات</option><option value="run">جارٍ الآن</option><option value="done">انتهى</option><option value="wait">لم يبدأ</option><option value="noev">بلا شواهد</option><option value="unseen">لم يُطَّلع</option><option value="ungraded">بلا درجة</option></select></div>
+      <select id="lbS"><option value="">كل الحالات</option><option value="run">جارٍ الآن</option><option value="done">انتهى</option><option value="wait">لم يبدأ</option><option value="noev">بلا شواهد</option></select></div>
     <div id="lbOut">${recTable(D.recs)}</div>`;
   }
   function filterPrograms() {
@@ -257,7 +263,7 @@
         if (b.dataset.act === 'seen' || b.dataset.act === 'save') {
           const body = { a: 'eval', key: r.key };
           if (b.dataset.act === 'seen') body.seen = !(evOf(r).seen);
-          else { const g = document.getElementById('ldG').value; if (g !== '' && (+g < 0 || +g > 100)) throw new Error('الدرجة بين ٠ و١٠٠'); body.grade = g === '' ? '' : +g; body.notes = document.getElementById('ldN').value; }
+          else body.notes = document.getElementById('ldN').value;   // الملاحظات فقط؛ لا اطلاع ولا درجة (طلب رائد النشاط)
           say('جارٍ الحفظ…'); const j = await api(body); D.evals[r.key] = j.eval; const y = window.scrollY; route(); window.scrollTo(0, y);
           const m = document.getElementById('ldMsg'); if (m) m.textContent = 'تم الحفظ في قاعدة الأنشطة الصفية';
         }
@@ -275,21 +281,13 @@
   function home(D) {
     const c = s => D.all.filter(p => p.s === s).length, noEv = D.all.filter(p => (p.s === 'done' || p.s === 'run') && !p.ev.length).length;
     const run = D.recs.filter(r => r.s === 'run');
-    return `<div class="card ld-h"><h2>بوابة رائدة النشاط — أ. منى العمري</h2><p>الأنشطة الصفية · الفصل الدراسي الأول ١٤٤٨هـ · من سجل خطة النشاط المعتمد</p></div>
+    return `<div class="card ld-h"><h2>صفحة رائد النشاط : منى العمري</h2><p>الفصل الدراسي الأول ١٤٤٨هـ · من سجل خطة النشاط المعتمد</p></div>
     <div class="ld-k">${[[D.teachers.length, 'معلمة'], [D.all.length, 'برنامجًا'], [c('run'), 'جارٍ الآن'], [c('done'), 'انتهى'], [c('wait'), 'لم يبدأ'], [noEv, 'بدأ أو انتهى بلا شواهد']]
       .map(([n, l]) => `<div class="card"><b>${ar(n)}</b><span>${l}</span></div>`).join('')}</div>
     <div class="ld-hub">
-      ${hubBtn('lg', 'الأنشطة الصفية', `الصفوف ← الفصول ← الأنشطة · ${ar(D.all.length)} نشاطًا`, '#0f6b63')}
+      ${hubBtn('lg', 'الأنشطة الصفية', 'المعلمات · المجالات · المجلدات · لوحة المؤشرات', '#0f6b63')}
       ${hubBtn('ln', 'الأنشطة اللاصفية', `الفترات حسب الأسبوع · ${ar(D.weeks.length)} أسبوعًا`, '#7a4fb5')}
-      ${hubBtn('lts', 'الأنشطة حسب المعلمات', `${ar(D.teachers.length)} معلمة مع زميلاتهن`, '#2f6fb0')}
-      ${hubBtn('ld', 'الأنشطة حسب المجالات', `${ar(D.doms.length)} مجالات`, '#b7791f')}
-      ${hubBtn('lf', 'المجلدات', `أقسام الأرشيف · ${ar(D.folders.length)} أقسام`, '#6b7280')}
-      ${hubBtn('lr', 'التقارير', `${ar(D.reports.length)} تقريرًا · تحميل الكل دفعة واحدة`, '#b3261e')}
-      ${hubBtn('lm', 'لوحة المؤشرات', 'قوة الشواهد وتحقق التنفيذ', '#8a6f52')}
-      ${hubBtn('lb', 'البرامج', `${ar(D.recs.length)} برنامجًا لكل فصل · بحث وتصفية وتقييم`, '#1e7f4f')}
-      ${hubBtn('lp', 'كل البرامج حسب التاريخ', 'لكل معلمة، مرتبة حسب البداية', '#4b5563')}
     </div>
-    <div class="ld-links">${btn(D.db, 'قاعدة الأنشطة الصفية', 1)} ${btn(D.archive, 'أرشيف الفصل الدراسي الأول', 1)}</div>
     <h3 class="ld-sec">برامج جارية الآن (${ar(run.length)})</h3>${run.length ? recTable(run) : '<p class="ld-empty">لا يوجد برنامج جارٍ اليوم.</p>'}
 `;
   }
@@ -306,7 +304,7 @@
     const c = D.cls[k]; if (!c) return home(D);
     const L = D.recs.filter(r => r.cls === c.c);
     const gi = D.grades.findIndex(g => g.g === c.g);
-    return nav(['lg', 'الأنشطة الصفية'], ['lg/' + gi, 'الصف ' + c.g], ['lc/' + k, clsName(c)]) + `<div class="card ld-h"><h2>${esc(clsName(c))}</h2><p>${c.T.map(t => esc(t.name) + ' (' + esc(t.subj) + ')').join(' · ')} · عدد الطالبات ${ar(c.T[0].students)}</p></div>` + recTable(L);
+    return nav(['lg', 'الأنشطة الصفية'], ['lts', 'المعلمات'], ['lc/' + k, clsName(c)]) + `<div class="card ld-h"><h2>${esc(clsName(c))}</h2><p>${c.T.map(t => esc(t.name) + ' (' + esc(t.subj) + ')').join(' · ')} · عدد الطالبات ${ar(c.T[0].students)}</p></div>` + recTable(L);
   }
   /* مؤشر قوة الشواهد والتنفيذ (لكل برنامج بدأ أو انتهى) — صيغة ميسّرة بطلب رائدة النشاط:
      تحقق التنفيذ 50 = شاهد لكل حصتين منقضيتين · انتظام الرفع 20 = المرفوع خلال مدة البرنامج (+14 يومًا)
@@ -337,7 +335,7 @@
     const need = st.filter(p => p.sc.v < 50).sort((a, b) => a.sc.v - b.sc.v);
     const noRep = D.all.filter(p => p.s === 'done' && !p.rep.length).length;
     const lv = LV(ov);
-    return nav(['lm', 'لوحة المؤشرات']) + `<div class="card ld-h"><h2>لوحة مؤشرات الشواهد والتنفيذ</h2><p>تقيس قوة الشواهد وتحقق التنفيذ لكل برنامج بدأ أو انتهى، وتُحدَّث تلقائيًا مع كل شاهد يُرفع.</p></div>
+    return nav(['lg', 'الأنشطة الصفية'], ['lm', 'لوحة المؤشرات']) + `<div class="card ld-h"><h2>لوحة مؤشرات الشواهد والتنفيذ</h2><p>تقيس قوة الشواهد وتحقق التنفيذ لكل برنامج بدأ أو انتهى، وتُحدَّث تلقائيًا مع كل شاهد يُرفع.</p></div>
     ${ev ? '' : '<div class="ld-m-note">لم تُرفع شواهد بعد؛ تكتمل المؤشرات تلقائيًا عندما تبدأ المعلمات رفع الصور من زر «برامج الأنشطة الصفية» في المنصة.</div>'}
     <div class="card ld-hero"><div class="ld-ring" style="--v:${ov || 0}"><div>${pc(ov)}</div></div>
       <div><span class="ld-lv ${lv[1]}">${lv[0]}</span><p>المؤشر العام لـ ${ar(st.length)} برنامجًا بدأت أو انتهت من ${ar(D.all.length)} برنامجًا</p></div></div>
@@ -373,13 +371,13 @@
     const d = D.doms[k]; if (d === undefined) return home(D);
     const L = D.all.filter(p => p.dom === d).sort((a, b) => a.n.localeCompare(b.n, 'ar') || (a.from ? day(a.from.g) : 9e15) - (b.from ? day(b.from.g) : 9e15));
     const names = [...new Set(L.map(p => p.n))];
-    return nav(['ld', 'الأنشطة حسب المجالات'], ['ld/' + k, d]) + `<div class="ld-dn">${D.doms.map((x, j) => `<button style="--c:${DOM[x] || 'var(--brand)'}" class="${j === k ? 'on' : ''}" data-go="ld/${j}">${esc(x)}</button>`).join('')}</div>
+    return nav(['lg', 'الأنشطة الصفية'], ['ld', 'المجالات'], ['ld/' + k, d]) + `<div class="ld-dn">${D.doms.map((x, j) => `<button style="--c:${DOM[x] || 'var(--brand)'}" class="${j === k ? 'on' : ''}" data-go="ld/${j}">${esc(x)}</button>`).join('')}</div>
     <div class="card ld-h" style="border-inline-start-color:${DOM[d] || 'var(--brand)'}"><h2>مجال ${esc(d)}</h2><p>${ar(L.length)} برنامجًا لدى ${ar(new Set(L.map(p => p.t.name)).size)} معلمة · ${names.map(esc).join('، ')}</p></div>
     ${names.map(n => { const R = D.recs.filter(r => r.dom === d && r.n === n); return `<h3 class="ld-sec">${esc(n)} — ${ar(R.length)} فصول · المعلمات: ${[...new Set(R.flatMap(r => r.T.map(t => t.name)))].map(esc).join('، ')}</h3>` + recTable(R); }).join('')}`;
   }
   function teacher(D, i) {
     const t = D.teachers[i]; if (!t) return home(D);
-    return nav(['lts', 'الأنشطة حسب المعلمات'], ['lt/' + i, t.name]) + `<div class="card ld-h"><h2>${esc(t.name)}</h2><p>${esc(t.cls)} · مادة ${esc(t.subj)} · عدد الطالبات ${ar(t.students)} · ${ar(t.p.length)} برامج</p></div>
+    return nav(['lg', 'الأنشطة الصفية'], ['lts', 'المعلمات'], ['lt/' + i, t.name]) + `<div class="card ld-h"><h2>${esc(t.name)}</h2><p>${esc(t.cls)} · مادة ${esc(t.subj)} · عدد الطالبات ${ar(t.students)} · ${ar(t.p.length)} برامج</p></div>
     <div class="ld-links">${btn(t.url, 'مجلد المعلمة')} ${t.mates.map(m => `<button class="btn sm ghost" data-go="lt/${m.i}">زميلتها: ${esc(m.name)}</button>`).join(' ')} <button class="btn sm ghost" data-go="lc/${D.cls.findIndex(c => c.c === t.cls)}">برامج الفصل</button></div>
     ${t.mates.length ? `<p class="ld-mate">${t.mates.map(m => same(t, m) ? `تنفذ البرامج نفسها مع زميلتها ${esc(m.name)}.` : `برامجها في جدول الإسناد تختلف عن زميلتها ${esc(m.name)}.`).join(' ')}</p>` : '<p class="ld-mate">لا زميلة لها في الفصل.</p>'}${table(t.p, false)}
     ${t.p.map(p => `<h3 class="ld-sec">${esc(p.n)} — الشواهد (${ar(p.ev.length)})</h3>${p.ev.length ? `<div class="ld-f">${p.ev.map(f =>
@@ -389,7 +387,8 @@
     return nav(['lp', 'كل البرامج']) + `<div class="card ld-h"><h2>كل البرامج (${ar(D.all.length)})</h2><p>مرتبة حسب تاريخ البداية</p></div>` + table(D.all.slice().sort((a, b) => (a.from ? day(a.from.g) : 9e15) - (b.from ? day(b.from.g) : 9e15)), true);
   }
   window.LEADER = {
-    render(D, v, a) { style(); events(); window.__LD = D; prep(D); return v === 'lt' ? teacher(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? grades(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : home(D); },
-    title: 'بوابة رائدة النشاط',
+    render(D, v, a) { style(); events(); window.__LD = D; prep(D); const tt = document.getElementById('title'); if (tt) tt.textContent = this.title;
+      return v === 'lt' ? teacher(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : home(D); },
+    title: 'صفحة رائد النشاط : منى العمري',
   };
 })();
