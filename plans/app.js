@@ -276,7 +276,7 @@ function renderTimeline(){
     const d = Math.round((today - dOf(T.monthStart[m])) / DAY) + 1;
     hm = [m, d]; cur = (m - ms[0]) * 4 + Math.min(Math.floor((d - 1) / 7), 3);
   } else if (today >= endAll) cur = ms.length * 4;
-  const tw = (T.weeks || []).find(w => today >= dOf(w[2]) && today <= dOf(w[2]) + 4 * DAY);
+  const tw = (T.weeks || []).find(w => today >= dOf(w[2]) && today <= dOf(w[2]) + 6 * DAY);   // الجمعة والسبت يتبعان الأسبوع المنتهي
   const hd2 = hmd;
   const R = T.rows.map(r => {
     const st = dOf(r.sg), en = dOf(r.eg);
