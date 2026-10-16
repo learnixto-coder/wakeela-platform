@@ -2023,10 +2023,10 @@ function folders(i) {
   const f = D.folders[fvs.fi], files = fvFiles(fvs.fi, fvs.t);
   fvs.k = Math.min(fvs.k, Math.max(0, files.length - 1));
   const cur = files[fvs.k];
-  let grp = '';
   // «ملفات المعلمة»: all files of one teacher in this folder together; السابق/التالي move between teachers
   const starts = files.map((r, j) => j).filter(j => !j || files[j].t !== files[j - 1].t);
   const ti = starts.filter(j => j <= fvs.k).length - 1, mine = cur ? files.filter(r => r.t === cur.t) : [];
+  let grp = '';
   const toc = D.folders.map(x => {
     const n = fvFiles(x.i, 'all').length, head = x.group && x.group !== grp ? `<div class="grp">${esc(x.group)}</div>` : '';
     grp = x.group;
@@ -2094,11 +2094,11 @@ async function fvGrid(grid) {   // thumbnails = first page of each file, loaded 
   grid.querySelectorAll('.fv-tile').forEach(t => io.observe(t));
 }
 function fvGo(k) { const n = fvFiles(fvs.fi, fvs.t).length; if (k < 0 || k >= n) return; fvs.k = k; route(); }
-function bindFv(el) {
 function fvStep(d) {   // jump to the first file of the previous/next teacher
   const fs = fvFiles(fvs.fi, fvs.t), s = fs.map((r, j) => j).filter(j => !j || fs[j].t !== fs[j - 1].t), i = s.filter(j => j <= fvs.k).length - 1;
   if (s[i + d] !== undefined) fvGo(s[i + d]);
 }
+function bindFv(el) {
   el.querySelectorAll('[data-fv]').forEach(b => b.addEventListener('click', () => go('f/' + b.dataset.fv)));
   el.querySelector('#fvF')?.addEventListener('change', e => go('f/' + e.target.value));
   el.querySelector('#fvT')?.addEventListener('change', e => { fvs.t = e.target.value === 'all' ? 'all' : +e.target.value; fvs.k = 0; route(); });
