@@ -1532,11 +1532,13 @@ async function qaLoadAll() {
 }
 // the program's period in the timeline (programs_1448.json from/to, y/m/d) as «17/3/1448هـ – 6/4/1448هـ»
 const planDate = p => { const f = s => s ? s.split('/').reverse().join('‏/') + 'هـ' : ''; return !p.from ? '' : p.from === p.to ? f(p.from) : `${f(p.from)} – ${f(p.to)}`; };
+const QA_OBSERVER = 'أ.فوزية الدوسري';
 let qaD = null;   // the open program: {p, doc (working copy), tab, dirty, intTouched, intAt, statusSet, srv}
 function qaOpen(p, doc) {
   const keep = qaD?.p === p ? qaD.tab : 'obs';
   doc = doc ? structuredClone(doc) : { v: 1, program: p.name, no: p.no, status: 'none' };
-  doc.obs ||= { items: Array(10).fill(null), notes: Array(10).fill(''), date: '', observer: lsGet('wk-qa-observer') || 'وكيلة المدرسة' };
+  doc.obs ||= { items: Array(10).fill(null), notes: Array(10).fill(''), date: '', observer: lsGet('wk-qa-observer') || QA_OBSERVER };
+  if (!doc.obs.observer || doc.obs.observer === 'وكيلة المدرسة') doc.obs.observer = QA_OBSERVER;   // the old default title → her name
   doc.obs.date ||= planDate(p);   // from «الخطة الزمنية»; she can still change it
   qaD = { p, doc, tab: keep, dirty: false, intTouched: false, intAt: doc.interview?.at || null, statusSet: false, srv: null };
 }
