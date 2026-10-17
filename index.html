@@ -188,6 +188,8 @@ body.lmode nav.tabs,body.lmode #reload{display:none}
 .fold summary .t{font-weight:600}
 .fold summary .g{color:var(--muted);font-size:12.5px}
 .fth{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.th-i{width:72px;height:94px;cursor:zoom-in;border-radius:7px;background:var(--soft);border:1px solid var(--line);overflow:hidden;display:grid;place-items:center;font-size:9px;color:var(--muted);text-transform:uppercase}.th-i img{width:100%;height:100%;object-fit:cover;display:block}.th-i.nx::after{content:attr(data-x)}.fth{gap:8px}.th-i:hover{outline:2px solid var(--brand);outline-offset:1px}@media (max-width:560px){.th-i{width:58px;height:76px}}.tz-img{display:block;max-width:100%;margin:0 auto;border-radius:8px}
+.ctw-i{width:72px;height:94px;cursor:zoom-in;border-radius:7px;background:var(--soft);border:1px solid var(--line);overflow:hidden;display:grid;place-items:center;font-size:9px;color:var(--muted);padding:0}.ctw-i img{width:100%;height:100%;object-fit:cover;display:block}.ctw-i:hover{outline:2px solid var(--brand);outline-offset:1px}@media (max-width:560px){.ctw-i{width:58px;height:76px}}
+.ctw-r{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:10px}.ctw-r>b{font-size:13px;min-width:120px;color:var(--muted)}.ctw-f{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:0 0 12px}
 .fold[open] summary{border-bottom:1px solid var(--line)}
 .files{list-style:none;margin:0;padding:6px 0}
 .files li{display:flex;gap:10px;padding:7px 14px;font-size:13.5px;align-items:baseline}
@@ -590,13 +592,13 @@ function route() {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === top));
   const el = $('#view');
   el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folders(+a),
-    plan: planW, plans: plansW, timeline: () => plansW('timeline'), qa: () => qaW(a), quality: qualityW, start: wHub }[v] || me)();
+    plan: planW, ctw: () => ctwW(a), plans: plansW, timeline: () => plansW('timeline'), qa: () => qaW(a), quality: qualityW, start: wHub }[v] || me)();
   if (v !== 'start') { const h = HUB.find(x => x[0] === (SUB_OF[v] || (v === 'w' ? 'me' : v))); el.insertAdjacentHTML('afterbegin', homeBar(h ? h[1] : '')); }
   bind(el); window.scrollTo(0, 0);
 }
 // «الرئيسية»: big buttons instead of a tab bar (the user's choice, to keep the وكيلة and the teacher focused); every page gets a «الرئيسية» button
 const HUB_G = [['الخطط والبرامج', [['plans', 'الخطة التشغيلية وخطة التحسين', 'الخطتان وبطاقات البرامج ومؤشراتها'], ['timeline', 'الخطة الزمنية', 'مواعيد تنفيذ البرامج'],
-    ['plan', 'برامج الخطة 1448هـ', 'شواهد البرامج ومجلداتها'], ['qa', 'تدقيق الجودة', 'تدقيق البرامج ونتائجها'], ['quality', 'لوحة مؤشرات الجودة', 'جودة صور الشواهد ومحتواها لكل برنامج ومعلمة']]],
+    ['plan', 'برامج الخطة 1448هـ', 'شواهد البرامج ومجلداتها'], ['qa', 'تدقيق الجودة', 'تدقيق البرامج ونتائجها'], ['quality', 'لوحة مؤشرات الجودة', 'جودة صور الشواهد ومحتواها لكل برنامج ومعلمة'], ['ctw', 'برامج النشاط الطلابي الصفية', 'شواهد وتقارير كل برنامج في كل فصل بصور مصغّرة']]],
   ['ملفات الوكيلة', [['me', 'مجلدات وكيلة المدرسة', 'أقسام ملفاتك وما فيها']]],
   ['المعلمات', [['home', 'متابعة المعلمات', 'لوحة التتبع والإنجاز حسب المجلد'], ['teachers', 'قائمة المعلمات', 'صفحة كل معلمة'], ['folders', 'المجلدات', 'محتوى ملفات المعلمات'],
     ['alerts', 'التنبيهات', 'الملفات المكررة والفارغة والتذكير'], ['dash', 'لوحة المؤشرات', 'مؤشرات إنجاز المعلمات']]],
@@ -2046,6 +2048,45 @@ function dash() {
       ${idle.length ? `<div class="list" style="margin-top:10px">${idle.map(teacherRow).join('')}</div>` : '<div class="empty">جميع المعلمات رفعن خلال الأسبوع</div>'}</div>
   </div>`;
 }
+
+// «برامج النشاط الطلابي الصفية» (للوكيلة): سجل لكل برنامج في كل فصل من بوابة رائدة النشاط، بمصغّرات الشواهد والتقارير
+// (D.ctw من export.js؛ المصغّرات داخل ملفها المشفر، والمكبّرة في prev/c/<id>.bin بمفتاح المعاينات نفسه)
+const CTW = { g: '', d: '', s: '' };
+const ctwDay = g => { const [y, m, d] = g.split('/').map(Number); return Date.UTC(y, m - 1, d); };
+const ctwState = r => { if (!r.from || !r.to) return ['بلا تاريخ', 'na']; const n = new Date(), t = Date.UTC(n.getFullYear(), n.getMonth(), n.getDate());
+  return t < ctwDay(r.from.g) ? ['لم يبدأ', 'na'] : t > ctwDay(r.to.g) ? ['انتهى', 'ok'] : ['جارٍ الآن', 'part']; };
+const ctwD = x => x ? `${esc(x.d)} ${esc(x.h.split('/').reverse().join('/'))}هـ` : '—';
+function ctwW() {
+  const C = D.ctw; if (!C) return '<div class="empty card">لا توجد بيانات بعد</div>';
+  const grades = ['أول متوسط', 'ثاني متوسط', 'ثالث متوسط'], doms = [...new Set(C.recs.map(r => r.dom))];
+  const R = C.recs.filter(r => (!CTW.g || r.cls.startsWith(CTW.g)) && (!CTW.d || r.dom === CTW.d) && (!CTW.s || (CTW.s === 'ev' ? !r.files.some(f => f.k === 'ev') : ctwState(r)[1] === CTW.s)))
+    .sort((a, b) => a.cls.localeCompare(b.cls, 'ar') || a.n.localeCompare(b.n, 'ar'));
+  const ev = C.recs.filter(r => r.files.some(f => f.k === 'ev')).length, nf_ = C.recs.reduce((a, r) => a + r.files.length, 0);
+  const strip = L => L.length ? `<div class="fth">${L.map(f => `<button class="ctw-i" data-ctw="${esc(f.id)}" data-big="${f.big}" title="${esc(f.n + ' · ' + f.who)}" aria-label="${esc(f.n)}">${f.th ? `<img alt="" src="data:image/jpeg;base64,${f.th}">` : esc((f.n.split('.').pop() || '').toUpperCase())}</button>`).join('')}</div>` : '<span class="muted" style="font-size:13px">لا ملفات</span>';
+  let cls = '';
+  return `<div class="ctw-f">${[[C.recs.length, 'برنامجًا (لكل فصل)'], [ev, 'برامج لها شواهد'], [C.recs.length - ev, 'بلا شواهد بعد'], [nf_, 'ملفًا (شواهد وتقارير)']].map(([n, l]) => `<div class="card pad"><b style="font-size:22px">${nf(n)}</b><div class="muted" style="font-size:13px">${l}</div></div>`).join('')}</div>
+  <div class="toolbar" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+    <select class="search" data-ctwf="g"><option value="">كل الصفوف</option>${grades.map(g => `<option${CTW.g === g ? ' selected' : ''}>${g}</option>`).join('')}</select>
+    <select class="search" data-ctwf="d"><option value="">كل المجالات</option>${doms.map(d => `<option${CTW.d === d ? ' selected' : ''}>${esc(d)}</option>`).join('')}</select>
+    <select class="search" data-ctwf="s"><option value="">كل الحالات</option>${[['part', 'جارٍ الآن'], ['ok', 'انتهى'], ['na', 'لم يبدأ'], ['ev', 'بلا شواهد']].map(([k, l]) => `<option value="${k}"${CTW.s === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+    <span class="muted" style="align-self:center;font-size:13px">${nf(R.length)} برنامجًا · اضغطي الصورة لتكبيرها</span></div>
+  ${R.map(r => { const st = ctwState(r), E = r.files.filter(f => f.k === 'ev'), P = r.files.filter(f => f.k === 'rep'), O = r.files.filter(f => f.k !== 'ev' && f.k !== 'rep'), e = C.evals[r.key] || {};
+    const head = r.cls !== cls ? `<h3 style="margin:18px 0 8px">${esc(r.cls)}</h3>` : ''; cls = r.cls;
+    return head + `<details class="card pad" style="margin-bottom:8px"${E.length || P.length ? ' open' : ''}><summary style="cursor:pointer;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center">
+      <b style="font-size:15.5px">${esc(r.n)}</b><span class="muted" style="font-size:13px">${esc(r.dom)} · ${r.T.map(esc).join(' و ')} · من ${ctwD(r.from)} إلى ${ctwD(r.to)}</span>
+      <span style="margin-inline-start:auto;display:flex;gap:6px;flex-wrap:wrap"><span class="chip s-${st[1]}">${st[0]}</span><span class="chip ${E.length ? 's-ok' : 's-none'}">${E.length ? nf(E.length) + ' شاهد' : 'لا شواهد'}</span>${e.grade !== null && e.grade !== undefined ? `<span class="chip s-ok">تقييم رائدة النشاط ${nf(e.grade)}/100</span>` : ''}${e.seen ? '<span class="chip s-ok">اطّلعت رائدة النشاط</span>' : ''}</span></summary>
+      <div class="ctw-r"><b>الشواهد</b>${strip(E)}</div><div class="ctw-r"><b>التقارير وقياس الأثر</b>${strip(P)}</div>${O.length ? `<div class="ctw-r"><b>مجلدات أخرى</b>${strip(O)}</div>` : ''}</details>`; }).join('') || '<div class="empty card">لا برامج بهذا التصنيف</div>'}`;
+}
+document.addEventListener('change', e => { const k = e.target.dataset && e.target.dataset.ctwf; if (!k) return; CTW[k] = e.target.value; route(); });
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-ctw]'); if (!b) return;
+  const f = D.ctw.recs.flatMap(r => r.files).find(x => x.id === b.dataset.ctw), lb = Object.assign(document.createElement('div'), { className: 'wv-lb', role: 'dialog' });
+  lb.innerHTML = `<div class="card wv-box"><div class="fv-file" style="padding:0 0 8px"><div class="grow"><b>${esc(f.n)}</b><div class="muted" style="font-size:12.5px">${esc(f.who)} · ${new Date(f.t).toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'long' })}</div></div><button class="btn sm ghost" data-x>إغلاق</button></div>
+    <div id="ctwBig">${f.th ? `<img class="tz-img" alt="" src="data:image/jpeg;base64,${f.th}" style="width:min(480px,100%)">` : '<div class="muted" style="padding:16px 0">لا توجد معاينة لهذا الملف.</div>'}</div></div>`;
+  lb.addEventListener('click', x => { if (x.target === lb || x.target.closest('[data-x]')) lb.remove(); }); document.body.append(lb);
+  if (b.dataset.big === '1') { try { await loadPrev(); const u = URL.createObjectURL(new Blob([await prevBin('prev/c/' + f.id + '.bin')], { type: 'image/jpeg' }));
+    const box = lb.querySelector('#ctwBig'); if (box) box.innerHTML = `<img class="tz-img" alt="" src="${u}" style="width:min(900px,100%)">`; } catch {} }
+});
 
 // small thumbnails (up to 20) under each folder in «تفاصيل المجلدات»: the teacher reads her own set prev/t/<tid>.json
 // (tools/thumbs.py, sealed with her phone); the وكيلة uses the full previews (prev/i.bin)
