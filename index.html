@@ -301,6 +301,13 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .lv-sum{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .qa-chips{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:46%}
 .seg-wrap{flex-wrap:wrap}
+.qa-tbl{overflow-x:auto;padding:0}
+.qa-tbl table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
+.qa-tbl th,.qa-tbl td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:center;vertical-align:middle}
+.qa-tbl thead th{background:var(--soft);color:var(--muted);font-weight:600;font-size:12.5px;white-space:nowrap}
+.qa-tbl tbody th{text-align:start;font-weight:600}.qa-tbl tbody th a{color:var(--ink)}
+.qa-tbl small{display:block;color:var(--muted);font-size:11.5px;font-weight:400;margin-top:3px}
+.qa-tbl tbody tr:last-child>*{border-bottom:0}
 .warnbox{background:var(--part-bg);color:var(--ink);border-radius:12px;padding:10px 12px;font-size:13.5px;margin-bottom:10px}
 .warnbox a{font-weight:600}
 .qa-grid{display:grid;grid-template-columns:1fr;gap:14px;align-items:start}
@@ -589,6 +596,7 @@ function route() {
     const qa = !mine && (v === 'qa' || v === 'me');
     $('#view').innerHTML = v === 'start' || rev ? tHub()
       : v === 'cp' && D.ct ? tTabs('cp') + teacherCp(a)
+      : v === 'cn' && D.cn ? tTabs('cn') + teacherCn()
       : v === 'sig' && D.ct ? tTabs('sig') + teacherSig()
       : v === 'x' && D.extra[+a] ? teacherExtra(+a)
       : rev ? tTabs('rev') + teacherReview()
@@ -601,14 +609,16 @@ function route() {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === top));
   const el = $('#view');
   el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folders(+a),
-    plan: planW, ctw: () => ctwW(a), plans: plansW, timeline: () => plansW('timeline'), qa: () => qaW(a), quality: qualityW, start: wHub }[v] || me)();
+    plan: planW, ctw: wHub, arc: () => actRepW('c', a), arn: () => actRepW('n', a),plans: plansW, timeline: () => plansW('timeline'), qa: () => qaW(a), quality: qualityW, start: wHub }[v] || me)();
   if (v !== 'start') { const h = HUB.find(x => x[0] === (SUB_OF[v] || (v === 'w' ? 'me' : v))); el.insertAdjacentHTML('afterbegin', homeBar(h ? h[1] : '')); }
   bind(el); window.scrollTo(0, 0);
 }
 // «الرئيسية»: big buttons instead of a tab bar (the user's choice, to keep the وكيلة and the teacher focused); every page gets a «الرئيسية» button
 const HUB_G = [['الخطط والبرامج', [['plans', 'الخطة التشغيلية وخطة التحسين', 'الخطتان وبطاقات البرامج ومؤشراتها'], ['timeline', 'الخطة الزمنية', 'مواعيد تنفيذ البرامج'],
-    ['plan', 'برامج الخطة 1448هـ', 'شواهد البرامج ومجلداتها'], ['qa', 'تدقيق الجودة', 'تدقيق البرامج ونتائجها'], ['quality', 'لوحة مؤشرات الجودة', 'جودة صور الشواهد ومحتواها لكل برنامج ومعلمة'], ['ctw', 'برامج النشاط الطلابي الصفية', 'شواهد وتقارير كل برنامج في كل فصل بصور مصغّرة']]],
+    ['plan', 'برامج الخطة 1448هـ', 'شواهد البرامج ومجلداتها'], ['qa', 'تدقيق الجودة', 'تدقيق البرامج ونتائجها'], ['quality', 'لوحة مؤشرات الجودة', 'جودة صور الشواهد ومحتواها لكل برنامج ومعلمة']]],   // «برامج النشاط الطلابي الصفية» (ctw) أُزيل: كل ما يخص النشاط لرائد النشاط وحده (طلب المستخدمة 2026-10-18)
   ['ملفات الوكيلة', [['me', 'مجلدات وكيلة المدرسة', 'أقسام ملفاتك وما فيها']]],
+  // النشاط الطلابي لرائد النشاط وحده؛ الوكيلة تطّلع على التقارير فقط (طلب المستخدمة 2026-10-18)
+  ['النشاط الطلابي (اطلاع)', [['arc', 'تقارير الأنشطة الصفية', 'ملف PDF واحد يجمع كل التقارير'], ['arn', 'تقارير الأنشطة اللاصفية', 'تقارير الفترات حسب الأسبوع']]],
   ['المعلمات', [['home', 'متابعة المعلمات', 'لوحة التتبع والإنجاز حسب المجلد'], ['teachers', 'قائمة المعلمات', 'صفحة كل معلمة'], ['folders', 'المجلدات', 'محتوى ملفات المعلمات'],
     ['alerts', 'التنبيهات', 'الملفات المكررة والفارغة والتذكير'], ['dash', 'لوحة المؤشرات', 'مؤشرات إنجاز المعلمات']]],
   ['الإداريات', [['admins', 'الإداريات', 'مبادرات الإداريات']]]];
@@ -643,6 +653,8 @@ function bind(el) {
   el.querySelectorAll('[data-qr]').forEach(drawQr);
   el.querySelectorAll('[data-srv]').forEach(fillSrv);
   el.querySelectorAll('[data-qf]').forEach(x => x.addEventListener('click', () => { state.qaF = x.dataset.qf; const h = $('#qaHost'); h.innerHTML = qaList(); bind(h); }));
+  el.querySelectorAll('[data-qv]').forEach(x => x.addEventListener('click', () => { state.qaV = x.dataset.qv; const h = $('#qaHost'); h.innerHTML = qaList(); bind(h); }));
+  fillSrvN(el);
   if (seenOn() && el.querySelector('[data-sk]')) seenLoad().then(() => seenPaint(el));
   if (el.querySelector('.fv')) bindFv(el);
   if (el.querySelector('.wv-grid')) bindW(el);
@@ -880,6 +892,8 @@ function teacher(i) {
   return `<button class="back" data-go="teachers">→ المعلمات</button>
   <div class="head" style="margin:10px 0 14px">${ring(t.pct)}<div><h2>${esc(t.name)}</h2><div class="muted">${nf(t.done)} من ${nf(t.exist)} مجلدات مكتملة · ${nf(t.total)} ملف</div></div>
     <div style="flex:1"></div><a class="btn sm" href="${esc(t.url)}" target="_blank" rel="noopener">فتح مجلدها في OneDrive</a></div>
+  ${D.actRep ? `<div class="toolbar" style="margin:0 0 14px"><button class="btn sm ghost" data-go="arc/${i}">الأنشطة الصفية (${nf(D.actRep.cls ? D.actRep.cls.items.filter(x => (x.tf || []).includes(t.name)).length : 0)})</button>
+    <button class="btn sm ghost" data-go="arn/${i}">الأنشطة اللاصفية (${nf(D.actRep.non.reduce((s, w) => s + w.files.filter(f => (f.tf || []).includes(t.name)).length, 0))})</button><span class="muted" style="font-size:12.5px">تقاريرها للاطلاع فقط</span></div>` : ''}
   ${msg ? '' : `<div class="card pad" style="margin-bottom:14px;color:var(--ok);font-weight:600">جميع مجلداتها مكتملة حسب المعايير</div>`}
   <div class="card pad" style="margin-bottom:14px"><div style="font-weight:600;margin-bottom:8px">تنبيه للمعلمة <span class="muted" style="font-weight:400;font-size:13px">· يمكنك تعديل النص قبل الإرسال</span></div>
     <textarea class="msg note-in" id="msg" rows="${msg ? Math.min(12, msg.split('\n').length + 3) : 3}" placeholder="اكتبي التنبيه هنا…">${esc(msg)}</textarea>
@@ -1217,7 +1231,45 @@ function rvCard(p) {
 // the teacher's «الرئيسية»: the same 4 buttons for every teacher (plan-only accounts have no «ملفاتي»)
 // «جودة شواهد البرامج» (rev) disabled 2026-10-17 at the user's request: no button, #rev → الرئيسية; teacherReview() kept unused
 const tList = () => [['qa', 'تدقيق الجودة', 'نتيجة تدقيق برامجك وردّك وخطة التحسين'],
-  ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها'], D.ct && ['cp', 'الأنشطة الصفية', 'برامجك في خطة النشاط ورفع صورها'], D.ct && ['sig', 'تسجيل توقيعي', 'ارسمي توقيعك مرة واحدة ليظهر في تقارير برامجك'], !D.planOnly && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
+  ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها'], D.ct && ['cp', 'الأنشطة الصفية', 'برامجك في خطة النشاط ورفع صورها'], D.cn && ['cn', 'الأنشطة اللاصفية', 'أنشطة فصلك اللاصفية ورفع صورها'], D.ct && ['sig', 'تسجيل توقيعي', 'ارسمي توقيعك مرة واحدة ليظهر في تقارير برامجك'], !D.planOnly && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
+/* ---------- «الأنشطة اللاصفية» للمعلمة: رفع الشواهد فقط (طلب المستخدمة 2026-10-18). تختار نشاط فصلها (أسبوع إذاعته)
+   ثم ترفع الصور إلى المجلد المشترك للفصل «3. شواهد البرامج/<الفصل> — الأنشطة اللاصفية/الأسبوع NN — <الموضوع>/الشواهد» (a='nupload') ---------- */
+const cnHd = h => { const ar = s => String(+s).replace(/\d/g, c => '٠١٢٣٤٥٦٧٨٩'[c]), [y, m, d] = h.split('/'); return ar(d) + '‏/' + ar(m) + '‏/' + ar(y) + 'هـ'; };   // اليوم أقصى اليمين
+function teacherCn() {
+  const W = D.cn.weeks || [], k = Math.min(+(state.cnW ?? 0), Math.max(0, W.length - 1)), w = W[k];
+  if (!W.length) return `<div class="card pad"><h2 style="margin:0 0 4px">الأنشطة اللاصفية</h2><p class="muted" style="margin:0">لا توجد أنشطة لاصفية لفصلك (${esc(D.cn.cls)}) في الجدول بعد.</p></div>`;
+  return `<div class="card hero th-hero"><div class="grow"><h2>الأنشطة اللاصفية</h2><p class="muted">${esc(D.cn.cls)} · اختاري النشاط ثم أرفقي صور الشواهد فقط</p></div></div>
+  <div class="card pad up" id="cnUp" data-cn="${k}"><label class="up-l" for="cnW">النشاط اللاصفي</label>
+    <select class="search" id="cnW">${W.map((x, i) => `<option value="${i}"${i === k ? ' selected' : ''}>${esc(x.topic)} — ${cnHd(x.from)}${x.to !== x.from ? ' إلى ' + cnHd(x.to) : ''}</option>`).join('')}</select>
+    <label class="up-drop"><input type="file" id="cnI" multiple accept="image/*" hidden><span><b>اختاري الصور أو صوّري الشاهد</b><br><span class="muted">تُصغَّر الصور قبل الرفع، وتصل إلى مجلد الفصل المشترك</span></span></label>
+    <div class="muted" id="cnMsg" style="font-size:13px;margin-top:8px">${w.files.length ? `${nf(w.files.length)} صورة مرفوعة لهذا النشاط` : 'لم تُرفع صور لهذا النشاط بعد'}</div>
+    ${w.files.length ? `<ul class="files">${w.files.map(f => `<li>${esc(f.n)}</li>`).join('')}</ul>` : ''}</div>`;
+}
+document.addEventListener('change', async ev => {
+  if (!D || !D.cn) return;
+  if (ev.target.id === 'cnW') { state.cnW = +ev.target.value; route(); return; }
+  if (ev.target.id !== 'cnI' || !ev.target.files.length) return;
+  const w = D.cn.weeks[+document.getElementById('cnUp').dataset.cn], msg = document.getElementById('cnMsg'), files = [...ev.target.files]; let ok = 0, err = '';
+  for (const [k, f0] of files.entries()) {
+    msg.textContent = `جارٍ رفع ${nf(k + 1)} من ${nf(files.length)}…`;
+    try {
+      if (!/^image\//.test(f0.type)) throw new Error('تُقبل الصور فقط');
+      const f = await shrinkImage(f0); if (f.size > 25 * 1048576) throw new Error('الصورة أكبر من ٢٥ م.ب');
+      const b64 = await new Promise((o, x) => { const fr = new FileReader(); fr.onload = () => o(String(fr.result).split(',')[1]); fr.onerror = x; fr.readAsDataURL(f); });
+      let j = null, last = 'تعذر الاتصال'; const uid = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + k;
+      for (let i = 0; i < 4 && !j; i++) {
+        try { const r = await fetch(D.ct.api, { method: 'POST', signal: AbortSignal.timeout ? AbortSignal.timeout(45000) : undefined, headers: { 'content-type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ a: 'nupload', uid, tok: D.cn.tok, cls: D.cn.cls, from: w.from, to: w.to, topic: w.topic, name: f.name, mime: f.type || 'image/jpeg', b64 }) });
+          const t = await r.text(); if (t[0] !== '{') throw new Error('رد غير متوقع'); const x = JSON.parse(t); if (!x.ok) { last = x.error; if (/غير مصرح|غير معروف|فقط|أكبر/.test(x.error)) break; throw new Error(x.error); } j = x; }
+        catch (e) { last = e.message; await new Promise(o => setTimeout(o, 800)); }
+      }
+      if (!j) throw new Error(last);
+      w.files.push({ n: j.file.n, t: j.file.t, id: j.file.id }); ok++;
+    } catch (e) { err = `تعذر رفع «${f0.name}»: ${e.message}`; }
+  }
+  route();
+  const m = document.getElementById('cnMsg'); if (m) { m.textContent = (ok ? `رُفعت ${nf(ok)} من ${nf(files.length)} — وصلت إلى مجلد الفصل` : '') + (err ? ' · ' + err : ''); m.style.color = err ? 'var(--none)' : 'var(--ok)'; }
+});
 /* ---------- «برامج الأنشطة الصفية» للمعلمة: برامجها من سجل خطة النشاط، وترفع الصور فقط ---------- */
 const cpList = () => D.ct.items.flatMap((it, j) => it.progs.map((p, k) => ({ it, p, id: j + '.' + k })));
 const CP_DAY = g => { const [y, m, d] = g.split('/').map(Number); return Date.UTC(y, m - 1, d); };
@@ -1399,6 +1451,7 @@ function tHub() {
   const meta = { qa: P.length && !A.length ? 'لم يبدأ البرنامج · الفصل الدراسي الثاني' : progs,
     rev: !P.length ? progs : !A.length ? 'لم يبدأ البرنامج · الفصل الدراسي الثاني' : avg == null ? 'لم تُقيَّم بعد' : `متوسط التقييم ${nf(avg)} من 100`,
     plan: !P.length ? progs : A.length ? `${nf(done)} من ${nf(A.length)} أُرفقت شواهدها` : 'تبدأ في الفصل الدراسي الثاني', mine: t ? `الإنجاز ${nf(t.pct)}٪` : '',
+    cn: D.cn ? `${nf((D.cn.weeks || []).length)} أنشطة لفصلك · ${nf((D.cn.weeks || []).reduce((s, w) => s + w.files.length, 0))} صورة مرفوعة` : '',
     cp: D.ct ? (() => { const L = cpList(); return `${nf(L.length)} برامج · ${nf(L.reduce((a, x) => a + x.p.files.length, 0))} صورة مرفوعة`; })() : '' };
   return thHero(`مرحبًا بكِ${t ? '، أ. ' + esc(t.short) : ''}`, 'اختاري القسم الذي تريدين العمل عليه.') + D.teachers.map(inbox).join('') + `<div class="th-hub">${tList().map(([g, l, d], i) => thBtn(g, l, d, meta[g], i)).join('')}</div>`;
 }
@@ -1408,6 +1461,50 @@ const thHero = (h, p) => `<div class="card hero th-hero">
 const thBtn = (g, l, d, m, c) => `<button class="th-b" data-go="${g}" style="--a:var(--th-${c % 4})">
     <span class="th-x"><span class="th-t">${l}</span><span class="th-s">${d}</span>${m ? `<span class="th-m">${m}</span>` : ''}</span><span class="th-go">←</span></button>`;
 // the وكيلة's «الرئيسية»: the same design, one colour per group, a live status under each button
+// «تقارير الأنشطة الصفية / اللاصفية» للوكيلة: اطلاع فقط. الملفات مشفرة بمفتاح المعاينات (prev/ar، tools/act_reports.py)
+// وتُفك في المتصفح؛ النافذة تُفتح عند الضغط مباشرة (قبل فك التشفير) حتى لا يمنعها المتصفح
+const arN = n => n === 1 ? 'تقرير واحد' : n === 2 ? 'تقريران' : `${nf(n)} ${n <= 10 ? 'تقارير' : 'تقريرًا'}`;
+const arSize = n => n >= 1048576 ? `${(n / 1048576).toFixed(1)} م.ب` : `${nf(Math.max(1, Math.round(n / 1024)))} ك.ب`;
+const arBtns = (bin, name) => `<button class="btn sm" data-arbin="${esc(bin)}" data-arname="${esc(name)}">فتح</button> <button class="btn sm ghost" data-arbin="${esc(bin)}" data-arname="${esc(name)}" data-ardl="1">تحميل</button>`;
+// التقارير الصفية حسب الفصل: معلمتا الفصل معًا (البرامج المشتركة)، ثم «الأنشطة الخاصة» بكل معلمة
+function arGroups(L) {
+  const row = x => `<div class="card pad" style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><span>${esc(x.n)}<br><span class="muted" style="font-size:12.5px">${esc(x.dom)}</span></span><span class="muted" style="font-size:13px">صفحة ${nf(x.page)}</span></div>`;
+  const C = [...new Set(L.map(x => x.cls || ''))];
+  return C.map(cl => { const I = L.filter(x => (x.cls || '') === cl), pair = I[0].pair || [], S = I.filter(x => !x.own), own = [...new Set(I.filter(x => x.own).map(x => x.own))];
+    return `<h3 class="hub-h">${esc(cl)}${pair.length ? ' — ' + pair.map(esc).join(' و ') : ''}</h3>
+      ${S.length ? `${own.length ? '<div class="muted" style="font-size:13px;margin:0 4px 6px">البرامج المشتركة</div>' : ''}<div class="list">${S.map(row).join('')}</div>` : ''}
+      ${own.map(o => `<div class="muted" style="font-size:13px;margin:10px 4px 6px">الأنشطة الخاصة — ${esc(o)}</div><div class="list">${I.filter(x => x.own === o).map(row).join('')}</div>`).join('')}`; }).join('');
+}
+function actRepW(k, ti) {
+  const A = D.actRep, t = ti !== undefined && ti !== '' ? D.teachers[+ti] : null, mine = x => !t || (x.tf || []).includes(t.name);
+  if (!A) return '<div class="empty card">لا توجد تقارير بعد</div>';
+  const back = t ? `<button class="back" data-go="t/${t.i}">→ ${esc(t.name)}</button>` : '', who = t ? ' — ' + esc(t.name) : '';
+  if (k === 'c') { const c = A.cls, L = c ? c.items.filter(mine) : [];
+    if (t) return back + `<div class="card hero th-hero"><div class="grow"><h2>تقارير الأنشطة الصفية${who}</h2><p class="muted">${L.length ? arN(L.length) : 'لا توجد لها تقارير بعد'} · للاطلاع فقط</p></div></div>
+      <div class="list">${L.map(x => `<div class="card pad" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span>${esc(x.n)}<br><span class="muted" style="font-size:12.5px">${esc(x.cls)} · ${esc(x.who)} · ${esc(x.dom)}</span></span><span>${x.bin ? arBtns(x.bin, x.cls + ' - ' + x.n + '.pdf') : ''}</span></div>`).join('')}</div>`;
+    return `<div class="card hero th-hero"><div class="grow"><h2>تقارير الأنشطة الصفية</h2><p class="muted">${c ? `${arN(c.items.length)} في ملف واحد · ${nf(c.pages)} ${c.pages <= 10 && c.pages > 2 ? 'صفحات' : 'صفحة'} · ${arSize(c.size)}` : 'لا توجد تقارير بعد'} · للاطلاع فقط</p></div>
+      ${c ? arBtns(c.bin, 'تقارير الأنشطة الصفية - 1448هـ.pdf') : ''}</div>
+      ${c ? arGroups(c.items) : ''}`;
+  }
+  const W = A.non.map(w => ({ ...w, files: w.files.filter(mine) })).filter(w => w.files.length), n = W.reduce((s, w) => s + w.files.length, 0);
+  return back + `<div class="card hero th-hero"><div class="grow"><h2>تقارير الأنشطة اللاصفية${who}</h2><p class="muted">${n ? `${arN(n)} في ${nf(W.length)} ${W.length <= 10 && W.length > 2 ? 'أسابيع' : 'أسبوعًا'}` : 'لا توجد تقارير بعد'} · للاطلاع فقط</p></div></div>
+    ${W.map(w => `<h3 class="hub-h">${esc(w.w.replace(/^d+.s*/, ''))}</h3><div class="list">${w.files.map(f => `<div class="card pad" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <span>${esc(f.n)}${f.sub ? `<br><span class="muted" style="font-size:12.5px">${esc(f.sub)}</span>` : ''}</span><span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:12px">${arSize(f.size)}</span>${arBtns(f.bin, f.n + '.pdf')}</span></div>`).join('')}</div>`).join('')}`;
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-arbin]'); if (!b) return;
+  const dl = b.dataset.ardl, win = dl ? null : window.open('', '_blank'), old = b.textContent;
+  if (win) win.document.write('<p dir="rtl" style="font-family:sans-serif;padding:20px">جارٍ فتح التقرير…</p>');
+  b.disabled = true; b.textContent = 'جارٍ التحميل…';
+  try {
+    await loadPrev();
+    const url = URL.createObjectURL(new Blob([await prevBin(b.dataset.arbin + '?t=' + Date.now())], { type: 'application/pdf' }));
+    if (win) win.location.href = url;
+    else { const a = document.createElement('a'); a.href = url; a.download = b.dataset.arname; document.body.appendChild(a); a.click(); a.remove(); }
+    setTimeout(() => URL.revokeObjectURL(url), 120000);
+  } catch { if (win) win.close(); toast('تعذّر فتح التقرير، حاولي مرة أخرى'); }
+  finally { b.disabled = false; b.textContent = old; }
+});
 function wHub() {
   const T = D.teachers, P = D.plan, A = P1(P), done = A.filter(p => p.s === 'ok').length;
   const avg = T.length ? Math.round(T.reduce((s, t) => s + t.pct, 0) / T.length) : 0, full = T.filter(t => t.pct === 100).length;
@@ -1416,7 +1513,8 @@ function wHub() {
   const meta = { timeline: D.week || '', plan: A.length ? `${nf(done)} من ${nf(A.length)} أُرفقت شواهدها` : '',
     qa: P.length ? cnt(P.length, 'برنامج واحد', 'برنامجان', 'برامج', 'برنامجًا') : '', home: `متوسط الإنجاز ${nf(avg)}٪`, teachers: cnt(T.length, 'معلمة واحدة', 'معلمتان', 'معلمات', 'معلمة'),
     folders: cnt(D.folders.length, 'مجلد واحد', 'مجلدان', 'مجلدات', 'مجلدًا'), alerts: flags ? `${nf(flags)} ملاحظة على الملفات` : '', dash: `${nf(full)} من ${nf(T.length)} أكملن مجلداتهن`,
-    admins: D.admins?.length ? cnt(D.admins.length, 'إدارية واحدة', 'إداريتان', 'إداريات', 'إدارية') : '' };
+    admins: D.admins?.length ? cnt(D.admins.length, 'إدارية واحدة', 'إداريتان', 'إداريات', 'إدارية') : '',
+    arc: D.actRep?.cls ? `${arN(D.actRep.cls.items.length)}` : '', arn: D.actRep ? arN(D.actRep.non.reduce((s, w) => s + w.files.length, 0)) : '' };
   return thHero('مرحبًا بكِ، فوزية الدوسري', `${cnt(T.length, 'معلمة واحدة', 'معلمتان', 'معلمات', 'معلمة')} · متوسط إنجاز المعلمات ${nf(avg)}٪${A.length ? ` · ${nf(done)} من ${nf(A.length)} برامج الفصل الأول أُرفقت شواهدها` : ''}`)
     + HUB_G.map(([gt, gl], gi) => `<h3 class="hub-h">${gt}</h3><div class="th-hub w">${gl.map(([g, l, d]) => thBtn(g, l, d, meta[g], gi)).join('')}</div>`).join('');
 }
@@ -1789,9 +1887,34 @@ function qaList() {
       <span class="chip s-part">⏳ قيد التنفيذ ${nf(done.filter(r => r.d.running).length)}</span></div></div></div>
   ${due.length ? `<div class="card pad warnbox"><b>حان موعد إعادة التدقيق:</b> ${due.map(r => `<a href="#qa/${r.p.k}">${esc(r.p.name)}</a>`).join('، ')}</div>` : ''}
   <div class="toolbar"><div class="seg seg-wrap">${[['all', 'الكل'], ['todo', 'لم يُدقق'], ['sent', 'بانتظار رد المعلمة'], ['replied', 'ردّت المعلمة'], ['run', 'قيد التنفيذ'], ['closed', 'مغلق']]
-    .map(([k, l]) => `<button data-qf="${k}" class="${flt === k ? 'on' : ''}">${l} (${nf(rows.filter(F[k]).length)})</button>`).join('')}</div></div>
-  ${PHASES.map(([k, l]) => { const g = shown.filter(r => phase(r.p) === k); return g.length ? `<h2 class="qa-ph">${l} <span class="muted" style="font-weight:400">(${nf(g.length)})</span></h2><div class="list">${g.map(row).join('')}</div>` : ''; }).join('') || '<div class="empty card">لا يوجد</div>'}
+    .map(([k, l]) => `<button data-qf="${k}" class="${flt === k ? 'on' : ''}">${l} (${nf(rows.filter(F[k]).length)})</button>`).join('')}</div>
+    <div class="seg" style="margin-inline-start:auto">${[['list', 'قائمة'], ['tbl', 'جدول']].map(([k, l]) => `<button data-qv="${k}" class="${(state.qaV === 'tbl' ? 'tbl' : 'list') === k ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+  ${!shown.length ? '<div class="empty card">لا يوجد</div>' : state.qaV === 'tbl' ? qaTable(shown)
+    : PHASES.map(([k, l]) => { const g = shown.filter(r => phase(r.p) === k); return g.length ? `<h2 class="qa-ph">${l} <span class="muted" style="font-weight:400">(${nf(g.length)})</span></h2><div class="list">${g.map(row).join('')}</div>` : ''; }).join('')}
   <p class="foot">النسبة في الدائرة = بطاقة الملاحظة · المستوى النهائي تختارينه في صفحة البرنامج · الاستبانة مفعّلة لبرامج التجربة والبرامج المنتهية</p>`;
+}
+// «جدول»: one row per program — has each of the four tabs been done? (the survey cell is filled from the Apps Script totals)
+const qaCell = (c, t, sub) => `<span class="chip s-${c}">${c === 'ok' ? '✓ ' : ''}${t}</span>${sub ? `<small>${sub}</small>` : ''}`;
+function qaTable(rows) {   // the first-semester programs only (19); the second semester has not started
+  rows = rows.filter(r => !r.p.t2);
+  if (!rows.length) return '<div class="empty card">لا يوجد</div>';
+  const tr = ({ p, d }, i) => {
+    const n = (d.obs?.items || []).filter(v => v != null).length, iv = d.interview?.state;
+    const obs = n === 10 ? qaCell('ok', 'تمت') : n ? qaCell('part', 'جزئيًا', `${nf(n)} من ١٠ عناصر`) : qaCell('na', 'لم تتم');
+    const int = iv === 'ok' ? qaCell('ok', 'تمت', 'معتمدة') : iv === 'pending' ? qaCell('part', 'بانتظار اعتمادك') : iv === 'back' ? qaCell('part', 'أُعيدت للمعلمة') : qaCell('na', 'لم تتم');
+    const srv = srvOn(p) ? `<span data-srvn="${p.no}" class="muted">…</span>` : qaCell('na', 'غير مفعّلة');
+    const res = QA_DONE.includes(d.status) ? qaCell('ok', 'تمت', QA_ST[d.status]) : d.status === 'draft' ? qaCell('part', 'مسودة', 'لم تُرسل') : qaCell('na', 'لم تتم');
+    return `<tr><td class="muted">${nf(i + 1)}</td><th><a href="#qa/${p.k}">${esc(p.name)}</a><small>${esc(p.people.map(x => x.label).join('، ') || '—')}</small></th><td>${obs}</td><td>${int}</td><td>${srv}</td><td>${res}</td></tr>`;
+  };
+  return `<h2 class="qa-ph">برامج الفصل الدراسي الأول <span class="muted" style="font-weight:400">(${nf(rows.length)})</span></h2>
+  <div class="card qa-tbl"><table><thead><tr><th>م</th><th>البرنامج</th><th>بطاقة الملاحظة</th><th>المقابلة</th><th>الاستبانة</th><th>النتيجة والإرسال</th></tr></thead>
+    <tbody>${rows.map(tr).join('')}</tbody></table></div>`;
+}
+async function fillSrvN(el) {
+  const cells = el.querySelectorAll('[data-srvn]'); if (!cells.length) return;
+  let r = null; try { r = await srvResults(); } catch {}
+  cells.forEach(c => { const n = r?.programs?.[c.dataset.srvn]?.n || 0;
+    c.outerHTML = !r ? qaCell('na', 'تعذّر التحميل') : n >= SRV_TARGET ? qaCell('ok', 'تمت', `${nf(n)} ردًّا`) : n ? qaCell('part', 'جزئيًا', `${nf(n)} من ${nf(SRV_TARGET)} ردًّا`) : qaCell('na', 'لم تتم', 'لا ردود'); });
 }
 function qaProgram() {
   const { p, doc: d } = qaD;

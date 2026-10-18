@@ -150,11 +150,31 @@
       <ul>${f.subs.map(x => `<li><span>${esc(x.n)}</span><span style="display:flex;gap:8px;align-items:center"><span class="muted">${ar(x.count)} ملف</span>${btn(x.url, 'فتح', 1)}</span></li>`).join('') || '<li>لا مجلدات فرعية</li>'}</ul>
       <div class="ld-links" style="margin-top:8px">${btn(f.url, 'فتح القسم')}</div></details>`).join('')}</div>`;
   }
+  // «تحميل الكل» للطباعة: ملف PDF واحد لكل نوع (tools/act_reports.py)؛ مشفر بمفتاح في ملف الرائدة (D.ar.key) ويُفك في المتصفح
+  const arAll = D => { const A = D.ar; if (!A || !(A.cls || A.non)) return '';
+    const b = (k, l) => A[k] ? `<button class="btn" data-arl="${k}">${l} — ${ar(A[k].count)} تقارير · ${ar(A[k].pages)} صفحة</button>` : '';
+    const ord = (k, t, how) => A[k] && A[k].items ? `<details class="ld-fold" style="margin:0"><summary>ترتيب ${t} في الملف (${how})</summary><ol style="margin:8px 0 0;padding-inline-start:22px;font-size:13px;line-height:1.9">${A[k].items.map(x => `<li>${esc(x)}</li>`).join('')}</ol></details>` : '';
+    return `<div class="card ld-tools"><h4>تحميل الكل للطباعة (ملف PDF واحد)</h4><div class="row2">${b('cls', 'الأنشطة الصفية')} ${b('non', 'الأنشطة اللاصفية')}<span class="ld-msg" id="arlMsg"></span></div>
+      ${ord('cls', 'الأنشطة الصفية', 'الصف ← الفصل ← المجال ← البرنامج')}${ord('non', 'الأنشطة اللاصفية', 'الأسبوع ← الفصل')}</div>`; };
+  document.addEventListener('click', async ev => {
+    const b = ev.target.closest('[data-arl]'); if (!b) return;
+    const A = D_().ar, it = A[b.dataset.arl], msg = document.getElementById('arlMsg'), old = b.textContent;
+    b.disabled = true; b.textContent = 'جارٍ التجهيز…';
+    try {
+      const key = await crypto.subtle.importKey('raw', Uint8Array.from(A.key.match(/../g).map(h => parseInt(h, 16))), 'AES-GCM', false, ['decrypt']);
+      const r = await fetch(it.bin + '?t=' + Date.now(), { cache: 'no-cache' }); if (!r.ok) throw new Error('net');
+      const u = new Uint8Array(await r.arrayBuffer()), pdf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.subarray(0, 12) }, key, u.subarray(12));
+      const url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' })), a = document.createElement('a');
+      a.href = url; a.download = (b.dataset.arl === 'cls' ? 'تقارير الأنشطة الصفية' : 'تقارير الأنشطة اللاصفية') + ' - 1448هـ.pdf'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 120000); if (msg) msg.textContent = 'تم التحميل';
+    } catch { if (msg) { msg.textContent = 'تعذّر التحميل، حاولي مرة أخرى'; msg.className = 'ld-msg err'; } }
+    finally { b.disabled = false; b.textContent = old; }
+  });
   function reportsPage(D) {
     const R = D.reports.slice().sort((a, b) => a.p.localeCompare(b.p, 'ar') || a.n.localeCompare(b.n, 'ar'));
     const groups = [...new Set(R.map(r => r.p))];
     const z = D.zip;
-    return nav(['lr', 'التقارير']) + `<div class="card ld-h"><h2>التقارير (${ar(R.length)})</h2><p>كل تقارير PDF في الأرشيف: التقارير الصفية واللاصفية، والجاهزة للختم، وتقارير البرامج</p></div>
+    return nav(['lr', 'التقارير']) + arAll(D) + `<div class="card ld-h"><h2>التقارير (${ar(R.length)})</h2><p>كل تقارير PDF في الأرشيف: التقارير الصفية واللاصفية، والجاهزة للختم، وتقارير البرامج</p></div>
     <div class="ld-links">${z ? `<a class="btn" href="https://drive.google.com/uc?export=download&id=${esc(z.id)}" target="_blank" rel="noopener">تحميل كل التقارير دفعة واحدة (ZIP)</a> <a class="btn ghost" href="https://drive.google.com/file/d/${esc(z.id)}/view" target="_blank" rel="noopener">عرض الملف المضغوط</a>
       <span class="ld-empty">آخر تجميع: ${new Date(z.t).toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-arab', { day: 'numeric', month: 'long' })}</span>` : '<span class="ld-empty">يُجهَّز ملف التحميل الكامل مع التحديث القادم.</span>'}</div>
     ${groups.map(g => `<h3 class="ld-sec">${esc(g)}</h3>${fileList(R.filter(r => r.p === g))}`).join('') || '<p class="ld-empty">لا توجد تقارير بعد.</p>'}`;
@@ -465,9 +485,24 @@
     <div class="card ld-h" style="border-inline-start-color:${DOM[d] || 'var(--brand)'}"><h2>مجال ${esc(d)}</h2><p>${ar(L.length)} برنامجًا لدى ${ar(new Set(L.map(p => p.t.name)).size)} معلمة · ${names.map(esc).join('، ')}</p></div>
     ${names.map(n => { const R = D.recs.filter(r => r.dom === d && r.n === n); return `<h3 class="ld-sec">${esc(n)} — ${ar(R.length)} فصول · المعلمات: ${[...new Set(R.flatMap(r => r.T.map(t => t.name)))].map(esc).join('، ')}</h3>` + recTable(R); }).join('')}`;
   }
+  // صفحة المعلمة: زرّا «الأنشطة الصفية» و«الأنشطة اللاصفية» (طلب المستخدمة 2026-10-18)
+  const nN = s => String(s).replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي');
+  const tPeriods = (D, t) => D.weeks.map(w => ({ w: w.n.replace(/^\d+\.\s*/, ''), url: w.url, files: w.files.concat(...(w.subs || []).map(s => s.files)).filter(f => nN(f.n).includes(nN(t.name))) })).filter(w => w.files.length);
   function teacher(D, i) {
     const t = D.teachers[i]; if (!t) return home(D);
-    return nav(['lg', 'الأنشطة الصفية'], ['lts', 'المعلمات'], ['lt/' + i, t.name]) + `<div class="card ld-h"><h2>${esc(t.name)}</h2><p>${esc(t.cls)} · مادة ${esc(t.subj)} · عدد الطالبات ${ar(t.students)} · ${ar(t.p.length)} برامج</p></div>
+    const n = tPeriods(D, t).reduce((s, w) => s + w.files.length, 0), ev = t.p.reduce((s, p) => s + p.ev.length, 0);
+    return nav(['lts', 'المعلمات'], ['lt/' + i, t.name]) + `<div class="card ld-h"><h2>${esc(t.name)}</h2><p>${esc(t.cls)} · مادة ${esc(t.subj)}${t.mates.length ? ' · مع ' + t.mates.map(m => esc(m.name)).join(' و ') : ''}</p></div>
+    <div class="ld-hub">${hubBtn('ltc/' + i, 'الأنشطة الصفية', `${ar(t.p.length)} برامج · ${ar(ev)} شاهد`, '#0f6b63')}${hubBtn('ltn/' + i, 'الأنشطة اللاصفية', n ? `${ar(n)} تقارير في الفترات` : 'لا توجد تقارير بعد', '#7a4fb5')}</div>`;
+  }
+  function teacherNon(D, i) {
+    const t = D.teachers[i]; if (!t) return home(D);
+    const W = tPeriods(D, t);
+    return nav(['lts', 'المعلمات'], ['lt/' + i, t.name], ['ltn/' + i, 'الأنشطة اللاصفية']) + `<div class="card ld-h"><h2>الأنشطة اللاصفية — ${esc(t.name)}</h2><p>تقاريرها في الفترات حسب الأسبوع</p></div>`
+      + (W.length ? W.map(w => `<h3 class="ld-sec">${esc(w.w)} ${btn(w.url, 'مجلد الأسبوع', 1)}</h3><div class="ld-f">${w.files.map(f => `<a href="https://drive.google.com/file/d/${esc(f.id)}/view" target="_blank" rel="noopener"><b>${esc(f.n)}</b><span>${new Date(f.t).toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-arab', { day: 'numeric', month: 'long' })}</span></a>`).join('')}</div>`).join('') : '<p class="ld-empty">لا توجد لها تقارير في الفترات اللاصفية بعد.</p>');
+  }
+  function teacherClass(D, i) {
+    const t = D.teachers[i]; if (!t) return home(D);
+    return nav(['lts', 'المعلمات'], ['lt/' + i, t.name], ['ltc/' + i, 'الأنشطة الصفية']) + `<div class="card ld-h"><h2>${esc(t.name)}</h2><p>${esc(t.cls)} · مادة ${esc(t.subj)} · عدد الطالبات ${ar(t.students)} · ${ar(t.p.length)} برامج</p></div>
     <div class="ld-links">${btn(t.url, 'مجلد المعلمة')} ${t.mates.map(m => `<button class="btn sm ghost" data-go="lt/${m.i}">زميلتها: ${esc(m.name)}</button>`).join(' ')} <button class="btn sm ghost" data-go="lc/${D.cls.findIndex(c => c.c === t.cls)}">برامج الفصل</button></div>
     ${t.mates.length ? `<p class="ld-mate">${t.mates.map(m => same(t, m) ? `تنفذ البرامج نفسها مع زميلتها ${esc(m.name)}.` : `برامجها في جدول الإسناد تختلف عن زميلتها ${esc(m.name)}.`).join(' ')}</p>` : '<p class="ld-mate">لا زميلة لها في الفصل.</p>'}${table(t.p, false)}
     ${t.p.map(p => `<h3 class="ld-sec">${esc(p.n)} — الشواهد (${ar(p.ev.length)})</h3>${p.ev.length ? `<div class="ld-f">${p.ev.map(f =>
@@ -478,7 +513,7 @@
   }
   window.LEADER = {
     render(D, v, a) { style(); events(); window.__LD = D; prep(D); const tt = document.getElementById('title'); if (tt) tt.textContent = this.title;
-      return v === 'lt' ? teacher(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : v === 'la' ? alerts(D) : home(D); },
+      return v === 'lt' ? teacher(D, +a) : v === 'ltc' ? teacherClass(D, +a) : v === 'ltn' ? teacherNon(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : v === 'la' ? alerts(D) : home(D); },
     title: 'صفحة رائد النشاط : منى العمري',
   };
 })();
