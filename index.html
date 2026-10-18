@@ -1242,7 +1242,7 @@ function teacherCn() {
   if (!W.length) return `<div class="card pad"><h2 style="margin:0 0 4px">الأنشطة اللاصفية</h2><p class="muted" style="margin:0">لا توجد أنشطة لاصفية لفصلك (${esc(D.cn.cls)}) في الجدول بعد.</p></div>`;
   return `<div class="card hero th-hero"><div class="grow"><h2>الأنشطة اللاصفية</h2><p class="muted">${esc(D.cn.cls)} · اختاري النشاط ثم أرفقي صور الشواهد فقط</p></div></div>
   <div class="card pad up" id="cnUp" data-cn="${k}"><label class="up-l" for="cnW">النشاط اللاصفي</label>
-    <select class="search" id="cnW">${W.map((x, i) => `<option value="${i}"${i === k ? ' selected' : ''}>${esc(x.topic)} — ${cnHd(x.from)}${x.to !== x.from ? ' إلى ' + cnHd(x.to) : ''}</option>`).join('')}</select>
+    <select class="search" id="cnW">${W.map((x, i) => `<option value="${i}"${i === k ? ' selected' : ''}>الأسبوع ${nf(x.w)} — ${esc(x.topic)} — ${cnHd(x.from)}${x.to !== x.from ? ' إلى ' + cnHd(x.to) : ''}</option>`).join('')}</select>
     <label class="up-drop"><input type="file" id="cnI" multiple accept="image/*" hidden><span><b>اختاري الصور أو صوّري الشاهد</b><br><span class="muted">تُصغَّر الصور قبل الرفع، وتصل إلى مجلد الفصل المشترك</span></span></label>
     <div class="muted" id="cnMsg" style="font-size:13px;margin-top:8px">${w.files.length ? `${nf(w.files.length)} صورة مرفوعة لهذا النشاط` : 'لم تُرفع صور لهذا النشاط بعد'}</div>
     ${w.files.length ? `<ul class="files">${w.files.map(f => `<li>${esc(f.n)}</li>`).join('')}</ul>` : ''}</div>`;
@@ -1261,7 +1261,7 @@ document.addEventListener('change', async ev => {
       let j = null, last = 'تعذر الاتصال'; const uid = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + k;
       for (let i = 0; i < 4 && !j; i++) {
         try { const r = await fetch(D.ct.api, { method: 'POST', signal: AbortSignal.timeout ? AbortSignal.timeout(45000) : undefined, headers: { 'content-type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ a: 'nupload', uid, tok: D.cn.tok, cls: D.cn.cls, from: w.from, to: w.to, topic: w.topic, name: f.name, mime: f.type || 'image/jpeg', b64 }) });
+            body: JSON.stringify({ a: 'nupload', uid, tok: D.cn.tok, cls: D.cn.cls, w: w.w, from: w.from, to: w.to, topic: w.topic, name: f.name, mime: f.type || 'image/jpeg', b64 }) });
           const t = await r.text(); if (t[0] !== '{') throw new Error('رد غير متوقع'); const x = JSON.parse(t); if (!x.ok) { last = x.error; if (/غير مصرح|غير معروف|فقط|أكبر/.test(x.error)) break; throw new Error(x.error); } j = x; }
         catch (e) { last = e.message; await new Promise(o => setTimeout(o, 800)); }
       }
