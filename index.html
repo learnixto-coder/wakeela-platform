@@ -356,6 +356,8 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .cp-th img{width:100%;height:100%;object-fit:cover;display:block}
 .cp-rep{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-top:10px}.cp-rep .cp-th img{object-fit:contain;background:#fff}
 .cp-rn{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cp-rf .cp-rn{white-space:normal;color:var(--ink);font-weight:600}
+.cp-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.cp-form label{display:grid;gap:4px;font-size:13.5px;color:var(--muted)}.cp-form .cp-wide{grid-column:1/-1}
+.cp-form input{font:inherit;color:var(--ink);padding:9px 10px;border:1.5px solid var(--line);border-radius:10px;background:var(--card)}
 .cp-bt{display:flex;gap:6px}.cp-bt .btn{flex:1;padding-inline:6px}.cp-del{color:var(--none)}
 .srv-u{font-size:12.5px;overflow-wrap:anywhere;background:var(--soft);border-radius:8px;padding:6px 10px;text-align:left}
 .srv-k{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin:12px 0 4px;font-size:14px}
@@ -1311,6 +1313,15 @@ function teacherCp(a) {
     ${(p.rep || []).length ? `<div class="cp-rep">${p.rep.map(f => `<div class="cp-rf"><div class="cp-th" data-ctth="${esc(f.id)}" data-k="${esc(one.id)}"><span class="muted">جارٍ تحميل المعاينة…</span></div>
       <div class="cp-rn">${esc(f.n.replace(/\.[^.]*$/, ''))}</div><div class="toolbar" style="margin:6px 0 0">${fBtns(f).replace('btn sm ghost', 'btn sm')}</div></div>`).join('')}</div>`
       : '<p class="muted" style="margin:6px 0 0">لم يصدر التقرير ونموذج قياس الأثر لهذا البرنامج بعد، ويظهران هنا عند صدورهما.</p>'}</div>
+  ${(() => { const f = p.info || {}, v = x => x == null ? '' : x; return `<div class="card pad" style="margin-top:12px" id="cpInfo" data-k="${esc(one.id)}"><b>بيانات بطاقة التنفيذ</b>
+    <p class="muted" style="margin:4px 0 10px">أدخليها ثم اضغطي «حفظ وإصدار البطاقة»؛ تصدر البطاقة بالختم والتواقيع إذا كانت للبرنامج شواهد مرفوعة.${f.at ? ` آخر حفظ: ${esc(f.at)}${f.by ? ' — ' + esc(f.by) : ''}` : ''}</p>
+    <div class="cp-form">
+      <label>عدد أولياء الأمور المشاركين<input type="number" min="0" max="999" inputmode="numeric" id="ciP" value="${v(f.parents)}" placeholder="0"></label>
+      <label>عدد الشراكات المجتمعية<input type="number" min="0" max="999" inputmode="numeric" id="ciC" value="${v(f.pcount)}" placeholder="0"></label>
+      <label>عدد الطالبات من ذوي الإعاقة<input type="number" min="0" max="999" inputmode="numeric" id="ciD" value="${v(f.dis)}" placeholder="0"></label>
+      <label class="cp-wide">أسماء الشراكات المجتمعية (إن وُجدت)<input type="text" maxlength="300" id="ciN" value="${esc(f.pnames || '')}" placeholder="مثال: جمعية البر بخميس مشيط"></label>
+    </div>
+    <div class="toolbar" style="margin:10px 0 0"><button class="btn" id="ciSave">حفظ وإصدار البطاقة</button><span class="muted" id="ciMsg" style="align-self:center"></span></div></div>`; })()}
   ${p.srv ? ctSrvCard(p.srv, p.n, it.cls, it.students, cpEndNote(p)) : ''}
   <div class="card pad up" style="margin-top:12px" id="cpUp" data-cp="${esc(one.id)}"><div class="up-h"><b>رفع الشواهد</b><span class="muted">تصل إلى مجلد «الشواهد» لهذا البرنامج في أرشيف رائدة النشاط مباشرة. الصور تُصغَّر قبل الرفع.</span></div>
     <label class="up-drop"><input type="file" id="cpI" accept="image/*,video/*,application/pdf" multiple hidden><span><b>اختاري الصور أو الفيديو أو ملف PDF</b><br><span class="muted">الفيديو والملف حتى ٢٥ م.ب</span></span></label>
@@ -1337,6 +1348,23 @@ async function ctThumbs() {   // ثلاث معاينات في وقت واحد (�
   };
   await Promise.all([0, 1, 2].map(async () => { while (q.length) await one1(q.shift()); }));
 }
+// «حفظ وإصدار البطاقة»: بيانات تدخلها المعلمة (a=tinfo) ثم يولّد النظام البطاقة إن وُجدت شواهد
+document.addEventListener('click', async ev => {
+  if (ev.target.id !== 'ciSave' || !D?.ct) return;
+  const box = document.getElementById('cpInfo'), one = cpList().find(x => x.id === box.dataset.k), msg = document.getElementById('ciMsg'), b = ev.target;
+  const val = id => document.getElementById(id).value.trim(), num = id => val(id) === '' ? 0 : Number(val(id));
+  const body = { a: 'tinfo', tok: one.it.tok, key: one.p.key, parents: num('ciP'), pcount: num('ciC'), dis: num('ciD'), pnames: val('ciN') };
+  if ([body.parents, body.pcount, body.dis].some(n => !(Number.isInteger(n) && n >= 0 && n < 1000))) { msg.textContent = 'أدخلي أعدادًا صحيحة'; msg.style.color = 'var(--none)'; return; }
+  if (body.pcount > 0 && !body.pnames) { msg.textContent = 'اكتبي أسماء الشراكات المجتمعية'; msg.style.color = 'var(--none)'; return; }
+  b.disabled = true; msg.style.color = ''; msg.textContent = 'جارٍ الحفظ وإصدار البطاقة… قد يستغرق دقيقة';
+  try {
+    const r = await fetch(D.ct.api, { method: 'POST', signal: AbortSignal.timeout ? AbortSignal.timeout(240000) : undefined, headers: { 'content-type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+    const t = await r.text(); if (t[0] !== '{') throw new Error('رد غير متوقع'); const j = JSON.parse(t); if (!j.ok) throw new Error(j.error);
+    one.p.info = j.info; if (j.card) one.p.rep = [j.card].concat((one.p.rep || []).filter(f => f.n !== j.card.n));
+    const y = window.scrollY; route(); window.scrollTo(0, y);
+    const m = document.getElementById('ciMsg'); if (m) { m.textContent = j.card ? '✓ حُفظت البيانات وصدرت البطاقة' : '✓ ' + (j.note || 'حُفظت البيانات'); m.style.color = 'var(--ok)'; }
+  } catch (e) { msg.textContent = 'تعذّر الحفظ: ' + e.message; msg.style.color = 'var(--none)'; b.disabled = false; }
+});
 document.addEventListener('click', async ev => {
   const b = ev.target.closest('[data-ctf]'); if (!b || !D?.ct) return;
   const one = cpList().find(x => x.id === b.dataset.k); if (!one) return;
