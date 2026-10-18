@@ -81,12 +81,13 @@ let type = '';
 function show(id) { ['load', 'bad', 'f', 'ok'].forEach(x => $('#' + x).hidden = x !== id); }
 
 async function init() {
-  if (!/^\d+$/.test(p)) return show('bad');
+  if (!/^c?\d+$/.test(p)) return show('bad');   // c<n> = استبانة نهاية برنامج نشاط صفي
   if (ls.get('srv-done-' + p)) { $('#okMsg').textContent = 'سبق أن أرسلتِ إجابتك على هذه الاستبانة من هذا الجهاز. شكرًا لك.'; return show('ok'); }
   let info;
   try { info = await (await fetch(`${API}?a=info&p=${p}`)).json(); } catch { info = null; }
   if (!info || !info.ok) return show('bad');
-  $('#hprog').textContent = info.name; $('#hprog').hidden = false;
+  $('#hprog').textContent = info.cls ? 'برنامج ' + info.name + ' · ' + info.cls : info.name; $('#hprog').hidden = false;
+  if (info.cls) document.title = $('header h1').textContent = 'استبانة نهاية البرنامج';
   if (info.types.length === 1) type = info.types[0];
   else {
     $('#tbox').hidden = false;

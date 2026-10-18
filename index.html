@@ -1216,15 +1216,36 @@ const cpState = p => { if (!p.from || !p.to) return ['بلا تاريخ في ا�
   return t < CP_DAY(p.from.g) ? ['لم يبدأ', 'na'] : t > CP_DAY(p.to.g) ? ['انتهى', 'ok'] : ['جارٍ الآن', 'part']; };
 const cpD = x => x ? `${esc(x.d)} ${esc(x.h.split('/').reverse().join('/'))}هـ` : '—';
 const cpPer = n => n === 1 ? 'حصة واحدة' : n === 2 ? 'حصتان' : n <= 10 ? nf(n) + ' حصص' : nf(n) + ' حصة';
+const cpEndNote = p => { const s = cpState(p)[1]; return s === 'ok' ? 'انتهى البرنامج: وقت تطبيق الاستبانة على الطالبات.' : s === 'part' ? `تُطبَّق في آخر حصة من البرنامج (${cpD(p.to)}).` : `تُطبَّق بعد انتهاء البرنامج (${cpD(p.to)}).`; };
+// استبانة نهاية البرنامج (نشاط صفي): رمز QR للطالبات + عدد الردود من survey-script (المجاميع فقط). تستعملها صفحة رائدة النشاط أيضًا (leader.js)
+function ctSrvCard(id, name, cls, target, note, full) {
+  if (!D.survey && D.ct?.srv) D.survey = { ...D.ct.srv, progs: [] };
+  const u = srvUrl(id), k = 'ct' + id;
+  return `<div class="card pad qa-card" style="margin-top:12px"><div class="qa-h"><b>استبانة نهاية البرنامج</b>
+      <span class="muted">${note ? esc(note) + ' ' : ''}تمسح الطالبة الرمز وتجيب من جوالها دون اسم (٥ عبارات). المطلوب: طالبات ${esc(cls)}${target ? ' (' + nf(target) + ' طالبة)' : ''}.</span></div>
+    <div class="srv-row"><div class="qr" data-qr="${esc(u)}"></div><div class="grow">
+      <div class="srv-u" id="srvU${k}" dir="ltr">${esc(u)}</div>
+      <textarea id="srvW${k}" hidden>استبانة نهاية ${esc(/^برنامج /.test(name) ? name : 'برنامج ' + name)} — ${esc(cls)}، نرجو الإجابة (دقيقة واحدة، دون ذكر الاسم):\n${esc(u)}</textarea>
+      <div class="toolbar" style="margin:8px 0 0"><button class="btn sm" data-copy="srvU${k}">نسخ الرابط</button><button class="btn sm ghost" data-wa="srvW${k}">إرسال عبر واتساب</button>
+        <a class="btn sm ghost" href="${esc(u)}" target="_blank" rel="noopener">فتح الاستبانة</a></div>
+      <div data-srv="${esc(id)}"${target ? ` data-tgt="${+target}"` : ''}${full ? ' data-full="1"' : ''}><div class="muted" style="margin-top:10px">جارٍ تحميل النتائج…</div></div></div></div></div>`;
+}
 function teacherCp(a) {
   const L = cpList(), one = L.find(x => x.id === a);
   if (!one) return `<div class="card pad"><h2 style="margin:0 0 4px">برامج الأنشطة الصفية</h2><p class="muted" style="margin:0">برامجك في خطة النشاط الطلابي للفصل الدراسي الأول ١٤٤٨هـ. اضغطي البرنامج لرفع صور تنفيذه.</p></div>
     <div class="list" style="margin-top:12px">${L.map(({ it, p, id }) => { const st = cpState(p); return `<button class="row" data-go="cp/${id}"><span class="grow"><b>${esc(p.n)}</b><span class="muted" style="display:block;font-size:13px">${esc(p.dom)} · ${esc(it.cls)}${D.ct.items.length > 1 ? ' · ' + esc(it.name) : ''} · ${cpPer(p.need)} · من ${cpD(p.from)} إلى ${cpD(p.to)}</span></span>
-      <span class="chip s-${st[1]}">${st[0]}</span><span class="chip ${p.files.length ? 's-ok' : 's-none'}">${p.files.length ? nf(p.files.length) + ' صورة' : 'لا صور'}</span></button>`; }).join('')}</div>`;
+      <span class="chip s-${st[1]}">${st[0]}</span><span class="chip ${p.files.length ? 's-ok' : 's-none'}">${p.files.length ? nf(p.files.length) + ' صورة' : 'لا صور'}</span>${p.note ? '<span class="chip s-part">ملاحظة من رائدة النشاط</span>' : ''}</button>`; }).join('')}</div>`;
   const { it, p } = one, st = cpState(p);
+  const dBtn = (u, t, gh) => u ? `<a class="btn sm${gh ? ' ghost' : ''}" href="${esc(u)}" target="_blank" rel="noopener">${t}</a>` : '';
   return `<div class="homebar"><button class="btn sm ghost" data-go="cp">→ كل برامجي</button></div>
   <div class="card pad"><h2 style="margin:0 0 4px">${esc(p.n)}</h2><p class="muted" style="margin:0">${esc(p.dom)} · ${esc(it.cls)} · ${cpPer(p.need)}</p>
     <p style="margin:8px 0 0">من ${cpD(p.from)} إلى ${cpD(p.to)} <span class="chip s-${st[1]}">${st[0]}</span></p></div>
+  ${p.note ? `<div class="card pad cp-note" style="margin-top:12px"><b>ملاحظات رائدة النشاط</b><p style="margin:6px 0 0;white-space:pre-line">${esc(p.note.t)}</p>${p.note.at ? `<span class="muted" style="font-size:12.5px">آخر تحديث: ${esc(p.note.at)}</span>` : ''}</div>` : ''}
+  ${p.evUrl || p.url ? `<div class="card pad" style="margin-top:12px"><b>مجلدات البرنامج في Google Drive</b>
+    <p class="muted" style="margin:4px 0 10px">افتحي المجلد وارفعي فيه الشواهد مباشرة (صور، فيديو، ملفات).</p>
+    <div class="toolbar" style="margin:0">${dBtn(p.evUrl, 'مجلد شواهدي')}${dBtn(p.url, 'مجلد البرنامج كاملًا', 1)}</div>
+    ${(p.mates || []).map(m => `<div class="toolbar" style="margin:10px 0 0"><span class="muted" style="align-self:center">زميلتك ${esc(m.name)}:</span>${dBtn(m.evUrl, 'مجلد شواهدها', 1)}${dBtn(m.url, 'مجلد البرنامج', 1)}</div>`).join('')}</div>` : ''}
+  ${p.srv ? ctSrvCard(p.srv, p.n, it.cls, it.students, cpEndNote(p)) : ''}
   <div class="card pad up" style="margin-top:12px" id="cpUp" data-cp="${esc(one.id)}"><div class="up-h"><b>رفع صور التنفيذ</b><span class="muted">تصل إلى مجلد «الشواهد» لهذا البرنامج في أرشيف رائدة النشاط مباشرة، وتُصغَّر الصورة قبل الرفع.</span></div>
     <label class="up-drop"><input type="file" id="cpI" accept="image/*" multiple hidden><span><b>اختاري الصور أو صوّري التنفيذ</b><br><span class="muted">صور فقط</span></span></label>
     <div id="cpMsg" class="muted" style="margin-top:8px"></div></div>
@@ -1596,9 +1617,9 @@ function srvCard(p, full) {
         <a class="btn sm ghost" href="${esc(u)}" target="_blank" rel="noopener">فتح الاستبانة</a></div>
       <div data-srv="${p.no}"${full ? ' data-full="1"' : ''}><div class="muted" style="margin-top:10px">جارٍ تحميل النتائج…</div></div></div></div></div>`;
 }
-function srvSummary(s, full) {
+function srvSummary(s, full, tgt = SRV_TARGET) {
   const weak = s.items.indexOf(Math.min(...s.items));
-  return `<div class="srv-k"><span><b>${nf(s.n)}</b> / ${nf(SRV_TARGET)} ردًّا</span><span class="track"><i style="width:${Math.min(100, s.n / SRV_TARGET * 100)}%;background:var(--brand-2)"></i></span></div>
+  return `<div class="srv-k"><span><b>${nf(s.n)}</b> / ${nf(tgt)} ردًّا</span><span class="track"><i style="width:${Math.min(100, s.n / tgt * 100)}%;background:var(--brand-2)"></i></span></div>
     <div class="muted" style="font-size:13px">${s.types.map(([k, n]) => `${esc(k)}: ${nf(n)}`).join(' · ')} · متوسط الموافقة <b>${s.avg.toFixed(1)}</b> من 5
       · أضعف عبارة: ${nf(weak + 1)} «${esc(QA_SRV[weak])}» (${s.items[weak].toFixed(1)})</div>
     ${full ? `<div class="srv-t">${QA_SRV.map((t, i) => `<div class="srv-tr"><span class="muted">${nf(i + 1)}</span><span>${esc(t)}</span>
@@ -1607,7 +1628,7 @@ function srvSummary(s, full) {
 async function fillSrv(el) {
   try {
     const s = srvStat((await srvResults())?.programs?.[el.dataset.srv]);
-    if (el.isConnected) el.innerHTML = s ? srvSummary(s, !!el.dataset.full) : '<div class="muted" style="margin-top:10px">لا توجد ردود بعد.</div>';
+    if (el.isConnected) el.innerHTML = s ? srvSummary(s, !!el.dataset.full, +el.dataset.tgt || SRV_TARGET) :'<div class="muted" style="margin-top:10px">لا توجد ردود بعد.</div>';
   } catch { if (el.isConnected) el.innerHTML = '<div class="warn" style="margin-top:10px">تعذّر تحميل نتائج الاستبانة.</div>'; }
 }
 

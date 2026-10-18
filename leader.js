@@ -195,7 +195,9 @@
     <div class="ld-links">${r.T.map(t => `<button class="btn sm ghost" data-go="lt/${t.i}">${esc(t.name)}</button>`).join(' ')} <button class="btn sm ghost" data-go="lc/${D.cls.findIndex(c => c.c === r.cls)}">برامج الفصل</button> <button class="btn sm ghost" data-go="ld/${D.doms.indexOf(r.dom)}">مجال ${esc(r.dom)}</button></div>
     <div class="card ld-ev" data-rec="${i}"><h4>ملاحظات رائد النشاط</h4>
       <label for="ldN">ملاحظات على الشواهد أو البرنامج</label><textarea id="ldN" placeholder="تكتب ما يلاحظ على التنفيذ أو الشواهد">${esc(e.notes || '')}</textarea>
-      <div class="row2"><button class="btn" data-act="save">حفظ الملاحظات</button><span class="ld-msg" id="ldMsg">${e.at ? 'آخر تحديث: ' + esc(e.at) : 'لا ملاحظات بعد'}</span></div></div>
+      <div class="row2"><button class="btn" data-act="save">حفظ الملاحظات</button><span class="ld-msg" id="ldMsg">${e.at ? 'آخر تحديث: ' + esc(e.at) : 'لا ملاحظات بعد'}</span></div>
+      <p class="ld-d" style="margin:8px 0 0">تظهر الملاحظات ${r.T.length > 1 ? 'للمعلمتين' : 'للمعلمة'} في صفحة البرنامج بالمنصة خلال ربع ساعة تقريبًا من الحفظ.</p></div>
+    ${D.survey && D.survey.ids && D.survey.ids[r.key] && typeof ctSrvCard === 'function' ? ctSrvCard(D.survey.ids[r.key], r.n, r.cls, ((D.teachers || []).find(t => t.cls === r.cls) || {}).students, '', 1) : ''}
     <div class="card ld-tools" data-rec="${i}"><h4>إضافة شواهد أو مجلد</h4>
       <div class="row2"><select id="ldF" aria-label="المجلد">${folders.filter(f => f.id).map(f => `<option value="${esc(f.id)}">${esc(f.who)} / ${esc(f.n)}</option>`).join('')}</select>
         <label class="btn sm ghost" style="cursor:pointer">اختيار ملفات<input type="file" id="ldU" multiple hidden></label><span class="ld-msg" id="ldUM">الصور تُصغَّر قبل الرفع</span></div>
