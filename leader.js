@@ -75,8 +75,8 @@
     D.weeks = D.weeks || []; D.folders = D.folders || []; D.reports = D.reports || []; D.evals = D.evals || {};
     // سجل البرنامج = الفصل + اسم البرنامج؛ تشترك فيه معلمات الفصل المسند إليهن (بلا نسخ)
     const RM = {};
-    D.all.forEach(p => { const key = p.t.cls + ' | ' + p.n;
-      const r = RM[key] = RM[key] || { key, cls: p.t.cls, n: p.n, dom: p.dom, need: p.need, from: p.from, to: p.to, s: p.s, P: [] };
+    D.all.forEach(p => { const pc = p.cls || p.t.cls, key = pc + ' | ' + p.n;   // p.cls: برنامج خاص بالمعلمة في فصل آخر
+      const r = RM[key] = RM[key] || { key, cls: pc, n: p.n, dom: p.dom, need: p.need, from: p.from, to: p.to, s: p.s, P: [] };
       r.P.push(p); p.rec = r; });
     D.recs = Object.values(RM).sort((a, b) => a.cls.localeCompare(b.cls, 'ar') || a.n.localeCompare(b.n, 'ar'));
     D.recs.forEach((r, i) => { r.i = i; r.T = r.P.map(p => p.t); });

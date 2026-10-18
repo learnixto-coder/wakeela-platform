@@ -1240,9 +1240,10 @@ const cnHd = h => { const ar = s => String(+s).replace(/\d/g, c => '٠١٢٣٤٥
 function teacherCn() {
   const W = D.cn.weeks || [], k = Math.min(+(state.cnW ?? 0), Math.max(0, W.length - 1)), w = W[k];
   if (!W.length) return `<div class="card pad"><h2 style="margin:0 0 4px">الأنشطة اللاصفية</h2><p class="muted" style="margin:0">لا توجد أنشطة لاصفية لفصلك (${esc(D.cn.cls)}) في الجدول بعد.</p></div>`;
-  return `<div class="card hero th-hero"><div class="grow"><h2>الأنشطة اللاصفية</h2><p class="muted">${esc(D.cn.cls)} · اختاري النشاط ثم أرفقي صور الشواهد فقط</p></div></div>
+  return `<div class="card hero th-hero"><div class="grow"><h2>الأنشطة اللاصفية</h2><p class="muted">${esc(D.cn.cls)} · برامج أسابيع فصلك (الاصطفاف الصباحي والصلاة) · اختاري النشاط ثم أرفقي صور الشواهد فقط</p></div></div>
   <div class="card pad up" id="cnUp" data-cn="${k}"><label class="up-l" for="cnW">النشاط اللاصفي</label>
-    <select class="search" id="cnW">${W.map((x, i) => `<option value="${i}"${i === k ? ' selected' : ''}>الأسبوع ${nf(x.w)} — ${esc(x.topic)} — ${cnHd(x.from)}${x.to !== x.from ? ' إلى ' + cnHd(x.to) : ''}</option>`).join('')}</select>
+    <select class="search" id="cnW">${W.map((x, i) => `<option value="${i}"${i === k ? ' selected' : ''}>الأسبوع ${nf(x.w)} — ${x.kind === 'الصلاة' ? 'الصلاة' : 'الاصطفاف الصباحي (الإذاعة)'}${x.prog ? ': ' + esc(x.prog) : ''} — ${cnHd(x.from)}${x.to !== x.from ? ' إلى ' + cnHd(x.to) : ''}</option>`).join('')}</select>
+    <div class="muted" style="font-size:13px;margin:6px 0 2px">موضوع إذاعة فصلك في هذا الأسبوع: <b>${esc(w.topic)}</b></div>
     <label class="up-drop"><input type="file" id="cnI" multiple accept="image/*" hidden><span><b>اختاري الصور أو صوّري الشاهد</b><br><span class="muted">تُصغَّر الصور قبل الرفع، وتصل إلى مجلد الفصل المشترك</span></span></label>
     <div class="muted" id="cnMsg" style="font-size:13px;margin-top:8px">${w.files.length ? `${nf(w.files.length)} صورة مرفوعة لهذا النشاط` : 'لم تُرفع صور لهذا النشاط بعد'}</div>
     ${w.files.length ? `<ul class="files">${w.files.map(f => `<li>${esc(f.n)}</li>`).join('')}</ul>` : ''}</div>`;
@@ -1261,7 +1262,7 @@ document.addEventListener('change', async ev => {
       let j = null, last = 'تعذر الاتصال'; const uid = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + k;
       for (let i = 0; i < 4 && !j; i++) {
         try { const r = await fetch(D.ct.api, { method: 'POST', signal: AbortSignal.timeout ? AbortSignal.timeout(45000) : undefined, headers: { 'content-type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ a: 'nupload', uid, tok: D.cn.tok, cls: D.cn.cls, w: w.w, from: w.from, to: w.to, topic: w.topic, name: f.name, mime: f.type || 'image/jpeg', b64 }) });
+            body: JSON.stringify({ a: 'nupload', uid, tok: D.cn.tok, cls: D.cn.cls, w: w.w, kind: w.kind, prog: w.prog, from: w.from, to: w.to, topic: w.topic, name: f.name, mime: f.type || 'image/jpeg', b64 }) });
           const t = await r.text(); if (t[0] !== '{') throw new Error('رد غير متوقع'); const x = JSON.parse(t); if (!x.ok) { last = x.error; if (/غير مصرح|غير معروف|فقط|أكبر/.test(x.error)) break; throw new Error(x.error); } j = x; }
         catch (e) { last = e.message; await new Promise(o => setTimeout(o, 800)); }
       }
@@ -1306,9 +1307,18 @@ function teacherCp(a) {
     <div class="cp-rn" title="${esc(f.n)}">${day(f)}</div>${f.id ? `<div class="cp-bt"><button class="btn sm ghost" data-ctf="open" data-id="${esc(f.id)}" data-k="${esc(one.id)}">فتح</button>${own ? `<button class="btn sm ghost cp-del" data-ctf="del" data-id="${esc(f.id)}" data-k="${esc(one.id)}">حذف</button>` : ''}</div>` : ''}</div>`).join('')}</div>`;
   setTimeout(ctThumbs, 0);
   return `<div class="homebar"><button class="btn sm ghost" data-go="cp">→ كل برامجي</button></div>
-  <div class="card pad"><h2 style="margin:0 0 4px">${esc(p.n)}</h2><p class="muted" style="margin:0">${esc(p.dom)} · ${esc(it.cls)} · ${cpPer(p.need)}</p>
+  <div class="card pad"><h2 style="margin:0 0 4px">${esc(p.n)}</h2><p class="muted" style="margin:0">${esc(p.dom)} · ${esc(p.cls || it.cls)} · ${cpPer(p.need)}</p>
     <p style="margin:8px 0 0">من ${cpD(p.from)} إلى ${cpD(p.to)} <span class="chip s-${st[1]}">${st[0]}</span></p></div>
   ${p.note ? `<div class="card pad cp-note" style="margin-top:12px"><b>ملاحظات رائدة النشاط</b><p style="margin:6px 0 0;white-space:pre-line">${esc(p.note.t)}</p>${p.note.at ? `<span class="muted" style="font-size:12.5px">آخر تحديث: ${esc(p.note.at)}</span>` : ''}</div>` : ''}
+  <div class="card pad up" style="margin-top:12px" id="cpUp" data-cp="${esc(one.id)}"><div class="up-h"><b>رفع الشواهد</b><span class="muted">تصل إلى مجلد «الشواهد» لهذا البرنامج في أرشيف رائدة النشاط مباشرة. الصور تُصغَّر قبل الرفع.</span></div>
+    <label class="up-drop"><input type="file" id="cpI" accept="image/*,video/*,application/pdf" multiple hidden><span><b>اختاري الصور أو الفيديو أو ملف PDF</b><br><span class="muted">الصور والفيديو وملفات PDF حتى ٥٠٠ م.ب للملف · دون حد لعدد الملفات</span></span></label>
+    <p style="margin:8px 0 0;font-size:13.5px;color:var(--ok);font-weight:600">يمكنك رفع الصور حتى بعد انتهاء تاريخ البرنامج.</p>
+    <div id="cpMsg" class="muted" style="margin-top:8px"></div></div>
+  <h3 style="margin:16px 0 8px">ما رفعتِه (${nf(p.files.length)})</h3>
+  ${p.files.length ? fList(p.files, 1) : '<p class="muted">لم تُرفع شواهد بعد.</p>'}
+  ${(p.mates || []).map(m => `<h3 style="margin:16px 0 8px">ما رفعته زميلتك ${esc(m.name)} (${nf(m.files.length)})</h3>${m.files.length ? fList(m.files) : '<p class="muted">لم ترفع شواهد بعد.</p>'}`).join('')}
+  <p class="muted" style="font-size:12.5px;margin-top:14px">ما تحذفينه ينتقل إلى سلة المحذوفات، وتستطيع رائدة النشاط استعادته خلال ٣٠ يومًا.</p>
+  ${p.srv ? ctSrvCard(p.srv, p.n, p.cls || it.cls, p.students || it.students, cpEndNote(p)) : ''}
   <div class="card pad" style="margin-top:12px"><b>التقرير وقياس الأثر</b>
     ${(p.rep || []).length ? `<div class="cp-rep">${p.rep.map(f => `<div class="cp-rf"><div class="cp-th" data-ctth="${esc(f.id)}" data-k="${esc(one.id)}"><span class="muted">جارٍ تحميل المعاينة…</span></div>
       <div class="cp-rn">${esc(f.n.replace(/\.[^.]*$/, ''))}</div><div class="toolbar" style="margin:6px 0 0">${fBtns(f).replace('btn sm ghost', 'btn sm')}</div></div>`).join('')}</div>`
@@ -1321,15 +1331,7 @@ function teacherCp(a) {
       <label>عدد الطالبات من ذوي الإعاقة<input type="number" min="0" max="999" inputmode="numeric" id="ciD" value="${v(f.dis)}" placeholder="0"></label>
       <label class="cp-wide">أسماء الشراكات المجتمعية (إن وُجدت)<input type="text" maxlength="300" id="ciN" value="${esc(f.pnames || '')}" placeholder="مثال: جمعية البر بخميس مشيط"></label>
     </div>
-    <div class="toolbar" style="margin:10px 0 0"><button class="btn" id="ciSave">حفظ وإصدار البطاقة</button><span class="muted" id="ciMsg" style="align-self:center"></span></div></div>`; })()}
-  ${p.srv ? ctSrvCard(p.srv, p.n, it.cls, it.students, cpEndNote(p)) : ''}
-  <div class="card pad up" style="margin-top:12px" id="cpUp" data-cp="${esc(one.id)}"><div class="up-h"><b>رفع الشواهد</b><span class="muted">تصل إلى مجلد «الشواهد» لهذا البرنامج في أرشيف رائدة النشاط مباشرة. الصور تُصغَّر قبل الرفع.</span></div>
-    <label class="up-drop"><input type="file" id="cpI" accept="image/*,video/*,application/pdf" multiple hidden><span><b>اختاري الصور أو الفيديو أو ملف PDF</b><br><span class="muted">الفيديو والملف حتى ٢٥ م.ب</span></span></label>
-    <div id="cpMsg" class="muted" style="margin-top:8px"></div></div>
-  <h3 style="margin:16px 0 8px">ما رفعتِه (${nf(p.files.length)})</h3>
-  ${p.files.length ? fList(p.files, 1) : '<p class="muted">لم تُرفع شواهد بعد.</p>'}
-  ${(p.mates || []).map(m => `<h3 style="margin:16px 0 8px">ما رفعته زميلتك ${esc(m.name)} (${nf(m.files.length)})</h3>${m.files.length ? fList(m.files) : '<p class="muted">لم ترفع شواهد بعد.</p>'}`).join('')}
-  <p class="muted" style="font-size:12.5px;margin-top:14px">ما تحذفينه ينتقل إلى سلة المحذوفات، وتستطيع رائدة النشاط استعادته خلال ٣٠ يومًا.</p>`;
+    <div class="toolbar" style="margin:10px 0 0"><button class="btn" id="ciSave">حفظ وإصدار البطاقة</button><span class="muted" id="ciMsg" style="align-self:center"></span></div></div>`; })()}`;
 }
 // فتح/تحميل ملف من مجلدات البرنامج ومعاينة التقرير: عبر النظام برمز المعلمة (لا صلاحية لها على مجلدات Drive)
 const ctGet = async (one, a, id, x = {}) => { let last = 'تعذر الاتصال';
@@ -1397,7 +1399,8 @@ document.addEventListener('change', async ev => {
     try {
       if (!/^(image|video)\/|^application\/pdf$/.test(f0.type)) throw new Error('يُقبل الصور والفيديو وملفات PDF فقط');
       const f = /^image\//.test(f0.type) ? await shrinkImage(f0) : f0;
-      if (f.size > 25 * 1048576) throw new Error('الملف أكبر من ٢٥ م.ب');
+      if (f.size > 500 * 1048576) throw new Error('الملف أكبر من ٥٠٠ م.ب');
+      if (f.size > 20 * 1048576) { const fl = await cpBig(one, f, p => { msg.textContent = `جارٍ رفع ${nf(k + 1)} من ${nf(files.length)}… ${nf(p)}٪`; }); one.p.files.push(fl); ok++; continue; }
       const b64 = await new Promise((o, x) => { const fr = new FileReader(); fr.onload = () => o(String(fr.result).split(',')[1]); fr.onerror = x; fr.readAsDataURL(f); });
       let j = null, last = 'تعذر الاتصال'; const uid = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + k;
       for (let i = 0; i < 4 && !j; i++) {
@@ -1412,6 +1415,22 @@ document.addEventListener('change', async ev => {
   route();
   const m = document.getElementById('cpMsg'); if (m) { m.textContent = (ok ? `رُفعت ${nf(ok)} من ${nf(files.length)} — وصلت إلى مجلد الشواهد` : '') + (err ? ' · ' + err : ''); m.style.color = err ? 'var(--none)' : 'var(--ok)'; }
 });
+// ملف كبير (أكثر من ٢٠ م.ب حتى ٥٠٠ م.ب): رفع على أجزاء ٨ م.ب عبر النظام (tustart ثم tuchunk)، مع إعادة المحاولة لكل جزء
+async function cpBig(one, f, prog) {
+  const post = async body => { let last = 'تعذر الاتصال';
+    for (let i = 0; i < 4; i++) { try { const r = await fetch(D.ct.api, { method: 'POST', signal: AbortSignal.timeout ? AbortSignal.timeout(240000) : undefined, headers: { 'content-type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+      const t = await r.text(); if (t[0] !== '{') throw new Error('رد غير متوقع'); const x = JSON.parse(t); if (!x.ok) { last = x.error; if (/غير مصرح|ليس من|فقط|أكبر|انتهت/.test(x.error)) break; throw new Error(x.error); } return x; }
+      catch (e) { last = e.message; await new Promise(o => setTimeout(o, 1500)); } }
+    throw new Error(last); };
+  const { sid } = await post({ a: 'tustart', tok: one.it.tok, key: one.p.key, name: f.name, mime: f.type, size: f.size });
+  const C = 8 * 1048576;
+  for (let off = 0; off < f.size; off += C) {
+    const part = new Uint8Array(await f.slice(off, Math.min(f.size, off + C)).arrayBuffer());
+    const x = await post({ a: 'tuchunk', tok: one.it.tok, sid, off, b64: toB64(part) }); prog(Math.round(Math.min(f.size, off + C) / f.size * 100));
+    if (x.done) return { n: x.file.n, t: x.file.t, id: x.file.id, m: x.file.m };
+  }
+  throw new Error('لم يكتمل الرفع');
+}
 /* ---------- «تسجيل توقيعي»: ترسم المعلمة توقيعها مرة واحدة؛ يُحفظ في «قاعدة النشاط / تواقيع المعلمات» ويظهر في تقارير برامجها ---------- */
 const sigPost = async body => { let last = 'تعذر الاتصال';
   for (let i = 0; i < 4; i++) { try { const r = await fetch(D.ct.api, { method: 'POST', signal: AbortSignal.timeout ? AbortSignal.timeout(45000) : undefined, headers: { 'content-type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
