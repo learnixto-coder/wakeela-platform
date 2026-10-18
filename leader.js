@@ -56,6 +56,10 @@
 .ld-pg{font-weight:700;cursor:pointer;background:none;border:0;padding:0;font:inherit;color:var(--ink);text-align:start}.ld-pg:hover{color:var(--brand-2);text-decoration:underline}
 .ld-f{display:grid;gap:6px;margin-top:8px}.ld-f a{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;text-decoration:none;color:var(--ink);background:var(--card)}
 .ld-f a span{color:var(--muted);font-size:12px;white-space:nowrap}
+.ld-row{display:flex;gap:6px;align-items:stretch}.ld-row>a{flex:1;min-width:0}
+.ld-del{border:1px solid var(--line);background:var(--card);color:var(--none);border-radius:10px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer}.ld-del:hover{border-color:var(--none)}.ld-del:disabled{opacity:.5;cursor:wait}
+.ld-cell{display:flex;flex-direction:column;gap:4px}.ld-cell .ld-del{padding:3px 6px}
+.ld-dup{outline:2px solid var(--none);outline-offset:-1px}
 .ld-al{padding:14px 16px;display:grid;gap:10px;margin-bottom:12px;border-inline-start:4px solid #b4443c}.ld-alh{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}.ld-alh label{display:flex;gap:8px;align-items:center;cursor:pointer;font-size:15.5px}.ld-alh input{width:18px;height:18px;accent-color:var(--brand)}
 .ld-alt{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--soft);font:inherit;font-size:14px;line-height:1.7;resize:vertical}.ld-al .ld-links{margin:0}.ld-empty{color:var(--muted);font-size:13px;padding:6px 0}`;
   function style() { if (document.getElementById('ld-css')) return; const s = document.createElement('style'); s.id = 'ld-css'; s.textContent = CSS; document.head.appendChild(s); }
@@ -116,14 +120,21 @@
       const L = c.T.flatMap(t => t.p);
       return hubBtn('lc/' + c.k, esc(clsName(c)), `${c.T.map(t => esc(t.name)).join(' و ')} · ${ar(new Set(L.map(p => p.n)).size)} أنشطة · ${ar(c.T[0].students)} طالبة`, 'var(--brand)'); }).join('')}</div>`;
   }
-  const fileLink = f => `<a href="https://drive.google.com/file/d/${esc(f.id)}/view" target="_blank" rel="noopener"><b>${esc(f.n)}</b><span>${new Date(f.t).toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-arab', { day: 'numeric', month: 'long' })}</span></a>`;
+  // المكرر = نفس الاسم (بلا « (2)» ونحوها) ونفس الحجم في القائمة نفسها؛ تبقى الأقدم أصلًا وتُعلَّم الباقية «مكرر»
+  const dupIds = F => { const seen = {}, d = new Set();
+    F.slice().sort((a, b) => String(a.t).localeCompare(String(b.t))).forEach(f => { const k = f.n.replace(/\s*\(\d+\)(?=\.[^.]*$)/, '') + '|' + f.s; if (seen[k]) d.add(f.id); else seen[k] = 1; });
+    return d; };
+  const dupChip = '<span class="chip s-none">مكرر</span>';
+  const delBtn = f => `<button class="ld-del" data-del="${esc(f.id)}" data-n="${esc(f.n)}" title="نقل إلى سلة المحذوفات في Drive">حذف</button>`;
+  const fileLink = (f, dup) => `<div class="ld-row"><a href="https://drive.google.com/file/d/${esc(f.id)}/view" target="_blank" rel="noopener"${dup ? ' class="ld-dup"' : ''}><b>${esc(f.n)}</b><span>${dup ? dupChip + ' ' : ''}${new Date(f.t).toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-arab', { day: 'numeric', month: 'long' })}</span></a>${delBtn(f)}</div>`;
+  const fileList = F => { const d = dupIds(F); return `<div class="ld-f">${F.map(f => fileLink(f, d.has(f.id))).join('')}</div>`; };
   function nonClass(D) {
     const n = D.weeks.reduce((a, w) => a + w.files.length + w.subs.reduce((b, s) => b + s.files.length, 0), 0);
     return nav(['ln', 'الأنشطة اللاصفية']) + `<div class="card ld-h"><h2>الأنشطة اللاصفية</h2><p>الفترات اللاصفية (الإذاعة والاصطفاف الصباحي والصلاة) حسب الأسبوع · ${ar(n)} تقريرًا · من «1. التقارير / التقارير اللاصفية (الفترات)»</p></div>
     <div class="ld-fo">${D.weeks.map(w => { const c = w.files.length + w.subs.reduce((b, s) => b + s.files.length, 0);
       return `<details class="card"${c ? ' open' : ''}><summary><span>${esc(w.n)}</span><span class="chip ${c ? 's-ok' : 's-na'}">${ar(c)} تقرير</span></summary>
-        ${w.files.length ? `<div class="ld-f">${w.files.map(fileLink).join('')}</div>` : ''}
-        ${w.subs.map(s => `<p class="ld-empty" style="margin:10px 0 4px">${esc(s.n)}</p>${s.files.length ? `<div class="ld-f">${s.files.map(fileLink).join('')}</div>` : '<p class="ld-empty">لا تقارير.</p>'}`).join('')}
+        ${w.files.length ? fileList(w.files) : ''}
+        ${w.subs.map(s => `<p class="ld-empty" style="margin:10px 0 4px">${esc(s.n)}</p>${s.files.length ? fileList(s.files) : '<p class="ld-empty">لا تقارير.</p>'}`).join('')}
         <div class="ld-links" style="margin-top:8px">${btn(w.url, 'فتح مجلد الأسبوع', 1)}</div></details>`; }).join('') || '<p class="ld-empty">لا توجد أسابيع.</p>'}</div>`;
   }
   function teachersPage(D) {
@@ -146,7 +157,7 @@
     return nav(['lr', 'التقارير']) + `<div class="card ld-h"><h2>التقارير (${ar(R.length)})</h2><p>كل تقارير PDF في الأرشيف: التقارير الصفية واللاصفية، والجاهزة للختم، وتقارير البرامج</p></div>
     <div class="ld-links">${z ? `<a class="btn" href="https://drive.google.com/uc?export=download&id=${esc(z.id)}" target="_blank" rel="noopener">تحميل كل التقارير دفعة واحدة (ZIP)</a> <a class="btn ghost" href="https://drive.google.com/file/d/${esc(z.id)}/view" target="_blank" rel="noopener">عرض الملف المضغوط</a>
       <span class="ld-empty">آخر تجميع: ${new Date(z.t).toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-arab', { day: 'numeric', month: 'long' })}</span>` : '<span class="ld-empty">يُجهَّز ملف التحميل الكامل مع التحديث القادم.</span>'}</div>
-    ${groups.map(g => `<h3 class="ld-sec">${esc(g)}</h3><div class="ld-f">${R.filter(r => r.p === g).map(fileLink).join('')}</div>`).join('') || '<p class="ld-empty">لا توجد تقارير بعد.</p>'}`;
+    ${groups.map(g => `<h3 class="ld-sec">${esc(g)}</h3>${fileList(R.filter(r => r.p === g))}`).join('') || '<p class="ld-empty">لا توجد تقارير بعد.</p>'}`;
   }
   /* ── التقييم: يُقرأ ويُحفظ في «قاعدة الأنشطة الصفية» (ورقة «التقييم») عبر نظام Apps Script؛ لا يُحفظ في المتصفح ── */
   const code = () => { try { return sessionCode; } catch { return ''; } };
@@ -179,7 +190,7 @@
     <td><button class="btn sm" data-go="lb/${r.i}">فتح</button></td></tr>`; };
   const recTable = R => R.length ? `<div class="card ld-tw"><table class="ld-t"><thead><tr><th>البرنامج</th><th>الفصل والمعلمات</th><th>البداية</th><th>النهاية</th><th>التنفيذ</th><th>الشواهد</th><th></th></tr></thead><tbody>${R.map(recRow).join('')}</tbody></table></div>` : '<p class="ld-empty">لا برامج.</p>';
   const thumb = f => /^image\//.test(f.m) ? `<img loading="lazy" src="https://drive.google.com/thumbnail?id=${esc(f.id)}&sz=w400" alt="" onerror="this.replaceWith(document.createTextNode('صورة'))">` : esc((f.n.split('.').pop() || 'ملف').toUpperCase());
-  const grid = F => F.length ? `<div class="ld-grid">${F.map(f => `<a class="ld-it" href="https://drive.google.com/file/d/${esc(f.id)}/view" target="_blank" rel="noopener" title="${esc(f.n)}"><span class="th">${thumb(f)}</span><span>${esc(f.n)}</span></a>`).join('')}</div>` : '<p class="ld-empty">لا ملفات في هذا المجلد.</p>';
+  const grid = F => { const d = dupIds(F); return F.length ? `<div class="ld-grid">${F.map(f => `<div class="ld-cell"><a class="ld-it${d.has(f.id) ? ' ld-dup' : ''}" href="https://drive.google.com/file/d/${esc(f.id)}/view" target="_blank" rel="noopener" title="${esc(f.n)}"><span class="th">${thumb(f)}</span><span>${d.has(f.id) ? dupChip + ' ' : ''}${esc(f.n)}</span></a>${delBtn(f)}</div>`).join('')}</div>` : '<p class="ld-empty">لا ملفات في هذا المجلد.</p>'; };
 
   // صفحة سجل البرنامج: المعلمات المشاركات، الحالات الأربع منفصلة، المجلدات والشواهد، الرفع وإنشاء المجلدات، والتقييم
   function record(D, i) {
@@ -207,7 +218,7 @@
         <select id="ldDP" aria-label="داخل مجلد المعلمة">${r.P.filter(p => p.ids && p.ids.p).map(p => `<option value="${esc(p.ids.p)}">داخل مجلد ${esc(p.t.name)}</option>`).join('')}</select>
         <button class="btn sm" data-act="mkdir">إنشاء المجلد</button></div></div>
     <h3 class="ld-sec">المجلدات والشواهد (${ar(n)} ملف)</h3>
-    ${folders.map(f => `<details class="card ld-fold"${f.files.length ? ' open' : ''}><summary><span>${esc(f.n)} <span class="ld-d" style="display:inline">· ${esc(f.who)}</span></span><span class="ld-dots">${upChip(f.files.length)}${btn(f.url, 'فتح في Drive', 1)}</span></summary>${grid(f.files)}</details>`).join('')}`;
+    ${folders.map(f => `<details class="card ld-fold"${f.files.length ? ' open' : ''}><summary><span>${esc(f.n)} <span class="ld-d" style="display:inline">· ${esc(f.who)}</span></span><span class="ld-dots">${upChip(f.files.length)}${dupIds(f.files).size ? `<span class="chip s-none">${ar(dupIds(f.files).size)} مكرر</span>` : ''}${btn(f.url, 'فتح في Drive', 1)}</span></summary>${grid(f.files)}</details>`).join('')}`;
   }
 
   // قائمة البرامج: بحث وتصفية بالمجال والمعلمة والشهر والحالة
@@ -233,6 +244,11 @@
   }
 
   // أحداث الصفحات (تفويض على المستند؛ index.html يربط data-go فقط)
+  function purge(o, id, seen = new Set()) {   // يزيل الملف المحذوف من كل القوائم (التقارير، الأسابيع، مجلدات البرامج)
+    if (!o || typeof o !== 'object' || seen.has(o)) return; seen.add(o);
+    if (Array.isArray(o)) { for (let i = o.length - 1; i >= 0; i--) if (o[i] && o[i].id === id && o[i].m) o.splice(i, 1); }
+    Object.values(o).forEach(v => purge(v, id, seen));
+  }
   function events() {
     if (window.__LDev) return; window.__LDev = 1;
     document.addEventListener('input', ev => {
@@ -258,6 +274,15 @@
         } catch (e) { msg.textContent = `تعذر رفع «${f0.name}»: ${e.message}`; msg.className = 'ld-msg err'; }
       }
       if (ok) { route(); const m = document.getElementById('ldUM'); if (m) m.textContent = `رُفع ${ar(ok)} من ${ar(files.length)}`; }
+    });
+    document.addEventListener('click', async ev => {   // حذف ملف: إلى سلة المحذوفات في Drive (يُسترجع خلال ٣٠ يومًا)
+      const x = ev.target.closest('[data-del]'); if (!x) return;
+      ev.preventDefault();
+      if (!confirm(`حذف «${x.dataset.n}»؟
+يُنقل الملف إلى سلة المحذوفات في Google Drive ويمكن استرجاعه خلال ٣٠ يومًا.`)) return;
+      x.disabled = true; x.textContent = 'جارٍ الحذف…';
+      try { await api({ a: 'del', id: x.dataset.del }); purge(D_(), x.dataset.del); const y = window.scrollY; route(); window.scrollTo(0, y); }
+      catch (e) { x.disabled = false; x.textContent = 'حذف'; alert('تعذر الحذف: ' + e.message); }
     });
     document.addEventListener('click', async ev => {
       const b = ev.target.closest('[data-act]'); if (!b) return;
