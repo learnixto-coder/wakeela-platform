@@ -969,9 +969,10 @@ function inbox(t) {   // alerts from the وكيلة; "جديد" until seen once 
   try { localStorage.setItem('wk-seen', JSON.stringify([...new Set([...seen, ...mine.map(x => x.id)])].slice(-200))); } catch {}
   const fresh = mine.filter(x => !seen.includes(x.id)).length;
   return `<div class="card pad inbox"><div class="inbox-h"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-    <b>تنبيهات من الوكيلة</b>${fresh ? `<span class="chip s-none">${nf(fresh)} جديد</span>` : ''}<span class="muted" style="font-size:12px;margin-inline-start:auto">اضغطي «تم الاطلاع» لإغلاق التنبيه</span></div>
-    <div class="notes">${mine.slice(0, 8).map(x => `<div class="note${seen.includes(x.id) ? '' : ' new'}"><div class="note-h"><span>${esc(whenTxt(x.at))}</span>
-      <button class="note-del note-close" data-close="${esc(x.id)}" data-t="${t.i}">تم الاطلاع ✕</button></div><div class="note-b">${esc(x.text)}</div></div>`).join('')}</div></div>`;
+    <b>${mine.every(x => x.kind === 'leader') ? 'تنبيهات من رائد النشاط' : mine.some(x => x.kind === 'leader') ? 'التنبيهات' : 'تنبيهات من الوكيلة'}</b>${fresh ? `<span class="chip s-none">${nf(fresh)} جديد</span>` : ''}<span class="muted" style="font-size:12px;margin-inline-start:auto">اضغطي «تم الاطلاع» لإغلاق التنبيه</span></div>
+    <div class="notes">${mine.slice(0, 8).map(x => `<div class="note${seen.includes(x.id) ? '' : ' new'}"><div class="note-h"><span>${x.from ? `<b>${esc(x.from)}</b> · ` : ''}${esc(whenTxt(x.at))}</span>
+      <button class="note-del note-close" data-close="${esc(x.id)}" data-t="${t.i}">تم الاطلاع ✕</button></div><div class="note-b">${esc(x.text)}</div>
+      ${x.kind === 'leader' && D.ct ? '<button class="btn sm" data-go="cp" style="margin-top:8px">فتح «الأنشطة الصفية» ورفع الشواهد ←</button>' : ''}</div>`).join('')}</div></div>`;
 }
 async function closeNote(id, ti) {
   try { localStorage.setItem('wk-closed', JSON.stringify([...new Set([...closedGet(), id])].slice(-300))); } catch {}
@@ -1343,7 +1344,7 @@ function tHub() {
     rev: !P.length ? progs : !A.length ? 'لم يبدأ البرنامج · الفصل الدراسي الثاني' : avg == null ? 'لم تُقيَّم بعد' : `متوسط التقييم ${nf(avg)} من 100`,
     plan: !P.length ? progs : A.length ? `${nf(done)} من ${nf(A.length)} أُرفقت شواهدها` : 'تبدأ في الفصل الدراسي الثاني', mine: t ? `الإنجاز ${nf(t.pct)}٪` : '',
     cp: D.ct ? (() => { const L = cpList(); return `${nf(L.length)} برامج · ${nf(L.reduce((a, x) => a + x.p.files.length, 0))} صورة مرفوعة`; })() : '' };
-  return thHero(`مرحبًا بكِ${t ? '، أ. ' + esc(t.short) : ''}`, 'اختاري القسم الذي تريدين العمل عليه.') + `<div class="th-hub">${tList().map(([g, l, d], i) => thBtn(g, l, d, meta[g], i)).join('')}</div>`;
+  return thHero(`مرحبًا بكِ${t ? '، أ. ' + esc(t.short) : ''}`, 'اختاري القسم الذي تريدين العمل عليه.') + D.teachers.map(inbox).join('') + `<div class="th-hub">${tList().map(([g, l, d], i) => thBtn(g, l, d, meta[g], i)).join('')}</div>`;
 }
 // shared by both «الرئيسية» pages: the welcome card and the big coloured buttons
 const thHero = (h, p) => `<div class="card hero th-hero">

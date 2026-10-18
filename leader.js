@@ -55,7 +55,9 @@
 .ld-flt{display:grid;grid-template-columns:2fr repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}@media (max-width:760px){.ld-flt{grid-template-columns:1fr 1fr}.ld-flt input{grid-column:1/-1}}
 .ld-pg{font-weight:700;cursor:pointer;background:none;border:0;padding:0;font:inherit;color:var(--ink);text-align:start}.ld-pg:hover{color:var(--brand-2);text-decoration:underline}
 .ld-f{display:grid;gap:6px;margin-top:8px}.ld-f a{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;text-decoration:none;color:var(--ink);background:var(--card)}
-.ld-f a span{color:var(--muted);font-size:12px;white-space:nowrap}.ld-empty{color:var(--muted);font-size:13px;padding:6px 0}`;
+.ld-f a span{color:var(--muted);font-size:12px;white-space:nowrap}
+.ld-al{padding:14px 16px;display:grid;gap:10px;margin-bottom:12px;border-inline-start:4px solid #b4443c}.ld-alh{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}.ld-alh label{display:flex;gap:8px;align-items:center;cursor:pointer;font-size:15.5px}.ld-alh input{width:18px;height:18px;accent-color:var(--brand)}
+.ld-alt{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--soft);font:inherit;font-size:14px;line-height:1.7;resize:vertical}.ld-al .ld-links{margin:0}.ld-empty{color:var(--muted);font-size:13px;padding:6px 0}`;
   function style() { if (document.getElementById('ld-css')) return; const s = document.createElement('style'); s.id = 'ld-css'; s.textContent = CSS; document.head.appendChild(s); }
 
   function prep(D) {
@@ -236,6 +238,7 @@
     document.addEventListener('input', ev => {
       const id = ev.target.id;
       if (/^lb[QDTMS]$/.test(id)) filterPrograms();
+      if (ev.target.classList.contains('ld-alc')) { const n = document.getElementById('laN'); if (n) n.textContent = ar(document.querySelectorAll('.ld-alc:checked').length); }
       if (id === 'ldGR') document.getElementById('ldG').value = ev.target.value;
       if (id === 'ldG') document.getElementById('ldGR').value = ev.target.value || 0;
     });
@@ -258,6 +261,7 @@
     });
     document.addEventListener('click', async ev => {
       const b = ev.target.closest('[data-act]'); if (!b) return;
+      if (b.dataset.act.startsWith('al-')) return alertAct(b);
       const box = b.closest('[data-rec]'), D = D_(), r = D.recs[+box.dataset.rec];
       const say = (t, err) => { const m = box.querySelector('.ld-msg:last-child') || document.getElementById('ldMsg'); if (m) { m.textContent = t; m.className = 'ld-msg' + (err ? ' err' : ''); } };
       b.disabled = true;
@@ -289,9 +293,68 @@
     <div class="ld-hub">
       ${hubBtn('lg', 'الأنشطة الصفية', 'المعلمات · المجالات · المجلدات · لوحة المؤشرات', '#0f6b63')}
       ${hubBtn('ln', 'الأنشطة اللاصفية', `الفترات حسب الأسبوع · ${ar(D.weeks.length)} أسبوعًا`, '#7a4fb5')}
+      ${hubBtn('la', 'رسائل التنبيه', (n => n ? `${ar(n)} معلمة لديها برامج انتهت بلا شواهد` : 'لا توجد برامج منتهية بلا شواهد')(overdue(D).length), '#b4443c')}
     </div>
     <h3 class="ld-sec">برامج جارية الآن (${ar(run.length)})</h3>${run.length ? recTable(run) : '<p class="ld-empty">لا يوجد برنامج جارٍ اليوم.</p>'}
 `;
+  }
+  // «رسائل التنبيه»: تنبيه المعلمة بالبرامج التي انتهت ولم تُرفق شواهدها (لا صور في «الشواهد» في مجلدها).
+  // تُرسل مشفرة إلى صندوق المنصة (sealSend في index.html)، وينقلها جهاز المدرسة (tools/inbox.js) إلى تنبيهات المعلمة
+  // فتظهر في «الرئيسية» عندها؛ السجل data/ln.json (مشفر برمز الرائدة) يبيّن ما وصل وما اطّلعت عليه.
+  const overdue = D => D.teachers.map(t => ({ t, P: t.p.filter(p => p.s === 'done' && !p.ev.length) })).filter(x => x.P.length);
+  const hijri = iso => { const f = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', { day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(new Date(iso));
+    const g = k => +(f.find(x => x.type === k) || {}).value; return hd(`${g('year')}/${g('month')}/${g('day')}`); };
+  const alMsg = (t, P) => `السلام عليكم ورحمة الله وبركاته\nأ. ${t.name}\n${P.length === 1 ? 'انتهى موعد تنفيذ البرنامج التالي ولم تُرفق شواهده بعد:' : 'انتهى موعد تنفيذ البرامج التالية ولم تُرفق شواهدها بعد:'}\n`
+    + P.map(p => `• ${p.n} — انتهى ${p.to.d} ${hd(p.to.h)}`).join('\n') + '\nنأمل رفع صور الشواهد من زر «الأنشطة الصفية» في المنصة.\nرائد النشاط: منى العمري';
+  const PEND = 'ld-al-pend';
+  const pendGet = () => { try { return JSON.parse(localStorage.getItem(PEND) || '[]'); } catch { return []; } };
+  const pendSet = v => { try { localStorage.setItem(PEND, JSON.stringify(v.slice(-200))); } catch {} };
+  function loadLog(D, force) {   // السجل يُقرأ من نسخة الموقع المنشورة (قد يتأخر دقيقة بعد معالجة جهاز المدرسة)
+    if (D._ln && !force) return Promise.resolve(D._ln);
+    return fetch('data/ln.json?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.json().then(e => openBox(e, code())).then(x => x.items || []) : [])
+      .catch(() => []).then(L => { D._ln = L; const have = new Set(L.map(x => x.id)); pendSet(pendGet().filter(p => !have.has(p.id) && Date.now() - Date.parse(p.at) < 2 * 864e5)); return L; });
+  }
+  const lastOf = (D, name) => (D._ln || []).filter(x => x.to === name).concat(pendGet().filter(x => x.to === name)).sort((a, b) => b.at.localeCompare(a.at))[0];
+  const stOf = x => x.pend ? '<span class="chip s-part">قيد الإرسال</span>' : x.ok === false ? '<span class="chip s-none">لم تصل: لا حساب لها في المنصة</span>' : x.closed ? `<span class="chip s-ok">اطّلعت ${hijri(x.closed)}</span>` : '<span class="chip s-na">وصلت · لم تطّلع بعد</span>';
+  const lastTxt = (D, name) => { const x = lastOf(D, name); return x ? `آخر تنبيه ${hijri(x.at)} ${stOf(x)}` : 'لم يُرسل لها تنبيه بعد'; };
+  function paintLog(D) {
+    document.querySelectorAll('[data-last]').forEach(s => { s.innerHTML = lastTxt(D, s.dataset.last); });
+    const box = document.getElementById('laLog'); if (!box) return;
+    const L = (D._ln || []).concat(pendGet()).sort((a, b) => b.at.localeCompare(a.at));
+    box.innerHTML = L.length ? `<div class="card ld-tw"><table class="ld-t"><thead><tr><th>التاريخ</th><th>المعلمة</th><th>البرامج</th><th>الحالة</th></tr></thead><tbody>${L.slice(0, 100).map(x =>
+      `<tr><td class="ld-w"><b>${hijri(x.at)}</b></td><td>${esc(x.to)}</td><td>${(x.progs || []).map(esc).join('<br>') || '—'}</td><td>${stOf(x)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="ld-empty">لم يُرسل أي تنبيه بعد.</p>';
+  }
+  function alerts(D) {
+    const O = overdue(D), can = new Set(D.alert || []);
+    setTimeout(() => loadLog(D, true).then(() => paintLog(D)), 0);
+    const card = ({ t, P }) => { const ok = can.has(t.name) && D.inbox;
+      return `<div class="card ld-al" data-al="${t.i}"><div class="ld-alh"><label><input type="checkbox" class="ld-alc"${ok ? ' checked' : ' disabled'}> <b>${esc(t.name)}</b></label>
+        <span class="ld-d" style="display:inline">${esc(t.cls)}${t.mates.length ? ' · مع ' + t.mates.map(m => esc(m.name)).join(' و ') : ''}</span>
+        <span class="chip s-none">${P.length === 1 ? 'برنامج واحد' : ar(P.length) + ' برامج'} بلا شواهد</span></div>
+        <div class="ld-links">${P.map(p => `<button class="btn sm ghost" data-go="lb/${p.rec.i}">${esc(p.n)} · انتهى ${hd(p.to.h)}</button>`).join('')}</div>
+        ${ok ? `<textarea class="ld-alt" rows="${P.length + 6}" aria-label="نص التنبيه إلى ${esc(t.name)}">${esc(alMsg(t, P))}</textarea>` : '<p class="ld-msg err">لا حساب لها في المنصة، فلا يصلها التنبيه.</p>'}
+        <span class="ld-msg" data-last="${esc(t.name)}">${lastTxt(D, t.name)}</span></div>`; };
+    const n = O.filter(x => can.has(x.t.name)).length;
+    return nav(['la', 'رسائل التنبيه']) + `<div class="card ld-h" style="border-inline-start-color:#b4443c"><h2>رسائل التنبيه</h2><p>البرامج التي انتهى موعدها حسب سجل الخطة ولم تُرفق المعلمة شواهدها. يمكنك تعديل نص كل رسالة قبل الإرسال، وتظهر في الصفحة الرئيسية للمعلمة في المنصة خلال ٥–١٠ دقائق.</p></div>
+    ${O.length ? `<div class="card ld-tools"><div class="row2"><button class="btn" data-act="al-send"${n && D.inbox ? '' : ' disabled'}>إرسال التنبيه إلى المحددات (<span id="laN">${ar(n)}</span>)</button>
+      <button class="btn sm ghost" data-act="al-all">تحديد الكل</button><button class="btn sm ghost" data-act="al-none">إلغاء التحديد</button><span class="ld-msg" id="laMsg">${D.inbox ? '' : 'الإرسال غير مفعّل بعد في هذه النسخة.'}</span></div></div>
+      ${O.map(card).join('')}` : '<div class="card ld-h"><p>لا توجد برامج انتهت بلا شواهد. 👍</p></div>'}
+    <h3 class="ld-sec">التنبيهات المرسلة</h3><div id="laLog"><p class="ld-empty">جارٍ التحميل…</p></div>`;
+  }
+  async function alertAct(b) {
+    const D = D_(), all = [...document.querySelectorAll('.ld-al')], cnt = () => { const n = document.getElementById('laN'); if (n) n.textContent = ar(document.querySelectorAll('.ld-alc:checked').length); };
+    if (b.dataset.act === 'al-all' || b.dataset.act === 'al-none') { all.forEach(c => { const x = c.querySelector('.ld-alc'); if (!x.disabled) x.checked = b.dataset.act === 'al-all'; }); return cnt(); }
+    const msg = document.getElementById('laMsg'), say = (t, err) => { msg.textContent = t; msg.className = 'ld-msg' + (err ? ' err' : ''); };
+    const at = new Date().toISOString(), items = all.filter(c => c.querySelector('.ld-alc:checked')).map(c => { const t = D.teachers[+c.dataset.al];
+      return { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8), to: t.name, text: c.querySelector('.ld-alt').value.trim(), progs: overdue(D).find(x => x.t === t).P.map(p => p.n) }; });
+    if (!items.length) return say('اختاري معلمة واحدة على الأقل', 1);
+    if (items.some(x => !x.text)) return say('نص التنبيه فارغ لإحدى المعلمات', 1);
+    b.disabled = true; say('جارٍ الإرسال…');
+    try {
+      await sealSend({ kind: 'lalert', code: code(), items }, new Uint8Array(0));
+      pendSet(pendGet().concat(items.map(x => ({ ...x, at, pend: 1 })))); paintLog(D);
+      say(`أُرسل ${items.length === 1 ? 'التنبيه' : ar(items.length) + ' تنبيهات'}، ويظهر في رئيسية المعلمة خلال ٥–١٠ دقائق`);
+    } catch (e) { say('تعذّر الإرسال، حاولي مرة أخرى', 1); } finally { b.disabled = false; }
   }
   const same = (a, b) => a.p.map(p => p.n).sort().join('|') === b.p.map(p => p.n).sort().join('|');
   function classCards(D) {
@@ -390,7 +453,7 @@
   }
   window.LEADER = {
     render(D, v, a) { style(); events(); window.__LD = D; prep(D); const tt = document.getElementById('title'); if (tt) tt.textContent = this.title;
-      return v === 'lt' ? teacher(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : home(D); },
+      return v === 'lt' ? teacher(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : v === 'la' ? alerts(D) : home(D); },
     title: 'صفحة رائد النشاط : منى العمري',
   };
 })();
