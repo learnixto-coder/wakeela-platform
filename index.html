@@ -598,7 +598,7 @@ function route() {
     const qa = !mine && (v === 'qa' || v === 'me');
     $('#view').innerHTML = v === 'start' || rev ? tHub()
       : v === 'cp' && D.ct ? tTabs('cp') + teacherCp(a)
-      : v === 'cn' && D.cn ? tTabs('cn') + teacherCn()
+      : v === 'cn' && D.cn ? tTabs('cn') + cnPage(a)
       : v === 'sig' && D.ct ? tTabs('sig') + teacherSig()
       : v === 'x' && D.extra[+a] ? teacherExtra(+a)
       : rev ? tTabs('rev') + teacherReview()
@@ -1233,7 +1233,15 @@ function rvCard(p) {
 // the teacher's «الرئيسية»: the same 4 buttons for every teacher (plan-only accounts have no «ملفاتي»)
 // «جودة شواهد البرامج» (rev) disabled 2026-10-17 at the user's request: no button, #rev → الرئيسية; teacherReview() kept unused
 const tList = () => [['qa', 'تدقيق الجودة', 'نتيجة تدقيق برامجك وردّك وخطة التحسين'],
-  ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها'], D.ct && ['cp', 'الأنشطة الصفية', 'برامجك في خطة النشاط ورفع صورها'], D.cn && ['cn', 'الأنشطة اللاصفية', 'أنشطة فصلك اللاصفية ورفع صورها'], D.ct && ['sig', 'تسجيل توقيعي', 'ارسمي توقيعك مرة واحدة ليظهر في تقارير برامجك'], !D.planOnly && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
+  ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها'], D.ct && ['cp', 'الأنشطة الصفية', 'برامجك في خطة النشاط ورفع صورها'], D.cn && ['cn', 'الأنشطة اللاصفية', 'أسابيع فصلك: بطاقة التنفيذ والشواهد والتقرير'], D.ct && ['sig', 'تسجيل توقيعي', 'ارسمي توقيعك مرة واحدة ليظهر في تقارير برامجك'], !D.planOnly && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
+// «الأنشطة اللاصفية» (2026-10-19): الأسابيع وبطاقة التنفيذ والتقرير المحفوظ في cn.js (يُحمَّل عند أول فتح)؛ teacherCn() القديمة احتياط إن تعذّر تحميله
+let cnLoad = null;
+function cnPage(a) {
+  if (window.CN) return CN.render(a);
+  cnLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'cn.js?v=20261019'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+    .then(() => route(), () => { cnLoad = null; window.CN = { render: () => teacherCn() }; route(); });
+  return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
+}
 /* ---------- «الأنشطة اللاصفية» للمعلمة: رفع الشواهد فقط (طلب المستخدمة 2026-10-18). تختار نشاط فصلها (أسبوع إذاعته)
    ثم ترفع الصور إلى المجلد المشترك للفصل «3. شواهد البرامج/<الفصل> — الأنشطة اللاصفية/الأسبوع NN — <الموضوع>/الشواهد» (a='nupload') ---------- */
 const cnHd = h => { const ar = s => String(+s).replace(/\d/g, c => '٠١٢٣٤٥٦٧٨٩'[c]), [y, m, d] = h.split('/'); return ar(d) + '‏/' + ar(m) + '‏/' + ar(y) + 'هـ'; };   // اليوم أقصى اليمين
