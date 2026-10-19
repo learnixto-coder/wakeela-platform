@@ -47,6 +47,20 @@
 .ld-ev input[type=range]{flex:1;min-width:160px;accent-color:var(--brand)}.ld-ev textarea{width:100%;min-height:80px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--soft);font:inherit;resize:vertical}
 .ld-seen{border:2px solid var(--ok);background:var(--card);color:var(--ok);border-radius:12px;padding:8px 14px;font:inherit;font-weight:700;cursor:pointer}.ld-seen.on{background:var(--ok);color:#fff}
 .ld-msg{font-size:13px;color:var(--muted)}.ld-msg.err{color:var(--none)}
+.oc-add{padding:16px;display:grid;gap:10px}.oc-add h3{margin:0;font-size:16px}.oc-add label,.oc-pl{display:grid;gap:4px;font-size:13.5px;color:var(--muted)}.oc-add input,.oc-pl input{font:inherit;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+.oc-qr{display:flex;gap:16px;align-items:flex-start;padding:16px;flex-wrap:wrap}.oc-qr .qr{width:150px;flex:0 0 150px;background:#fff;border-radius:10px;padding:4px}.oc-qi{flex:1 1 260px;display:grid;gap:10px;min-width:0}.oc-u{font-size:13px;background:var(--soft);border-radius:8px;padding:6px 10px;overflow-wrap:anywhere}.oc-bt{display:flex;flex-wrap:wrap;gap:6px}
+.oc-f{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px}.oc-f select{font:inherit;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+.oc-ms{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}.oc-m{padding:14px 16px;border-top:4px solid var(--line)}.oc-m.star{border-top-color:#b7791f}.oc-mh{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.oc-mh span{color:var(--muted);font-size:12.5px}.oc-m p{margin:8px 0 10px;line-height:1.85;overflow-wrap:anywhere}.oc-mb{display:flex;gap:6px}
+.oc-card{padding:0;margin-top:12px}.oc-card summary{cursor:pointer;padding:16px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;list-style-position:inside}.oc-card summary b{font-size:16px}.oc-card summary span{color:var(--muted);font-size:13px}.oc-card[open] summary{border-bottom:1px solid var(--line)}
+.oc-card>p,.oc-card>.oc-g,.oc-card>.oc-bt{margin:12px 16px}.oc-card>.oc-bt{margin-bottom:16px;align-items:center}
+.oc-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}.oc-g>label{display:grid;gap:4px;font-size:13.5px;color:var(--muted);align-content:start}.oc-g .oc-w{grid-column:1/-1}
+.oc-g input:not([type=checkbox]),.oc-g select{font:inherit;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+.oc-g fieldset{border:1px solid var(--line);border-radius:12px;padding:8px 12px 12px;margin:0}.oc-g legend{font-size:13.5px;color:var(--muted);padding:0 6px;display:flex;gap:8px;align-items:center}
+.oc-cks{display:flex;flex-wrap:wrap;gap:6px 14px}.oc-ck{display:inline-flex;gap:6px;align-items:center;font-size:14px;color:var(--ink);cursor:pointer}.oc-ck input{width:17px;height:17px;accent-color:var(--brand)}
+.oc-sug{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.oc-lock{padding:16px;display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:12px}.oc-lock span{color:var(--muted);font-size:13px}.oc-ot{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--muted);margin-top:8px}.oc-ot input{flex:1}
+.oc-g textarea{font:inherit;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:8px 10px;resize:vertical}
+.oc-st{font-size:13px;font-weight:600;border-radius:999px;padding:2px 10px}.oc-st.wait{background:var(--part-bg);color:var(--part)}.oc-st.ok{background:var(--ok-bg);color:var(--ok)}.oc-st.err{background:var(--none-bg);color:var(--none)}
 .ld-fold{padding:12px 16px;margin-bottom:10px}.ld-fold summary{cursor:pointer;display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;font-weight:700}
 .ld-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:10px}.ld-it{display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:10px;overflow:hidden;text-decoration:none;color:var(--ink);background:var(--card)}
 .ld-it .th{aspect-ratio:4/3;max-width:100%;background:var(--soft);display:grid;place-items:center;color:var(--muted);font-size:12px;overflow:hidden}.ld-it .th img{width:100%;height:100%;object-fit:cover}.ld-it span{padding:4px 8px 6px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -339,6 +353,7 @@
       ${hubBtn('lg', 'الأنشطة الصفية', 'المعلمات · المجالات · المجلدات · لوحة المؤشرات', '#0f6b63')}
       ${hubBtn('ln', 'الأنشطة اللاصفية', `الفترات حسب الأسبوع · ${ar(D.weeks.length)} أسبوعًا`, '#7a4fb5')}
       ${hubBtn('lnr', 'تقارير المعلمات في الأنشطة اللاصفية', 'التقارير حسب الأسبوع · المؤشرات والخطة الزمنية', '#b5477a')}
+      ${hubBtn('lo', 'الأيام والمناسبات', 'رسائل الطالبات في المناسبات · رابط ورمز لكل مناسبة', '#b7791f')}
       ${hubBtn('la', 'رسائل التنبيه', (n => n ? `${ar(n)} معلمة لديها برامج انتهت بلا شواهد` : 'لا توجد برامج منتهية بلا شواهد')(overdue(D).length), '#b4443c')}
     </div>
     <h3 class="ld-sec">برامج جارية الآن (${ar(run.length)})</h3>${run.length ? recTable(run) : '<p class="ld-empty">لا يوجد برنامج جارٍ اليوم.</p>'}
@@ -645,12 +660,234 @@
 .nr-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}.nr-l{padding:14px 16px}.nr-l h3{margin:0 0 8px;font-size:15px}.nr-l>div{padding:5px 0;border-top:1px dashed var(--line)}.nr-l small{color:var(--muted)}`;
     document.head.appendChild(s);
   }
+  // «الأيام والمناسبات» (2026-10-19): لكل مناسبة رابط/رمز تكتب منه الطالبة رسالة (site/m/?o=<id>)، والرسائل حيّة من الخادم
+  // (Occasions.gs: olist / oset / omsgs / omark). القائمة قابلة للإضافة والفتح/الإغلاق، ولا يُحذف منها شيء.
+  const OC = { occ: null, msgs: {}, busy: {}, err: '', f: { cls: '', st: '' } };
+  const ocDay = t => { try { const P = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', { day: 'numeric', month: 'numeric', year: 'numeric', timeZone: 'Asia/Riyadh' }).formatToParts(new Date(t.replace(' ', 'T') + ':00+03:00')), g = k => P.find(x => x.type === k).value;
+    return ar(g('day')) + RLM + '/' + ar(g('month')) + RLM + '/' + ar(g('year')) + 'هـ'; } catch { return ''; } };
+  const ocN = n => n === 1 ? 'رسالة واحدة' : n === 2 ? 'رسالتان' : n >= 3 && n <= 10 ? ar(n) + ' رسائل' : ar(n) + ' رسالة';
+  const ocUrl = id => new URL('m/?o=' + id, location.href.split('#')[0]).href;
+  const ocRe = () => { if (/^#lo/.test(location.hash) && typeof route === 'function' && !(document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName))) { const y = window.scrollY; route(); window.scrollTo(0, y); } };
+  function ocLoad(force) {
+    if ((OC.occ && !force) || OC.busy.list) return; OC.busy.list = 1;
+    api({ a: 'olist' }).then(j => { OC.occ = j.occ; OC.err = ''; }).catch(e => { OC.err = e.message; }).finally(() => { OC.busy.list = 0; ocRe(); });
+  }
+  function ocLoadMsgs(id, force) {
+    if ((OC.msgs[id] && !force) || OC.busy[id]) return; OC.busy[id] = 1;
+    api({ a: 'omsgs', o: id }).then(j => { OC.msgs[id] = j.msgs; OC.err = ''; }).catch(e => { OC.err = e.message; }).finally(() => { OC.busy[id] = 0; ocRe(); });
+  }
+  // ── بطاقة تنفيذ البرنامج: من المكتبة الاسم والمجال وعدد الحصص؛ والباقي خيارات تعبئها رائدة النشاط (تُحفظ مع المناسبة) ──
+  const OC_DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
+  const OC_CLS = ['أول متوسط 1', 'أول متوسط 2', 'أول متوسط 3', 'ثاني متوسط 1', 'ثاني متوسط 2', 'ثاني متوسط 3', 'ثالث متوسط 1', 'ثالث متوسط 2', 'ثالث متوسط 3'];
+  const OC_ICONS = ['بنك الإثراءات', 'التطوير الذاتي', 'قيمنا الغالية', 'نادي القراءة'];
+  function ocLoadLib() {
+    if (OC.lib || OC.busy.lib) return; OC.busy.lib = 1;
+    api({ a: 'olib' }).then(j => { OC.lib = j; }).catch(e => { OC.err = e.message; }).finally(() => { OC.busy.lib = 0; ocRe(); });
+  }
+  const ocLibList = () => { ocLoadLib(); return `<datalist id="ocLibL">${((OC.lib || {}).lib || []).map(l => `<option value="${esc(l.name)}">`).join('')}</datalist>`; };
+  function ocCardForm(o, M) {
+    ocLoadLib();
+    const LB = OC.lib, libRow = n => ((LB || {}).lib || []).find(l => l.name === n);
+    const f = Object.assign({ lib: o.lib || o.name, sem: 'الفصل الدراسي الأول', grades: [], self: true, exec: [], sw: '', sd: '', ew: '', ed: '', st: '', dis: '', parents: '', icon: '', pcount: '', pnames: '' }, o.form || {}, (OC.draft || {})[o.id] || {});
+    if (!f.sessions) f.sessions = (libRow(f.lib) || {}).sessions || 1;
+    const sel = (id, opts, v) => `<select id="${id}"><option value="">—</option>${opts.map(([x, l]) => `<option value="${esc(x)}"${String(x) === String(v) ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+    const W = Array.from({ length: 19 }, (_, i) => [i + 1, 'الأسبوع ' + (WK[i + 1] || ar(i + 1))]);
+    const stSum = f.grades.reduce((s, c) => s + (+((LB || {}).students || {})[c] || 0), 0);
+    const chk = (cls, v, on, l) => `<label class="oc-ck"><input type="checkbox" class="${cls}" value="${esc(v)}"${on ? ' checked' : ''}> ${esc(l)}</label>`;
+    return `<details class="card oc-card" data-occ="${esc(o.id)}"${OC.cardOpen === o.id ? ' open' : ''}><summary><b>بطاقة تنفيذ البرنامج (التقرير)</b><span>${o.card ? 'أُنشئت بطاقة · يمكنك تعديلها وإعادة إنشائها' : 'لم تُنشأ بعد'}</span></summary>
+      <p class="ld-msg">من المكتبة: اسم البرنامج والمجال (الأيام والمناسبات) وعدد الحصص. الباقي اختاري ما يناسب. التاريخ يُكتب من التقويم الدراسي: اليوم ثم الشهر ثم السنة، والختم وتوقيعك في أسفل البطاقة.</p>
+      <div class="oc-g">
+        <label class="oc-w">برنامج المكتبة<input id="cfLib" list="ocLibL" maxlength="120" value="${esc(f.lib)}">${ocLibList()}</label>
+        <label>الفصل الدراسي${sel('cfSem', ['الفصل الدراسي الأول', 'الفصل الدراسي الثاني', 'الفصل الدراسي الثالث'].map(x => [x, x]), f.sem)}</label>
+        <label>عدد حصص البرنامج<input id="cfSes" type="number" min="1" max="60" value="${esc(f.sessions)}"></label>
+        <fieldset class="oc-w"><legend>الصفوف المشاركة <button type="button" class="btn sm ghost" data-oc="allcls">الكل</button></legend><div class="oc-cks">${OC_CLS.map(c => chk('cfCls', c, f.grades.includes(c), c)).join('')}</div></fieldset>
+        <fieldset class="oc-w"><legend>المنفذة</legend><div class="oc-cks">${chk('cfSelf', '1', f.self !== false, 'رائدة النشاط (منى العمري)')}${((LB || {}).teachers || []).map(t => chk('cfEx', t, f.exec.includes(t), t)).join('')}</div>
+          <small class="ld-msg">أول معلمتين تُوقّعان في خانتي المعلمات (من التواقيع المحفوظة).</small></fieldset>
+        <label>بداية التنفيذ: الأسبوع${sel('cfSW', W, f.sw)}</label><label>اليوم${sel('cfSD', OC_DAYS.map(d => [d, d]), f.sd)}</label>
+        <label>نهاية التنفيذ: الأسبوع${sel('cfEW', W, f.ew)}</label><label>اليوم${sel('cfED', OC_DAYS.map(d => [d, d]), f.ed)}</label>
+        <label>عدد الطالبات المشاركات<input id="cfSt" type="number" min="0" value="${esc(f.st)}">
+          <span class="oc-sug">${stSum ? `<button type="button" class="btn sm ghost" data-oc="st" data-v="${stSum}">طالبات الصفوف المختارة: ${ar(stSum)}</button>` : ''}${M && M.length ? `<button type="button" class="btn sm ghost" data-oc="st" data-v="${M.length}">عدد الرسائل: ${ar(M.length)}</button>` : ''}</span></label>
+        <label>المشاركات من ذوات الإعاقة<input id="cfDis" type="number" min="0" value="${esc(f.dis)}"></label>
+        <label>أولياء الأمور المشاركون<input id="cfPar" type="number" min="0" value="${esc(f.parents)}"></label>
+        <label>أيقونة التنفيذ في منصة مدرستي${sel('cfIc', OC_ICONS.map(x => [x, x]), f.icon)}</label>
+        <label>عدد الشراكات المجتمعية<input id="cfPc" type="number" min="0" value="${esc(f.pcount)}"></label>
+        <label class="oc-w">أسماء الشراكات المجتمعية<input id="cfPn" maxlength="300" value="${esc(f.pnames)}"></label>
+        <label class="oc-w">صورة من التنفيذ للبطاقة <small>(اختياري؛ تُحفظ في مجلد المناسبة بالأرشيف، وتُوضع أول صورة فيه بجانب رمز QR)</small><input id="cfImg" type="file" accept="image/*"></label>
+      </div>
+      <div class="oc-bt"><button class="btn" data-oc="card" data-id="${esc(o.id)}">إنشاء البطاقة وتنزيلها (PDF)</button>${o.card ? `<button class="btn ghost" data-oc="dl" data-id="${esc(o.id)}">تنزيل آخر بطاقة</button>` : ''}<span class="ld-msg" id="cfM"></span></div></details>`;
+  }
+  // ── «قياس أثر البرنامج»: نموذج برامج الخطة التشغيلية نفسه؛ يُعبأ في PowerPoint على جهاز المدرسة (tools/oc_impact.js) خلال دقائق ──
+  const IMP = { DOM: ['الإدارة المدرسية', 'نواتج التعلم', 'التعليم والتعلم', 'البيئة المدرسية'], PERF: ['جيد', 'مقبول', 'ضعيف'], IMPACT: ['تأثير ملحوظ', 'طفيف', 'لا يوجد'],
+    TOOLS: ['الاستبانات', 'المقابلات', 'الملاحظة المباشرة'], METH: ['لقاء', 'ورشة عمل', 'مواد إعلامية', 'زيارة خارجية', 'معرض', 'مسابقة'],
+    EV: ['صور', 'محاضر وتقارير', 'مقاطع فيديو', 'مواد إعلامية منوعة', 'تطبيقات التواصل الاجتماعي'] };
+  function ocImpactForm(o, M) {
+    if (!o.form) return `<div class="card oc-card oc-lock"><b>قياس أثر البرنامج</b><span>أنشئي بطاقة التنفيذ أولًا؛ منها يُؤخذ الأسبوع والتاريخ وعدد الطالبات وأولياء الأمور.</span></div>`;
+    const nT = (o.form.self !== false ? 1 : 0) + (o.form.exec || []).length;
+    const f = Object.assign({ domain: '', audience: 'الطالبات', perf: '', impact: '', goal: '', ipct: '', tools: M && M.length ? ['الملاحظة المباشرة'] : [], toolOther: M && M.length ? 'رسائل الطالبات' : '',
+      methods: [], methodOther: '', teachers: nT, committee: 'نعم', positives: '', difficulties: '', evidence: ['صور'] }, o.imp || {}, (OC.idraft || {})[o.id] || {});
+    const rad = (name, L, v) => `<div class="oc-cks">${L.map(x => `<label class="oc-ck"><input type="radio" name="${name}" value="${esc(x)}"${x === v ? ' checked' : ''}> ${esc(x)}</label>`).join('')}</div>`;
+    const cks = (cls, L, V) => `<div class="oc-cks">${L.map(x => `<label class="oc-ck"><input type="checkbox" class="${cls}" value="${esc(x)}"${V.includes(x) ? ' checked' : ''}> ${esc(x)}</label>`).join('')}</div>`;
+    const st = o.impSt === 'pending' ? '<span class="oc-st wait">جارٍ تعبئة النموذج على جهاز المدرسة (خلال ٥–١٠ دقائق)</span>' : o.impSt === 'done' ? '<span class="oc-st ok">النموذج جاهز</span>'
+      : o.impSt === 'err' ? `<span class="oc-st err">${esc(o.impErr)}</span>` : '<span>لم يُعبأ بعد</span>';
+    return `<details class="card oc-card oc-imp" data-occ="${esc(o.id)}"${OC.impOpen === o.id ? ' open' : ''}><summary><b>قياس أثر البرنامج</b>${st}</summary>
+      <p class="ld-msg">النموذج نفسه المستخدم في برامج الخطة التشغيلية. الأسبوع وتاريخ التنفيذ وعدد الطالبات وأولياء الأمور من بطاقة التنفيذ. بعد الحفظ يُعبأ على جهاز المدرسة ويظهر هنا للتنزيل، ويُحفظ في الأرشيف.</p>
+      <div class="oc-g">
+        <fieldset class="oc-w"><legend>المجال</legend>${rad('ifDom', IMP.DOM, f.domain)}</fieldset>
+        <label>المستهدفون<input id="ifAud" maxlength="60" value="${esc(f.audience)}"></label>
+        <label>عدد المعلمات<input id="ifT" type="number" min="0" max="99" value="${esc(f.teachers)}"></label>
+        <fieldset><legend>الأداء العام للبرنامج</legend>${rad('ifPerf', IMP.PERF, f.perf)}</fieldset>
+        <fieldset><legend>مستوى الأثر</legend>${rad('ifImp', IMP.IMPACT, f.impact)}</fieldset>
+        <label>نسبة تحقق الأهداف ٪<input id="ifGoal" type="number" min="0" max="100" value="${esc(f.goal)}"></label>
+        <label>النسبة المئوية للأثر ٪<input id="ifPct" type="number" min="0" max="100" value="${esc(f.ipct)}"></label>
+        <fieldset class="oc-w"><legend>أدوات قياس الأثر</legend>${cks('ifTool', IMP.TOOLS, f.tools)}<label class="oc-ot">أخرى<input id="ifTO" maxlength="60" value="${esc(f.toolOther)}"></label></fieldset>
+        <fieldset class="oc-w"><legend>أسلوب التنفيذ</legend>${cks('ifMeth', IMP.METH, f.methods)}<label class="oc-ot">أخرى<input id="ifMO" maxlength="60" value="${esc(f.methodOther)}"></label></fieldset>
+        <fieldset><legend>مشاركة أعضاء اللجنة</legend>${rad('ifCom', ['نعم', 'لا'], f.committee)}</fieldset>
+        <fieldset class="oc-w"><legend>شواهد تنفيذ البرنامج</legend>${cks('ifEv', IMP.EV, f.evidence)}</fieldset>
+        <label class="oc-w">الإيجابيات <small>(سطر لكل نقطة)</small><textarea id="ifPos" rows="3" maxlength="600">${esc(f.positives)}</textarea></label>
+        <label class="oc-w">الصعوبات في التنفيذ<textarea id="ifDif" rows="3" maxlength="600">${esc(f.difficulties)}</textarea></label>
+      </div>
+      <div class="oc-bt"><button class="btn" data-oc="imp" data-id="${esc(o.id)}">حفظ وإعداد النموذج</button>${o.impFile ? `<button class="btn ghost" data-oc="impdl" data-id="${esc(o.id)}">تنزيل قياس الأثر (PDF)</button>` : ''}${o.impSt === 'pending' ? `<button class="btn ghost" data-oc="impre" data-id="${esc(o.id)}">تحديث الحالة</button>` : ''}<span class="ld-msg" id="ifM"></span></div></details>`;
+  }
+  function ocReadImp(box) {
+    const v = id => (box.querySelector('#' + id) || {}).value || '', r = n => (box.querySelector(`input[name=${n}]:checked`) || {}).value || '', all = c => [...box.querySelectorAll('.' + c + ':checked')].map(x => x.value);
+    return { domain: r('ifDom'), audience: v('ifAud').trim(), teachers: v('ifT'), perf: r('ifPerf'), impact: r('ifImp'), goal: v('ifGoal'), ipct: v('ifPct'), tools: all('ifTool'), toolOther: v('ifTO').trim(),
+      methods: all('ifMeth'), methodOther: v('ifMO').trim(), committee: r('ifCom'), evidence: all('ifEv'), positives: v('ifPos').trim(), difficulties: v('ifDif').trim() };
+  }
+  function ocReadForm(box) {
+    const v = id => (box.querySelector('#' + id) || {}).value || '', all = c => [...box.querySelectorAll('.' + c + ':checked')].map(x => x.value);
+    return { lib: v('cfLib').trim(), sem: v('cfSem'), sessions: v('cfSes'), grades: all('cfCls'), self: !!box.querySelector('.cfSelf:checked'), exec: all('cfEx'),
+      sw: v('cfSW'), sd: v('cfSD'), ew: v('cfEW'), ed: v('cfED'), st: v('cfSt'), dis: v('cfDis'), parents: v('cfPar'), icon: v('cfIc'), pcount: v('cfPc'), pnames: v('cfPn') };
+  }
+  const ocSave = (b64, name) => { const a = document.createElement('a'); a.href = 'data:application/pdf;base64,' + b64; a.download = name; document.body.appendChild(a); a.click(); a.remove(); };
+  function occasions(D, a) {
+    ocLoad();
+    if (a) return occasion(D, a);
+    const L = OC.occ;
+    return nav(['lo', 'الأيام والمناسبات']) + `<div class="card ld-h"><h2>الأيام والمناسبات</h2><p>لكل مناسبة رابط ورمز QR تكتب منه الطالبة رسالة (إلى الوطن، إلى المعلمة…). الرسائل تصلك أنتِ فقط.</p></div>
+    ${OC.err ? `<p class="ld-msg err">${esc(OC.err)}</p>` : ''}
+    ${!L ? '<p class="ld-empty">جارٍ تحميل المناسبات…</p>' : `<div class="ld-hub">${L.map(o => hubBtn('lo/' + o.id, esc(o.name), `${o.n ? ocN(o.n) : 'لا رسائل'} · ${o.open ? 'مفتوحة للطالبات' : 'مغلقة'}`, o.open ? '#0f6b63' : '#6b7280')).join('')}</div>`}
+    <div class="card oc-add"><h3>إضافة مناسبة</h3>
+      <label>اسم المناسبة<input id="ocN" maxlength="80" placeholder="مثل: اليوم العالمي للغة العربية"></label>
+      <label>نص الدعوة للطالبة <small>(اختياري)</small><input id="ocP" maxlength="300" placeholder="مثل: اكتبي رسالة حب إلى لغتك العربية"></label>
+      <label>برنامج المكتبة <small>(اسم البرنامج في البطاقة؛ اختاري من المكتبة أو اكتبي اسمًا جديدًا)</small><input id="ocL" maxlength="120" list="ocLibL"></label>${ocLibList()}
+      <div><button class="btn sm" data-oc="add">إضافة</button> <span class="ld-msg" id="ocM"></span></div></div>`;
+  }
+  function occasion(D, id) {
+    const o = (OC.occ || []).find(x => x.id === id);
+    if (!o) return nav(['lo', 'الأيام والمناسبات'], [location.hash.slice(1), '…']) + `<p class="ld-empty">${OC.occ ? 'المناسبة غير موجودة.' : 'جارٍ التحميل…'}</p>`;
+    ocLoadMsgs(id);
+    const u = ocUrl(id), M = OC.msgs[id], f = OC.f;
+    const V = (M || []).filter(m => (!f.cls || m.cls === f.cls) && (f.st === 'star' ? m.star : f.st === 'hide' ? m.hide : !m.hide));
+    const cls = [...new Set((M || []).map(m => m.cls))].sort();
+    const by = {}; (M || []).forEach(m => { if (!m.hide) by[m.cls] = (by[m.cls] || 0) + 1; });
+    return nav(['lo', 'الأيام والمناسبات'], ['lo/' + id, o.name]) + `<div class="card ld-h"><h2>${esc(o.name)}</h2><p>${o.open ? 'مفتوحة: تستقبل رسائل الطالبات' : 'مغلقة: لا تستقبل رسائل جديدة'} · ${(n => n ? ocN(n) : 'لا رسائل بعد')(M ? M.length : o.n)}</p></div>
+    ${OC.err ? `<p class="ld-msg err">${esc(OC.err)}</p>` : ''}
+    <div class="card oc-qr"><div class="qr" data-qr="${esc(u)}"></div><div class="oc-qi">
+      <b>رابط الطالبات</b><div class="oc-u" id="ocU" dir="ltr">${esc(u)}</div>
+      <textarea id="ocW" hidden>${esc(o.name)} — ${esc(o.prompt || 'اكتبي رسالتك')}:\n${esc(u)}</textarea>
+      <div class="oc-bt"><button class="btn sm" data-copy="ocU">نسخ الرابط</button><button class="btn sm ghost" data-wa="ocW">إرسال عبر واتساب</button><a class="btn sm ghost" href="${esc(u)}" target="_blank" rel="noopener">فتح صفحة الطالبة</a>
+        <button class="btn sm ghost" data-oc="open" data-id="${esc(id)}">${o.open ? 'إغلاق الاستقبال' : 'فتح الاستقبال'}</button></div>
+      <label class="oc-pl">نص الدعوة الذي تراه الطالبة<input id="ocPr" maxlength="300" value="${esc(o.prompt)}"></label>
+      <div><button class="btn sm ghost" data-oc="prompt" data-id="${esc(id)}">حفظ النص</button> <span class="ld-msg" id="ocM"></span></div></div></div>
+    ${ocCardForm(o, M)}
+    ${ocImpactForm(o, M)}
+    <h3 class="ld-sec">رسائل الطالبات</h3>
+    ${Object.keys(by).length ? `<div class="ld-k" style="margin-top:12px">${Object.keys(by).sort().map(c => `<div class="card"><b>${ar(by[c])}</b><span>${esc(c)}</span></div>`).join('')}</div>` : ''}
+    <div class="card oc-f"><select id="ocC"><option value="">كل الفصول</option>${cls.map(c => `<option${c === f.cls ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select>
+      <select id="ocS">${[['', 'الظاهرة'], ['star', 'المختارة ★'], ['hide', 'المخفية']].map(([v, l]) => `<option value="${v}"${v === f.st ? ' selected' : ''}>${l}</option>`).join('')}</select>
+      <button class="btn sm ghost" data-oc="reload" data-id="${esc(id)}">تحديث</button>
+      <button class="btn sm" data-oc="print" data-id="${esc(id)}"${V.length ? '' : ' disabled'}>طباعة المعروض (${ar(V.length)})</button></div>
+    ${!M ? '<p class="ld-empty">جارٍ تحميل الرسائل…</p>' : !V.length ? `<p class="ld-empty">${M.length ? 'لا رسائل في هذا العرض.' : 'لم تصل رسائل بعد. شاركي الرابط أو الرمز مع الطالبات.'}</p>`
+      : `<div class="oc-ms">${V.slice().reverse().map(m => `<div class="card oc-m${m.star ? ' star' : ''}"><div class="oc-mh"><b>${esc(m.nm || 'دون اسم')}</b><span>${esc(m.cls)} · ${ocDay(m.t)}</span></div>
+        <p>${esc(m.msg).replace(/\n/g, '<br>')}</p><div class="oc-mb"><button class="btn sm ghost" data-oc="star" data-r="${m.r}" data-id="${esc(id)}">${m.star ? '★ مختارة' : '☆ اختيار'}</button>
+        <button class="btn sm ghost" data-oc="hide" data-r="${m.r}" data-id="${esc(id)}">${m.hide ? 'إظهار' : 'إخفاء'}</button></div></div>`).join('')}</div>`}`;
+  }
+  function ocPrint(id) {
+    const o = OC.occ.find(x => x.id === id), f = OC.f, V = (OC.msgs[id] || []).filter(m => (!f.cls || m.cls === f.cls) && (f.st === 'star' ? m.star : f.st === 'hide' ? m.hide : !m.hide));
+    const w = window.open('', '_blank'); if (!w) return;
+    w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>رسائل الطالبات — ${esc(o.name)}</title>
+      <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+      <style>body{font:15px/1.9 "IBM Plex Sans Arabic",Tahoma,sans-serif;color:#222;margin:24px}header{display:flex;align-items:center;gap:14px;border-bottom:3px solid #0f6b63;padding-bottom:10px;margin-bottom:16px}
+      header img{height:64px}h1{margin:0;font-size:20px;color:#0f6b63}header small{display:block;color:#555}.m{border:1px solid #cfd8d4;border-radius:10px;padding:10px 14px;margin:0 0 10px;break-inside:avoid}
+      .m b{color:#0f6b63}.m span{color:#666;font-size:13px;margin-inline-start:8px}.m p{margin:4px 0 0;white-space:pre-wrap}@media print{body{margin:10mm}}</style></head><body>
+      <header><img src="${esc(new URL('moe-logo.png', location.href.split('#')[0]).href)}" alt=""><div><h1>رسائل الطالبات بمناسبة ${esc(o.name)}</h1><small>المتوسطة الحادية والعشرون · النشاط الطلابي · ${ar(V.length)} رسالة${f.cls ? ' · ' + esc(f.cls) : ''}</small></div></header>
+      ${V.map(m => `<div class="m"><b>${esc(m.nm || 'طالبة')}</b><span>${esc(m.cls)}</span><p>${esc(m.msg)}</p></div>`).join('')}
+      <script>window.onload=()=>setTimeout(()=>print(),400)<\/script></body></html>`);
+    w.document.close();
+  }
+  function ocEvents() {
+    if (window.__OCev) return; window.__OCev = 1;
+    const keep = ev => { const box = ev.target.closest && ev.target.closest('.oc-card'); if (!box || ev.target.type === 'file') return;
+      if (box.classList.contains('oc-imp')) { OC.idraft = OC.idraft || {}; OC.idraft[box.dataset.occ] = ocReadImp(box); } else { OC.draft = OC.draft || {}; OC.draft[box.dataset.occ] = ocReadForm(box); } };
+    document.addEventListener('input', keep);
+    document.addEventListener('toggle', ev => { const t = ev.target; if (t.classList && t.classList.contains('oc-card')) OC[t.classList.contains('oc-imp') ? 'impOpen' : 'cardOpen'] = t.open ? t.dataset.occ : ''; }, true);
+    document.addEventListener('change', ev => { keep(ev); if (ev.target.classList.contains('cfCls') && typeof route === 'function') { const y = window.scrollY; route(); window.scrollTo(0, y); } });
+    document.addEventListener('change', ev => { if (ev.target.id === 'ocC' || ev.target.id === 'ocS') { OC.f[ev.target.id === 'ocC' ? 'cls' : 'st'] = ev.target.value; if (typeof route === 'function') { const y = window.scrollY; route(); window.scrollTo(0, y); } } });
+    document.addEventListener('click', async ev => {
+      const b = ev.target.closest('[data-oc]'); if (!b || b.disabled) return;
+      const k = b.dataset.oc, id = b.dataset.id, msg = document.getElementById('ocM');
+      const say = (t, err) => { if (msg) { msg.textContent = t; msg.className = 'ld-msg' + (err ? ' err' : ''); } };
+      if (k === 'print') return ocPrint(id);
+      if (k === 'reload') { ocLoadMsgs(id, 1); return; }
+      if (k === 'allcls' || k === 'st') { const box = b.closest('.oc-card');
+        if (k === 'allcls') { const C = [...box.querySelectorAll('.cfCls')], on = !C.every(x => x.checked); C.forEach(x => { x.checked = on; }); }
+        else box.querySelector('#cfSt').value = b.dataset.v;
+        OC.draft = OC.draft || {}; OC.draft[box.dataset.occ] = ocReadForm(box); const y = window.scrollY; route(); window.scrollTo(0, y); return; }
+      if (k === 'imp' || k === 'impdl' || k === 'impre') {
+        const box = b.closest('.oc-card'), m = box.querySelector('#ifM'), tell = (t, err) => { m.textContent = t; m.className = 'ld-msg' + (err ? ' err' : ''); };
+        b.disabled = true;
+        try {
+          const o = OC.occ.find(x => x.id === id);
+          if (k === 'impdl') { tell('جارٍ التنزيل…'); const j = await api({ a: 'file', id: o.impFile }); ocSave(j.b64, j.n); tell(''); b.disabled = false; return; }
+          if (k === 'imp') { const f = ocReadImp(box);
+            if (!f.domain) throw new Error('اختاري المجال'); if (!f.perf) throw new Error('اختاري الأداء العام'); if (!f.impact) throw new Error('اختاري مستوى الأثر');
+            if (f.goal === '' || f.ipct === '') throw new Error('اكتبي نسبة تحقق الأهداف والنسبة المئوية للأثر');
+            tell('جارٍ الحفظ…'); OC.occ = (await api({ a: 'oimpact', o: id, f })).occ; delete (OC.idraft || {})[id]; }
+          else OC.occ = (await api({ a: 'olist' })).occ;
+          OC.impOpen = id; if (document.activeElement) document.activeElement.blur(); ocRe();
+        } catch (e) { tell(e.message, 1); b.disabled = false; }
+        return;
+      }
+      if (k === 'card' || k === 'dl') {
+        const box = b.closest('.oc-card'), m = box.querySelector('#cfM'), tell = (t, err) => { m.textContent = t; m.className = 'ld-msg' + (err ? ' err' : ''); };
+        b.disabled = true;
+        try {
+          const o = OC.occ.find(x => x.id === id);
+          if (k === 'dl') { tell('جارٍ التنزيل…'); const j = await api({ a: 'file', id: o.card }); ocSave(j.b64, j.n); tell(''); b.disabled = false; return; }
+          const f = ocReadForm(box), img = box.querySelector('#cfImg').files[0];
+          if (!f.lib) throw new Error('اكتبي اسم البرنامج');
+          if (!f.grades.length) throw new Error('اختاري الصفوف المشاركة');
+          if (!f.sw || !f.sd || !f.ew || !f.ed) throw new Error('اختاري أسبوع ويوم البداية والنهاية');
+          if (img) { tell('جارٍ رفع الصورة…'); await api({ a: 'oset', id, lib: f.lib }); const im = typeof shrinkImage === 'function' ? await shrinkImage(img) : img;
+            const b64 = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.onerror = no; r.readAsDataURL(im); });
+            await api({ a: 'oup', o: id, b64, mime: im.type, name: img.name, uid: id + '-' + img.size + '-' + img.lastModified }); }
+          tell('جارٍ إنشاء البطاقة… (قد يستغرق دقيقة)');
+          const r = await fetch(window.__LD.api, { method: 'POST', signal: AbortSignal.timeout ? AbortSignal.timeout(150000) : undefined, headers: { 'content-type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ code: code(), a: 'ocard', o: id, f }) });
+          const j = JSON.parse(await r.text()); if (!j.ok) throw new Error(j.error);
+          ocSave(j.b64, j.file.n); delete (OC.draft || {})[id];
+          OC.occ = (await api({ a: 'olist' })).occ; OC.cardOpen = id; if (document.activeElement) document.activeElement.blur(); ocRe();
+          const m2 = document.querySelector('.oc-card #cfM'); if (m2) { m2.textContent = 'أُنشئت البطاقة ونُزّلت، وحُفظت في الأرشيف («1. التقارير/تقارير الأيام والمناسبات» و«التقارير جاهزة للطباعة»)' + (j.photo ? '' : ' — لا توجد صورة في مجلد المناسبة بعد'); m2.className = 'ld-msg'; }
+        } catch (e) { tell(e.name === 'TimeoutError' ? 'تأخر الخادم؛ اضغطي «تنزيل آخر بطاقة» بعد دقيقة' : e.message, 1); b.disabled = false; }
+        return;
+      }
+      b.disabled = true;
+      try {
+        if (k === 'add') { const name = document.getElementById('ocN').value.trim(); if (!name) throw new Error('اكتبي اسم المناسبة');
+          say('جارٍ الإضافة…'); OC.occ = (await api({ a: 'oset', name, prompt: document.getElementById('ocP').value.trim(), lib: document.getElementById('ocL').value.trim() })).occ; }
+        if (k === 'open') { const o = OC.occ.find(x => x.id === id); OC.occ = (await api({ a: 'oset', id, open: !o.open })).occ; }
+        if (k === 'prompt') { say('جارٍ الحفظ…'); OC.occ = (await api({ a: 'oset', id, prompt: document.getElementById('ocPr').value.trim() })).occ; }
+        if (k === 'star' || k === 'hide') { const m = OC.msgs[id].find(x => x.r === +b.dataset.r); const v = !m[k]; await api({ a: 'omark', r: m.r, [k]: v }); m[k] = v; }
+        if (document.activeElement) document.activeElement.blur();
+        ocRe(); if (k === 'prompt') say('حُفظ');
+      } catch (e) { say(e.message, 1); b.disabled = false; }
+    });
+  }
   // معلمة مطّلعة (سلمى القرني): D = { nplan, radio, nrecs } من ملفها، call = طلب برمزها (nallv / nthumbv)
   function nrView(D, a, call) { style(); NR.call = call; return nrPage(D, a); }
   window.LEADER = {
     nr: nrView,
-    render(D, v, a) { style(); events(); window.__LD = D; prep(D); const tt = document.getElementById('title'); if (tt) tt.textContent = this.title;
-      return v === 'lnr' ? nrPage(D, a) : v === 'lt' ? teacher(D, +a) : v === 'ltc' ? teacherClass(D, +a) : v === 'ltn' ? teacherNon(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : v === 'la' ? alerts(D) : home(D); },
+    render(D, v, a) { style(); events(); ocEvents(); window.__LD = D; prep(D); const tt = document.getElementById('title'); if (tt) tt.textContent = this.title;
+      return v === 'lo' ? occasions(D, a) : v === 'lnr' ? nrPage(D, a) : v === 'lt' ? teacher(D, +a) : v === 'ltc' ? teacherClass(D, +a) : v === 'ltn' ? teacherNon(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : v === 'la' ? alerts(D) : home(D); },
     title: 'صفحة رائد النشاط : منى العمري',
   };
 })();
