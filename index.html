@@ -597,6 +597,7 @@ function route() {
     const rev = !mine && v === 'rev';
     const qa = !mine && (v === 'qa' || v === 'me');
     $('#view').innerHTML = v === 'start' || rev ? tHub()
+      : v === 'td' && D.td ? tTabs('td') + tdPage()
       : v === 'cp' && D.ct ? tTabs('cp') + teacherCp(a)
       : v === 'cn' && D.cn ? tTabs('cn') + cnPage(a)
       : v === 'lnr' && D.nv ? nvPage(a)
@@ -1233,7 +1234,7 @@ function rvCard(p) {
 }
 // the teacher's «الرئيسية»: the same 4 buttons for every teacher (plan-only accounts have no «ملفاتي»)
 // «جودة شواهد البرامج» (rev) disabled 2026-10-17 at the user's request: no button, #rev → الرئيسية; teacherReview() kept unused
-const tList = () => [['qa', 'تدقيق الجودة', 'نتيجة تدقيق برامجك وردّك وخطة التحسين'],
+const tList = () => [D.td && ['td', 'لوحتي', 'مستواكِ مقارنة بالجميع وخطتك الزمنية وما يحتاج منكِ'], ['qa', 'تدقيق الجودة', 'نتيجة تدقيق برامجك وردّك وخطة التحسين'],
   ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها'], D.ct && ['cp', 'الأنشطة الصفية', 'برامجك في خطة النشاط ورفع صورها'], D.cn && ['cn', 'الأنشطة اللاصفية', 'أسابيع فصلك: بطاقة التنفيذ والشواهد والتقرير'], D.nv && ['lnr', 'تقارير المعلمات في الأنشطة اللاصفية', 'تقارير الأسابيع ومؤشراتها (اطلاع)'], D.ct && ['sig', 'تسجيل توقيعي', 'ارسمي توقيعك مرة واحدة ليظهر في تقارير برامجك'], !D.planOnly && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
 // «الأنشطة اللاصفية» (2026-10-19): الأسابيع وبطاقة التنفيذ والتقرير المحفوظ في cn.js (يُحمَّل عند أول فتح)؛ teacherCn() القديمة احتياط إن تعذّر تحميله
 // «تقارير المعلمات في الأنشطة اللاصفية» لمعلمة مطّلعة (2026-10-19: سلمى القرني): صفحة رائدة النشاط نفسها (leader.js → LEADER.nr) بطلبات برمز المعلمة
@@ -1246,10 +1247,18 @@ function nvPage(a) {
   nvLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'leader.js?v=' + Date.now(); s.onload = ok; s.onerror = no; document.head.appendChild(s); }).then(() => route(), () => { nvLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
+// «لوحتي» (2026-10-19): td.js يُحمَّل عند أول فتح؛ البيانات D.td من tools/td.js
+let tdLoad = null;
+function tdPage() {
+  if (window.TD) return TD.render();
+  tdLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'td.js?v=20261019'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+    .then(() => route(), () => { tdLoad = null; });
+  return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
+}
 let cnLoad = null;
 function cnPage(a) {
   if (window.CN) return CN.render(a);
-  cnLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'cn.js?v=20261019'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  cnLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'cn.js?v=20261019b'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { cnLoad = null; window.CN = { render: () => teacherCn() }; route(); });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
@@ -1517,6 +1526,7 @@ function tHub() {
   const meta = { qa: P.length && !A.length ? 'لم يبدأ البرنامج · الفصل الدراسي الثاني' : progs,
     rev: !P.length ? progs : !A.length ? 'لم يبدأ البرنامج · الفصل الدراسي الثاني' : avg == null ? 'لم تُقيَّم بعد' : `متوسط التقييم ${nf(avg)} من 100`,
     plan: !P.length ? progs : A.length ? `${nf(done)} من ${nf(A.length)} أُرفقت شواهدها` : 'تبدأ في الفصل الدراسي الثاني', mine: t ? `الإنجاز ${nf(t.pct)}٪` : '',
+    td: D.td && D.td.me.o != null ? `مؤشرك ${nf(D.td.me.o)} من 100 · متوسط المعلمات ${nf(Math.round(D.td.peers.reduce((s, p) => s + p.o, 0) / Math.max(1, D.td.peers.length)))}` : '',
     cn: D.cn ? `${nf((D.cn.weeks || []).length)} أنشطة لفصلك · ${nf((D.cn.weeks || []).reduce((s, w) => s + w.files.length, 0))} صورة مرفوعة` : '',
     cp: D.ct ? (() => { const L = cpList(); return `${nf(L.length)} برامج · ${nf(L.reduce((a, x) => a + x.p.files.length, 0))} صورة مرفوعة`; })() : '' };
   return thHero(`مرحبًا بكِ${t ? '، أ. ' + esc(t.short) : ''}`, 'اختاري القسم الذي تريدين العمل عليه.') + D.teachers.map(inbox).join('') + `<div class="th-hub">${tList().map(([g, l, d], i) => thBtn(g, l, d, meta[g], i)).join('')}</div>`;
