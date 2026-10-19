@@ -338,6 +338,7 @@
     <div class="ld-hub">
       ${hubBtn('lg', 'الأنشطة الصفية', 'المعلمات · المجالات · المجلدات · لوحة المؤشرات', '#0f6b63')}
       ${hubBtn('ln', 'الأنشطة اللاصفية', `الفترات حسب الأسبوع · ${ar(D.weeks.length)} أسبوعًا`, '#7a4fb5')}
+      ${hubBtn('lnr', 'تقارير المعلمات في الأنشطة اللاصفية', 'التقارير حسب الأسبوع · المؤشرات والخطة الزمنية', '#b5477a')}
       ${hubBtn('la', 'رسائل التنبيه', (n => n ? `${ar(n)} معلمة لديها برامج انتهت بلا شواهد` : 'لا توجد برامج منتهية بلا شواهد')(overdue(D).length), '#b4443c')}
     </div>
     <h3 class="ld-sec">برامج جارية الآن (${ar(run.length)})</h3>${run.length ? recTable(run) : '<p class="ld-empty">لا يوجد برنامج جارٍ اليوم.</p>'}
@@ -511,9 +512,142 @@
   function all(D) {
     return nav(['lp', 'كل البرامج']) + `<div class="card ld-h"><h2>كل البرامج (${ar(D.all.length)})</h2><p>مرتبة حسب تاريخ البداية</p></div>` + table(D.all.slice().sort((a, b) => (a.from ? day(a.from.g) : 9e15) - (b.from ? day(b.from.g) : 9e15)), true);
   }
+  // ───── «تقارير المعلمات في الأنشطة اللاصفية» (طلب المستخدمة 2026-10-19): تبويبان «التقارير» و«المؤشرات» ─────
+  // الخطة: D.nplan (أسابيع إذاعة كل فصل من جدول الإذاعة + برنامجا المكتبة)؛ الشواهد: D.radio[الفصل] (ev، وفي كل ملف by = من رفعته)؛
+  // التقارير: حية من الخادم (a=nall برمز الرائدة، مع صورة التقرير المصغرة)، وإلى أن تصل تُستعمل D.nrecs (بلا صور) من الملف المشفر.
+  const NR = { recs: null, loading: false, err: '', f: { cls: '', st: '' }, th: {} };
+  // مصغرات الشواهد عبر النظام برمز الرائدة (a=thumb، من الأرشيف فقط) — لا تعتمد على تسجيل دخولها في Google؛ ثلاث في وقت واحد وتُحفظ في الذاكرة
+  async function nrThumbs() {
+    const q = [...document.querySelectorAll('[data-nrth]')];
+    await Promise.all([0, 1, 2].map(async () => { while (q.length) { const el = q.shift(), id = el.dataset.nrth;
+      try { if (!NR.th[id]) { const j = await api({ a: 'thumb', id }); NR.th[id] = j.b64 || ''; }
+        if (el.isConnected) el.outerHTML = NR.th[id] ? `<img alt="" src="data:image/jpeg;base64,${NR.th[id]}">` : '<span>صورة</span>'; }
+      catch { if (el.isConnected) el.textContent = 'صورة'; } } }));
+  }
+  function nrLoad() {
+    if (NR.loading || NR.recs) return; NR.loading = true;
+    api({ a: 'nall', ...(window.NC_TEST && { test: 1 }) }).then(j => { NR.recs = j.recs || []; NR.err = ''; }).catch(e => { NR.err = e.message; })
+      .finally(() => { NR.loading = false; if (/^#lnr/.test(location.hash) && typeof route === 'function') { const y = window.scrollY; route(); window.scrollTo(0, y); } });
+  }
+  const gDay = s => s ? Date.parse(s + 'T00:00:00Z') : 0;
+  const hNum = h => { const [y, m, d] = String(h || '').split('/').map(Number); return (y || 0) * 400 + (m || 0) * 32 + (d || 0); };
+  const NS = { rep: ['تقرير صادر', 'ok'], ev: ['شواهد بلا تقرير', 'part'], none: ['لم ترفع الشواهد', 'none'], now: ['جارٍ هذا الأسبوع', 'part'], later: ['لم يحن موعده', 'na'] };
+  /** صف لكل معلمة في كل أسبوع من أسابيع فصلها (ولكل نشاط يدوي أصدرته) */
+  function nrRows(D) {
+    const R = NR.recs || D.nrecs || [], rows = [];
+    (D.nplan || []).forEach(c => {
+      const W = (D.radio || {})[c.cls] || [];
+      c.runs.forEach(r => {
+        const fd = W.find(x => x.n === 'الأسبوع ' + String(r.w).padStart(2, '0') + ' — ' + r.topic) || {};
+        const state = today > gDay(r.g1) ? 'past' : today >= gDay(r.g0) ? 'now' : 'later';
+        c.teachers.forEach(t => rows.push({ c, r, t, state, url: fd.url || '', rec: R.find(x => x.cls === c.cls && x.sid === r.sid && x.teacher === t && x.st !== 'مسودة') || null,
+          ev: (fd.ev || []).filter(f => f.by === t) }));
+      });
+      R.filter(x => x.cls === c.cls && x.sid.startsWith('m|') && x.st !== 'مسودة').forEach(rec => {
+        const fd = W.find(x => x.n.startsWith('نشاط يدوي — ' + rec.mname.slice(0, 40))) || {};
+        rows.push({ c, r: { topic: rec.mname, days: rec.days, w: rec.w, manual: true, sid: rec.sid }, t: rec.teacher, state: 'past', url: fd.url || '', rec, ev: (fd.ev || []).filter(f => f.by === rec.teacher) });
+      });
+    });
+    rows.forEach(x => { x.s = x.rec ? 'rep' : x.ev.length ? 'ev' : x.state === 'past' ? 'none' : x.state === 'now' ? 'now' : 'later'; x.k = x.c.cls + '|' + (x.r.sid || ''); });
+    return rows.sort((a, b) => hNum((a.rec && a.rec.days[0]) || a.r.days[0]) - hNum((b.rec && b.rec.days[0]) || b.r.days[0]) || a.c.cls.localeCompare(b.c.cls, 'ar'));
+  }
+  const nrSpan = days => !days || !days.length ? '—' : days.length === 1 ? hd(days[0]) : hd(days[0]) + ' – ' + hd(days[days.length - 1]);
+  const nrTabs = tab => `<div class="nr-tabs"><button class="${tab ? '' : 'on'}" data-go="lnr">التقارير</button><button class="${tab ? 'on' : ''}" data-go="lnr/m">المؤشرات</button></div>`;
+  const nrThumb = f => `<a class="nr-ev" href="https://drive.google.com/file/d/${esc(f.id)}/view" target="_blank" rel="noopener" title="${esc(f.n)}">${/^image\//.test(f.m)
+    ? (NR.th[f.id] ? `<img alt="" src="data:image/jpeg;base64,${NR.th[f.id]}">` : `<span data-nrth="${esc(f.id)}">…</span>`) : `<span>${/pdf/.test(f.m) ? 'PDF' : /video/.test(f.m) ? 'فيديو' : 'ملف'}</span>`}</a>`;
+  function nrRow(x) {
+    const rec = x.rec, p = rec && rec.partner, days = rec ? rec.days : x.r.days;
+    return `<div class="nr-r"><div class="nr-who"><b>${esc(x.t)}</b><span class="chip s-${NS[x.s][1]}">${NS[x.s][0]}</span>
+        <small>${nrSpan(days)}${rec ? ` · ${ar(rec.dur || 15)} دقيقة · ${rec.students == null ? '—' : ar(rec.students) + ' طالبة'}${rec.dis ? ` · ${ar(rec.dis)} من ذوات الإعاقة` : ''}` : ''}</small>
+        ${p && p.n ? `<small>المعلمة المشاركة: ${esc(p.n)} — ${p.took ? '<b class="nr-y">شاركت</b>' : '<b class="nr-n">لم تشارك</b>'}</small>` : ''}
+        ${rec && rec.pcount ? `<small>الشراكات (${ar(rec.pcount)}): ${esc(rec.pnames)}</small>` : ''}</div>
+      <div class="nr-evs">${x.ev.slice(0, 10).map(nrThumb).join('')}${x.ev.length > 10 ? `<span class="nr-more">+${ar(x.ev.length - 10)}</span>` : ''}${x.ev.length ? '' : '<span class="ld-empty" style="margin:0">لا شواهد</span>'}</div>
+      <div class="nr-rep">${rec && rec.pdf ? `<a href="https://drive.google.com/file/d/${esc(rec.pdf.id)}/view" target="_blank" rel="noopener" title="${esc(rec.pdf.name)}">${rec.thumb
+        ? `<img alt="التقرير" src="data:image/jpeg;base64,${rec.thumb}">` : '<span class="nr-noth">PDF</span>'}<span>التقرير${rec.ver > 1 ? ` (الإصدار ${ar(rec.ver)})` : ''}</span></a>` : '<span class="ld-empty" style="margin:0">لم يصدر التقرير</span>'}</div></div>`;
+  }
+  function nrReports(D, rows) {
+    const F = NR.f, cls = (D.nplan || []).map(c => c.cls);
+    const shown = rows.filter(x => (!F.cls || x.c.cls === F.cls) && (!F.st || x.s === F.st));
+    const groups = []; shown.forEach(x => { let g = groups.find(q => q.k === x.k); if (!g) groups.push(g = { k: x.k, x, rows: [] }); g.rows.push(x); });
+    return `<div class="nr-f"><select id="nrC"><option value="">كل الفصول</option>${cls.map(c => `<option${F.cls === c ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select>
+      <select id="nrS"><option value="">كل الحالات</option>${Object.entries(NS).map(([k, v]) => `<option value="${k}"${F.st === k ? ' selected' : ''}>${v[0]}</option>`).join('')}</select>
+      <span class="muted">${ar(groups.length)} أسبوعًا · ${ar(shown.length)} تقريرًا مطلوبًا</span></div>
+    ${groups.map(({ x, rows: G }) => { const r = x.r, c = x.c;
+      return `<div class="card nr-g"><div class="nr-h"><div><b>${r.manual ? 'نشاط يدوي: ' + esc(r.topic) : `الأسبوع ${WK[r.w] || ar(r.w)} — ${esc(r.topic)}`}</b>
+          <span>${esc(c.cls)} · ${nrSpan(r.days)}${r.dn ? ' (' + r.dn.join('، ') + ')' : ''}</span>
+          ${r.radio || r.prayer ? `<span>الاصطفاف الصباحي: ${esc(r.radio || '—')} · الصلاة: ${esc(r.prayer || '—')}</span>` : ''}</div>
+        ${x.url ? `<a class="btn sm ghost" href="${esc(x.url)}" target="_blank" rel="noopener">رابط الشواهد</a>` : ''}</div>${G.map(nrRow).join('')}</div>`; }).join('') || '<p class="ld-empty">لا نتائج.</p>'}`;
+  }
+  function nrMetrics(D, rows) {
+    const W = rows.filter(x => !x.r.manual), due = W.filter(x => x.state === 'past'), done = due.filter(x => x.s === 'rep'), R = rows.filter(x => x.rec).map(x => x.rec);
+    const sum = k => R.reduce((a, r) => a + (Number(r[k]) || 0), 0), withP = R.filter(r => r.partner && r.partner.n), took = withP.filter(r => r.partner.took).length;
+    const pct = due.length ? Math.round(done.length / due.length * 100) : null;
+    const names = [...new Set(R.filter(r => r.pcount && r.pnames).flatMap(r => r.pnames.split(/[،,]\s*/)).map(s => s.trim()).filter(Boolean))];
+    const kpi = [[pct === null ? '—' : ar(pct) + '٪', 'نسبة الإنجاز', `${ar(done.length)} من ${ar(due.length)} تقريرًا مستحقًا`], [ar(R.length), 'تقريرًا صادرًا', (m => m ? 'منها ' + ar(m) + ' لأنشطة يدوية' : 'في أسابيع الإذاعة')(rows.filter(x => x.r.manual && x.rec).length)],
+      [ar(due.filter(x => x.s === 'none').length), 'بلا شواهد', 'أسابيع انتهت ولم تُرفع شواهدها'], [ar(sum('students')), 'طالبة مشاركة', 'مجموع التقارير الصادرة'],
+      [ar(sum('dis')), 'من ذوات الإعاقة', 'مجموع التقارير الصادرة'], [ar(sum('pcount')), 'شراكة مجتمعية', names.length ? names.slice(0, 3).join('، ') + (names.length > 3 ? '…' : '') : 'لا توجد'],
+      [withP.length ? ar(took) + ' / ' + ar(withP.length) : '—', 'مشاركة الزميلات', 'شاركت فعلًا في التنفيذ']];
+    // الخطة الزمنية: صف لكل فصل، عمود لكل أسبوع (١–١٩)، والخانة ملونة بحالة معلماته
+    const cell = (c, w) => { const r = c.runs.find(q => q.w === w); if (!r) return '<td></td>';
+      const X = rows.filter(x => x.c === c && x.r === r), all = X.every(x => x.s === 'rep'), some = X.some(x => x.s === 'rep' || x.s === 'ev');
+      const s = X[0].state === 'later' ? 'na' : X[0].state === 'now' ? (all ? 'ok' : 'part') : all ? 'ok' : some ? 'part' : 'none';
+      return `<td class="nr-c s-${s}" title="${esc(r.topic)} — ${nrSpan(r.days)} — ${X.map(x => x.t + ': ' + NS[x.s][0]).join('، ')}">${esc(r.topic)}<small>${X.filter(x => x.s === 'rep').length ? ar(X.filter(x => x.s === 'rep').length) + '/' + ar(X.length) : ''}</small></td>`; };
+    const curW = (() => { let w = 0; (D.nplan || []).forEach(c => c.runs.forEach(r => { if (today >= gDay(r.g0)) w = Math.max(w, r.w); })); return w; })();
+    const byT = {}; due.forEach(x => { (byT[x.t] ||= { t: x.t, cls: x.c.cls, due: 0, rep: 0, miss: [], ev: [] }); const b = byT[x.t]; b.due++;
+      if (x.s === 'rep') b.rep++; else if (x.s === 'ev') b.ev.push(x); else b.miss.push(x); });
+    const T = Object.values(byT), okT = T.filter(b => b.rep === b.due), missT = T.filter(b => b.miss.length), evT = T.filter(b => b.ev.length);
+    const lbl = x => `الأسبوع ${WK[x.r.w] || ar(x.r.w)} (${esc(x.r.topic)})`;
+    return `<div class="ld-k">${kpi.map(([n, l, s]) => `<div class="card"><b>${n}</b><span>${l}</span><small class="nr-ks">${esc(s)}</small></div>`).join('')}</div>
+    <h3 class="ld-sec">الخطة الزمنية للأنشطة اللاصفية</h3>
+    <div class="nr-leg"><span class="nr-c s-ok">صدرت تقاريره</span><span class="nr-c s-part">جزئي / جارٍ</span><span class="nr-c s-none">انتهى بلا شواهد</span><span class="nr-c s-na">لم يحن</span></div>
+    <div class="card ld-tw"><table class="ld-t nr-plan"><thead><tr><th>الفصل</th>${Array.from({ length: 19 }, (_, i) => `<th${i + 1 === curW ? ' class="nr-cur"' : ''}>${ar(i + 1)}</th>`).join('')}</tr></thead>
+      <tbody>${(D.nplan || []).map(c => `<tr><th>${esc(c.cls)}<small>${c.teachers.map(esc).join(' و')}</small></th>${Array.from({ length: 19 }, (_, i) => cell(c, i + 1)).join('')}</tr>`).join('')}</tbody></table></div>
+    <div class="card ld-tw" style="margin-top:12px"><table class="ld-t"><thead><tr><th>الأسبوع</th><th>الفصل</th><th>الموضوع والبرنامجان</th><th>الأيام</th><th>المعلمات</th></tr></thead><tbody>
+      ${(D.nplan || []).flatMap(c => c.runs.map(r => ({ c, r }))).sort((a, b) => a.r.w - b.r.w).map(({ c, r }) => `<tr><td>${WK[r.w] || ar(r.w)}</td><td>${esc(c.cls)}</td>
+        <td><b>${esc(r.topic)}</b><br><small>${esc(r.radio || '—')} · ${esc(r.prayer || '—')}</small></td><td>${nrSpan(r.days)}</td>
+        <td>${rows.filter(x => x.c === c && x.r === r).map(x => `${esc(x.t)} <span class="chip s-${NS[x.s][1]}">${NS[x.s][0]}</span>`).join('<br>')}</td></tr>`).join('')}</tbody></table></div>
+    <div class="nr-cols">
+      <div class="card nr-l"><h3>المعلمات المنجزات (${ar(okT.length)})</h3>${okT.length ? okT.map(b => `<div><b>${esc(b.t)}</b> <small>${esc(b.cls)} · ${ar(b.rep)} من ${ar(b.due)}</small></div>`).join('') : '<p class="ld-empty">لا توجد بعد.</p>'}</div>
+      <div class="card nr-l"><h3>لم يرفعن الشواهد (${ar(missT.length)})</h3>${missT.length ? missT.map(b => `<div><b>${esc(b.t)}</b> <small>${esc(b.cls)} · ${b.miss.map(lbl).join('، ')}</small></div>`).join('') : '<p class="ld-empty">لا توجد — كل الأسابيع المنتهية فيها شواهد.</p>'}</div>
+      <div class="card nr-l"><h3>شواهد بلا تقرير (${ar(evT.length)})</h3>${evT.length ? evT.map(b => `<div><b>${esc(b.t)}</b> <small>${esc(b.cls)} · ${b.ev.map(lbl).join('، ')}</small></div>`).join('') : '<p class="ld-empty">لا توجد.</p>'}</div>
+    </div>
+    ${names.length ? `<div class="card nr-l" style="margin-top:12px"><h3>الشراكات المجتمعية (${ar(names.length)})</h3><div>${names.map(esc).join('، ')}</div></div>` : ''}`;
+  }
+  function nrPage(D, a) {
+    nrCss(); nrLoad(); setTimeout(nrThumbs, 0);
+    const rows = nrRows(D), tab = a === 'm';
+    return nav(['lnr', 'تقارير المعلمات في الأنشطة اللاصفية']) + `<div class="card ld-h"><h2>تقارير المعلمات في الأنشطة اللاصفية</h2>
+      <p>بطاقات تنفيذ الفترات اللاصفية (الاصطفاف الصباحي والصلاة) لكل معلمة في أسابيع إذاعة فصلها${NR.loading ? ' · جارٍ تحديث التقارير…' : NR.err ? ' · تعذّر تحديث التقارير: ' + esc(NR.err) : ''}</p></div>`
+      + nrTabs(tab) + (tab ? nrMetrics(D, rows) : nrReports(D, rows));
+  }
+  document.addEventListener('change', ev => {
+    if (ev.target.id !== 'nrC' && ev.target.id !== 'nrS') return;
+    NR.f[ev.target.id === 'nrC' ? 'cls' : 'st'] = ev.target.value; if (typeof route === 'function') route();
+  });
+  function nrCss() {
+    if (document.getElementById('nr-css')) return; const s = document.createElement('style'); s.id = 'nr-css';
+    s.textContent = `.nr-tabs{display:flex;gap:6px;margin:0 0 12px}.nr-tabs button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 18px;font-weight:600;cursor:pointer}.nr-tabs button.on{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.nr-f{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}.nr-f select{padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+.nr-g{padding:14px 16px;margin-bottom:12px}.nr-h{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:6px}
+.nr-h b{font-size:16px}.nr-h span{display:block;color:var(--muted);font-size:13px}
+.nr-r{display:grid;grid-template-columns:minmax(180px,1.1fr) 2fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px dashed var(--line)}.nr-r:first-of-type{border-top:0}
+.nr-who b{display:block}.nr-who small{display:block;color:var(--muted);font-size:12.5px;margin-top:3px}.nr-y{color:var(--ok)}.nr-n{color:var(--none)}
+.nr-evs{display:flex;flex-wrap:wrap;gap:4px;align-items:center}.nr-ev{width:46px;height:46px;border-radius:7px;overflow:hidden;border:1px solid var(--line);background:var(--soft);display:grid;place-items:center;font-size:10px;color:var(--muted);text-decoration:none}
+.nr-ev img{width:100%;height:100%;object-fit:cover}.nr-more{font-size:12px;color:var(--muted)}
+.nr-rep a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;text-decoration:none}.nr-rep img{width:58px;border:1px solid var(--line);border-radius:4px;background:#fff}
+.nr-noth{width:58px;height:80px;display:grid;place-items:center;border:1px solid var(--line);border-radius:4px;background:var(--soft)}
+@media(max-width:700px){.nr-r{grid-template-columns:1fr auto}.nr-evs{grid-column:1/-1;order:3}}
+.nr-ks{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+.nr-plan{font-size:12px}.nr-plan th small{display:block;font-weight:400;color:var(--muted);font-size:11px}.nr-plan td,.nr-plan th{padding:5px 4px;text-align:center;min-width:44px}.nr-plan th:first-child{text-align:right;min-width:130px}
+.nr-c{border-radius:6px;font-size:11px;line-height:1.3}.nr-c small{display:block;font-weight:700}.nr-plan th.nr-cur{background:var(--brand);color:var(--brand-ink);border-radius:6px}
+.nr-c.s-ok{background:var(--ok-bg);color:var(--ok)}.nr-c.s-part{background:var(--part-bg);color:var(--part)}.nr-c.s-none{background:var(--none-bg);color:var(--none)}.nr-c.s-na{background:var(--na-bg);color:var(--na)}
+.nr-leg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.nr-leg .nr-c{padding:3px 10px;font-size:12px}
+.nr-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}.nr-l{padding:14px 16px}.nr-l h3{margin:0 0 8px;font-size:15px}.nr-l>div{padding:5px 0;border-top:1px dashed var(--line)}.nr-l small{color:var(--muted)}`;
+    document.head.appendChild(s);
+  }
   window.LEADER = {
     render(D, v, a) { style(); events(); window.__LD = D; prep(D); const tt = document.getElementById('title'); if (tt) tt.textContent = this.title;
-      return v === 'lt' ? teacher(D, +a) : v === 'ltc' ? teacherClass(D, +a) : v === 'ltn' ? teacherNon(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : v === 'la' ? alerts(D) : home(D); },
+      return v === 'lnr' ? nrPage(D, a) : v === 'lt' ? teacher(D, +a) : v === 'ltc' ? teacherClass(D, +a) : v === 'ltn' ? teacherNon(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : v === 'la' ? alerts(D) : home(D); },
     title: 'صفحة رائد النشاط : منى العمري',
   };
 })();

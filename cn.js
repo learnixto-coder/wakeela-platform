@@ -13,7 +13,7 @@ window.CN = (() => {
     return HD(g('year') + '/' + g('month') + '/' + g('day')) + ' ' + AR(m[4] + ':' + m[5]); };
   const ORD = ['', 'الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر', 'الحادي عشر', 'الثاني عشر',
     'الثالث عشر', 'الرابع عشر', 'الخامس عشر', 'السادس عشر', 'السابع عشر', 'الثامن عشر', 'التاسع عشر'];
-  const pics = n => n === 1 ? 'صورة واحدة' : n === 2 ? 'صورتان' : n >= 3 && n <= 10 ? AR(n) + ' صور' : AR(n) + ' صورة';
+  const pics = n => !n ? 'لا صور' : n === 1 ? 'صورة واحدة' : n === 2 ? 'صورتان' : n >= 3 && n <= 10 ? AR(n) + ' صور' : AR(n) + ' صورة';
   const n0 = v => Number(v) || DUR;
   const DUR = 15, AUTO = 6, FINE = 0.30, REVIEW = 10;
   // مقيسة على ٢١٨ صورة شواهد حقيقية (2026-10-19): الصورة نفسها بعد تصغير/ضغط شديد ← pHash ≤ ٤ وفرق المربعات ≤ ٠٫٣٤؛
@@ -123,7 +123,7 @@ window.CN = (() => {
     const r = L.rec || L.draft || {};
     S.F[s.sid] = { mname: r.mname || s.mname || '', progs: r.progs ? r.progs.map(p => p.n) : [s.radio, s.prayer],
       days: (r.days && r.days.length ? r.days : s.days).map(hk), took: !!(r.partner && r.partner.took),
-      students: r.students ?? D.cn.students ?? '', dur: r.dur ?? DUR, dis: r.dis ?? 0, notes: r.notes || '', ex: new Set(r.ex || []), keep: new Set(r.keep || []) };
+      students: r.students ?? D.cn.students ?? '', dur: r.dur ?? DUR, dis: r.dis ?? 0, pcount: r.pcount ?? 0, pnames: r.pnames || '', notes: r.notes || '', ex: new Set(r.ex || []), keep: new Set(r.keep || []) };
   }
   const isImg = f => /^image\//.test(f.m);
   /** تحليل التكرار بين شواهدها: المطابق تمامًا/المصغّر من الصورة نفسها ← مستبعد تلقائيًا؛ المتشابه ← للمراجعة */
@@ -173,7 +173,7 @@ window.CN = (() => {
         <button class="btn sm" data-nc="link">جلب الشواهد من المجلد</button></div>
       <div class="muted nc-msg" id="ncEvMsg">${esc((S.ui[s.sid] || {}).evMsg || '')}</div>
       ${L.files.length ? `<div class="nc-tiles">${L.files.map(tile).join('')}</div>` : '<p class="muted nc-hint">لم تُرفق شواهد بعد.</p>'}
-      <p class="muted nc-hint">في التقرير: ${pics(X.ev.length)}${autoN ? ` · استُبعدت ${AR(autoN)} مكررة تلقائيًا` : ''}${F.ex.size ? ` · ${AR([...F.ex].filter(id => L.files.some(f => f.id === id)).length)} استبعدتِها` : ''}${X.other.length ? ` · ${AR(X.other.length)} ملف آخر (PDF/فيديو) في المجلد يظهر عبر رمز QR` : ''}${hashing ? ' · جارٍ فحص التشابه…' : ''}</p>
+      <p class="muted nc-hint">الشواهد المعتمدة: ${pics(X.ev.length)}${autoN ? ` · استُبعدت ${AR(autoN)} مكررة تلقائيًا` : ''}${F.ex.size ? ` · ${AR([...F.ex].filter(id => L.files.some(f => f.id === id)).length)} استبعدتِها` : ''}${X.other.length ? ` · ${AR(X.other.length)} ملف آخر (PDF/فيديو) في المجلد يظهر عبر رمز QR` : ''}${hashing ? ' · جارٍ فحص التشابه…' : ''}</p>
       ${X.pairs.length ? `<div class="nc-rev"><b>صور متشابهة للمراجعة (${AR(X.pairs.length)})</b><p class="muted nc-hint">قد تكون لقطتين مختلفتين للتنفيذ، فلا تُستبعد إلا باختيارك.</p>
         ${X.pairs.map(p => `<div class="nc-pair"><img alt="" src="data:image/jpeg;base64,${p.a.tb}" data-nc="zoom" data-id="${esc(p.a.id)}"><img alt="" src="data:image/jpeg;base64,${p.b.tb}" data-nc="zoom" data-id="${esc(p.b.id)}">
           <div class="nc-pb"><button class="btn sm" data-nc="exc" data-id="${esc(p.b.id)}">استبعاد الثانية من التقرير</button><button class="btn sm ghost" data-nc="keep" data-k="${esc(p.a.id + '~' + p.b.id)}">إبقاء الاثنتين</button></div></div>`).join('')}</div>` : ''}
@@ -184,12 +184,14 @@ window.CN = (() => {
 
       <div class="nc-sec">٥. المعلمة المشاركة</div>
       ${D.cn.partner ? `<label class="nc-chk"><input type="checkbox" data-f="took"${F.took ? ' checked' : ''}> <span><b>${esc(D.cn.partner)}</b></span></label>
-        <p class="muted nc-hint">إن لم تحدّديه فلا تُحتسب لها مشاركة فعلية، ويُكتب في التقرير «لم تشارك».</p>` : '<p class="muted" style="margin:0">لا توجد معلمة مشاركة لفصلك في التكليف.</p>'}
+        <p class="muted nc-hint">حدّديه إن شاركت في التنفيذ فيُكتب اسمها مع اسمك في التقرير، وإلا فلا يُكتب عنها شيء.</p>` : '<p class="muted" style="margin:0">لا توجد معلمة مشاركة لفصلك في التكليف.</p>'}
 
       <div class="nc-sec">٦. عدد الطالبات المشاركات</div>
       <input type="number" min="0" max="999" inputmode="numeric" data-f="students" value="${esc(F.students)}" class="nc-num">
-      <details class="nc-more"${F.dis || F.notes ? ' open' : ''}><summary>حقول اختيارية: ذوات الإعاقة والملاحظات</summary>
-        <div class="nc-two"><label class="nc-l">منهن من ذوات الإعاقة<input type="number" min="0" max="999" inputmode="numeric" data-f="dis" value="${esc(F.dis)}"></label></div>
+      <details class="nc-more"${F.dis || F.notes || F.pcount ? ' open' : ''}><summary>حقول اختيارية: ذوات الإعاقة والشراكات والملاحظات</summary>
+        <div class="nc-two"><label class="nc-l">منهن من ذوات الإعاقة<input type="number" min="0" max="999" inputmode="numeric" data-f="dis" value="${esc(F.dis)}"></label>
+          <label class="nc-l">عدد الشراكات المجتمعية<input type="number" min="0" max="999" inputmode="numeric" data-f="pcount" value="${esc(F.pcount)}"></label></div>
+        <label class="nc-l">أسماء الشراكات (إن وُجدت)<input type="text" maxlength="300" data-f="pnames" value="${esc(F.pnames)}" placeholder="مثال: جمعية البر بخميس مشيط"></label>
         <label class="nc-l">ملاحظات (التحديات ـ المقترحات)<textarea maxlength="400" data-f="notes" rows="2">${esc(F.notes)}</textarea></label></details>
     </div>
     <div class="card pad nc-act"><button class="btn" data-nc="save"${S.busy ? ' disabled' : ''}>${L.rec ? 'حفظ وتحديث التقرير' : 'حفظ وإصدار التقرير'}</button>
@@ -207,7 +209,7 @@ window.CN = (() => {
         <div class="muted" style="font-size:13.5px">${span(r.days)} (${r.days.length === 1 ? 'يوم واحد' : r.days.length === 2 ? 'يومان' : r.days.length <= 10 ? AR(r.days.length) + ' أيام' : AR(r.days.length) + ' يومًا'}) · ${AR(r.dur)} دقيقة · ${AR(r.students)} طالبة
           ${r.partner && r.partner.n ? ` · ${esc(r.partner.n)}: ${r.partner.took ? 'شاركت ✓' : 'لم تشارك'}` : ''}</div>
         <div class="nc-mini">${shown.map(f => f.tb ? `<img alt="" src="data:image/jpeg;base64,${f.tb}" data-nc="zoom" data-id="${esc(f.id)}">` : '').join('')}</div>
-        <div class="muted" style="font-size:12.5px">في التقرير ${pics(shown.length)}${(r.ex || []).length ? ` · ${AR(r.ex.length)} مستبعدة (مكررة أو باختيارك)` : ''}</div>
+        <div class="muted" style="font-size:12.5px">الشواهد المعتمدة: ${pics(shown.length)}${(r.ex || []).length ? ` · ${AR(r.ex.length)} مستبعدة (مكررة أو باختيارك)` : ''}</div>
         <div class="toolbar nc-tools"><button class="btn sm" data-nc="open">معاينة التقرير</button><button class="btn sm" data-nc="dl">تنزيل PDF</button>
           <button class="btn sm ghost" data-nc="edit">تعديل البيانات</button><button class="btn sm ghost" data-nc="addev">إضافة شواهد</button></div>
         <span class="nc-msg" id="ncPrevMsg">${esc((S.ui[s.sid] || {}).saveMsg || '')}</span>
@@ -363,18 +365,18 @@ window.CN = (() => {
         <tr><td class="l">بداية التنفيذ</td><td>${dayCell(days[0])}</td></tr>
         <tr><td class="l">نهاية التنفيذ</td><td>${dayCell(days[days.length - 1])}</td></tr>
         <tr><td class="l">أيام التنفيذ</td><td class="sm">${days.map(h => { const c = calOf(h); return esc(c ? c[2] : '') + ' ' + HD(h); }).join('، ')}</td></tr>
-        <tr><td class="l">${D.cn.partner ? 'المعلمتان' : 'المعلمة المنفذة'}</td><td><div class="dates halves"><div><span class="k">المنفذة:</span>${esc(D.cn.name)}</div>${D.cn.partner ? `<div><span class="k">المشاركة:</span>${esc(D.cn.partner)} <b class="${took ? 'yes' : 'no'}">(${took ? 'شاركت في التنفيذ' : 'لم تشارك'})</b></div>` : ''}</div></td></tr>
+        <tr><td class="l">${took ? 'المعلمتان المنفذتان' : 'المعلمة المنفذة'}</td><td>${took ? `<div class="dates halves"><div>${esc(D.cn.name)}</div><div>${esc(D.cn.partner)}</div></div>` : esc(D.cn.name)}</td></tr>
         <tr><td class="l">عدد الطالبات المشاركات</td><td>${girls(F.students)}</td></tr>
         <tr><td class="l" style="font-size:15.5px">عدد الطالبات المشاركات<br>من ذوي الإعاقة</td><td>${girls(F.dis)}</td></tr>
         <tr><td class="l" style="font-size:15.5px">ملاحظات (التحديات ـ المقترحات)</td><td class="tall multi">${esc(AR(F.notes))}</td></tr>
         <tr><td class="l">الشواهد</td><td class="tall"><div class="ev">${photo ? `<img class="ncph" src="${photo.src}" style="width:${photo.w}px;height:${photo.h}px" alt="">` : '<span></span>'}
-          <span class="ncqrb"><img class="ncqr" src="${qr}" alt=""><span class="nccap">امسحي الرمز<br>لعرض الشواهد${X.ev.length > 1 ? `<br>ملحق الصور: ${pics(X.ev.length)}` : ''}</span></span></div></td></tr>
+          <span class="ncqrb"><img class="ncqr" src="${qr}" alt=""><span class="nccap">امسحي الرمز<br>لعرض الشواهد</span></span></div></td></tr>
       </table>
       <div class="s-sign">
         <div class="b"><b>المعلمة المنفذة:</b> ${esc(D.cn.name)}<br><b>التاريخ:</b> ${HD(days[days.length - 1])}<br><b>التوقيع/</b><div class="sig">${sig(A.sig)}</div></div>
         <div class="stamp"><span class="lab">الختم</span><div class="ell${A.stamp ? ' has' : ''}">${A.stamp ? `<img src="${A.stamp}" alt="">` : ''}</div></div>
         <div class="b"><b>رائدة النشاط:</b> ${esc(A.leader || '')}<br><b>التاريخ:</b> ${HD(days[days.length - 1])}<br><b>التوقيع/</b><div class="sig">${sig(A.leaderSig)}</div></div>
-        ${took ? `<div class="b partner"><b>المعلمة المشاركة:</b> ${esc(D.cn.partner)}<br><b>التاريخ:</b> ${HD(days[days.length - 1])}<br><b>التوقيع/</b><div class="sig">${sig(A.partnerSig)}</div></div>` : ''}
+        ${took ? `<div class="b partner"><b>المعلمة المنفذة:</b> ${esc(D.cn.partner)}<br><b>التاريخ:</b> ${HD(days[days.length - 1])}<br><b>التوقيع/</b><div class="sig">${sig(A.partnerSig)}</div></div>` : ''}
         <div class="b principal"><b>مدير المدرسة:</b> ${esc(A.principal || '')}<br><b>التوقيع/</b><div class="sig">${sig(A.principalSig)}</div></div>
       </div>
       <div class="s-note">• يتم تعبئة هذه البطاقة عند استكمال المدة المخصصة للفترة اللاصفية وفق ما ورد في دليل الخطط الدراسية / الإصدار الخامس.</div>
@@ -388,15 +390,12 @@ window.CN = (() => {
   async function makePdf(s, L, F, X, say) {
     say('جارٍ تجهيز أدوات التقرير…'); await Promise.all([pdfLibs(), cardFont(), loadQr()]);
     say('جارٍ تجهيز صور الشواهد…');
-    const big = await bigs(s, X.ev.map(f => f.id));
+    const big = await bigs(s, X.ev.slice(0, 1).map(f => f.id));   // صورة واحدة في خانة الشواهد (لا ملحق صور)
     const logo = await toData('moe-logo.png').catch(() => '');
     const q = qrcode(0, 'M'); q.addData(L.folder); q.make(); const qr = q.createDataURL(6, 2);
-    const photos = (await Promise.all(big.map(b => fit(b, 210, 230)))).filter(Boolean), cardPh = big[0] ? await fit(big[0], 300, 118) : null;
-    const pages = [pageCard(s, F, X, cardPh, qr, logo)], per = 9;
-    for (let i = 0; i < photos.length; i += per) pages.push(i);
-    const of = Math.ceil(photos.length / per);
+    const cardPh = big[0] ? await fit(big[0], 300, 118) : null, pages = [pageCard(s, F, X, cardPh, qr, logo)];
     const host = document.createElement('div'); host.className = 'ncs'; host.style.cssText = 'position:fixed;top:0;right:-4000px;width:794px;z-index:-1';
-    host.innerHTML = pages.map((p, k) => k ? pageAnnex(s, photos.slice(p, p + per), k, of) : p).join(''); document.body.append(host);
+    host.innerHTML = pages.join(''); document.body.append(host);
     try {
       await Promise.all([...host.querySelectorAll('img')].map(im => im.decode ? im.decode().catch(() => { }) : 0));
       // إن طال المحتوى (أسماء طويلة، أيام كثيرة) تتقلص المقاسات معًا حتى يبقى الختم والتواقيع داخل الصفحة
@@ -424,6 +423,8 @@ window.CN = (() => {
     if (!(Number.isInteger(n(F.dur)) && n(F.dur) >= 1 && n(F.dur) <= 120)) miss.push('مدة الفترة (١–١٢٠ دقيقة)');
     if (!(Number.isInteger(n(F.students)) && n(F.students) >= 0 && n(F.students) < 1000)) miss.push('عدد الطالبات المشاركات');
     if (!(Number.isInteger(n(F.dis || 0)) && n(F.dis || 0) >= 0)) miss.push('عدد ذوات الإعاقة');
+    if (!(Number.isInteger(n(F.pcount || 0)) && n(F.pcount || 0) >= 0)) miss.push('عدد الشراكات');
+    else if (n(F.pcount || 0) > 0 && !(F.pnames || '').trim()) miss.push('أسماء الشراكات');
     if (!X.ev.length && !X.other.length) miss.push('شاهد واحد على الأقل');
     if (miss.length) { const m = document.getElementById('ncSaveMsg'); if (m) { m.textContent = 'أكملي: ' + miss.join('، '); m.style.color = 'var(--none)'; } return; }
     const btn = document.querySelector('[data-nc="save"]'); if (btn) btn.disabled = true;
@@ -431,7 +432,7 @@ window.CN = (() => {
       const pdf = await makePdf(s, L, F, X, msg);
       msg(L.rec ? 'جارٍ تحديث التقرير المحفوظ…' : 'جارٍ حفظ التقرير…');
       const ex = [...new Set([...F.ex, ...X.auto.keys()])].filter(id => L.files.some(f => f.id === id));
-      const data = { mname: F.mname, progs: F.progs.map(n => ({ n })), days: F.days, dur: n(F.dur), partner: { took: !!F.took }, students: n(F.students), dis: n(F.dis || 0), notes: F.notes,
+      const data = { mname: F.mname, progs: F.progs.map(n => ({ n })), days: F.days, dur: n(F.dur), partner: { took: !!F.took }, students: n(F.students), dis: n(F.dis || 0), pcount: n(F.pcount || 0), pnames: (F.pnames || '').trim(), notes: F.notes,
         ev: X.ev.map(f => f.id), ex, keep: [...F.keep], ...(TEST() && { test: true }) };
       const r = await api('nsave', { sid: s.sid, data, pdf: pdf.b64, thumb: pdf.thumb }, 300000, 1);   // طلب واحد (الخادم يقفل ويحدّث الملف نفسه عند الإعادة)
       Object.assign(L, { rec: r.rec, status: r.status, ver: r.ver, thumb: r.thumb, at: r.rec.pdf.at });
