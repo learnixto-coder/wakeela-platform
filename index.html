@@ -599,6 +599,7 @@ function route() {
     $('#view').innerHTML = v === 'start' || rev ? tHub()
       : v === 'cp' && D.ct ? tTabs('cp') + teacherCp(a)
       : v === 'cn' && D.cn ? tTabs('cn') + cnPage(a)
+      : v === 'lnr' && D.nv ? nvPage(a)
       : v === 'sig' && D.ct ? tTabs('sig') + teacherSig()
       : v === 'x' && D.extra[+a] ? teacherExtra(+a)
       : rev ? tTabs('rev') + teacherReview()
@@ -1233,8 +1234,18 @@ function rvCard(p) {
 // the teacher's «الرئيسية»: the same 4 buttons for every teacher (plan-only accounts have no «ملفاتي»)
 // «جودة شواهد البرامج» (rev) disabled 2026-10-17 at the user's request: no button, #rev → الرئيسية; teacherReview() kept unused
 const tList = () => [['qa', 'تدقيق الجودة', 'نتيجة تدقيق برامجك وردّك وخطة التحسين'],
-  ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها'], D.ct && ['cp', 'الأنشطة الصفية', 'برامجك في خطة النشاط ورفع صورها'], D.cn && ['cn', 'الأنشطة اللاصفية', 'أسابيع فصلك: بطاقة التنفيذ والشواهد والتقرير'], D.ct && ['sig', 'تسجيل توقيعي', 'ارسمي توقيعك مرة واحدة ليظهر في تقارير برامجك'], !D.planOnly && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
+  ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها'], D.ct && ['cp', 'الأنشطة الصفية', 'برامجك في خطة النشاط ورفع صورها'], D.cn && ['cn', 'الأنشطة اللاصفية', 'أسابيع فصلك: بطاقة التنفيذ والشواهد والتقرير'], D.nv && ['lnr', 'تقارير المعلمات في الأنشطة اللاصفية', 'تقارير الأسابيع ومؤشراتها (اطلاع)'], D.ct && ['sig', 'تسجيل توقيعي', 'ارسمي توقيعك مرة واحدة ليظهر في تقارير برامجك'], !D.planOnly && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
 // «الأنشطة اللاصفية» (2026-10-19): الأسابيع وبطاقة التنفيذ والتقرير المحفوظ في cn.js (يُحمَّل عند أول فتح)؛ teacherCn() القديمة احتياط إن تعذّر تحميله
+// «تقارير المعلمات في الأنشطة اللاصفية» لمعلمة مطّلعة (2026-10-19: سلمى القرني): صفحة رائدة النشاط نفسها (leader.js → LEADER.nr) بطلبات برمز المعلمة
+let nvLoad = null;
+function nvPage(a) {
+  if (window.LEADER && LEADER.nr) return LEADER.nr(D.nv, a === 'm' ? 'm' : '', async b => { let last = 'تعذر الاتصال';
+    for (let i = 0; i < 3; i++) { try { const r = await fetch(D.ct.api, { method: 'POST', headers: { 'content-type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ a: b.a === 'nall' ? 'nallv' : 'nthumbv', tok: D.nv.tok, id: b.id || '' }) });
+      const j = JSON.parse(await r.text()); if (j.ok) return j; last = j.error; if (/غير مصرح/.test(last)) break; } catch (e) { last = e.message; } await new Promise(o => setTimeout(o, 800)); }
+    throw new Error(last); });
+  nvLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'leader.js?v=' + Date.now(); s.onload = ok; s.onerror = no; document.head.appendChild(s); }).then(() => route(), () => { nvLoad = null; });
+  return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
+}
 let cnLoad = null;
 function cnPage(a) {
   if (window.CN) return CN.render(a);

@@ -520,13 +520,13 @@
   async function nrThumbs() {
     const q = [...document.querySelectorAll('[data-nrth]')];
     await Promise.all([0, 1, 2].map(async () => { while (q.length) { const el = q.shift(), id = el.dataset.nrth;
-      try { if (!NR.th[id]) { const j = await api({ a: 'thumb', id }); NR.th[id] = j.b64 || ''; }
+      try { if (!NR.th[id]) { const j = await (NR.call || api)({ a: 'thumb', id }); NR.th[id] = j.b64 || ''; }
         if (el.isConnected) el.outerHTML = NR.th[id] ? `<img alt="" src="data:image/jpeg;base64,${NR.th[id]}">` : '<span>صورة</span>'; }
       catch { if (el.isConnected) el.textContent = 'صورة'; } } }));
   }
   function nrLoad() {
     if (NR.loading || NR.recs) return; NR.loading = true;
-    api({ a: 'nall', ...(window.NC_TEST && { test: 1 }) }).then(j => { NR.recs = j.recs || []; NR.err = ''; }).catch(e => { NR.err = e.message; })
+    (NR.call || api)({ a: 'nall', ...(window.NC_TEST && { test: 1 }) }).then(j => { NR.recs = j.recs || []; NR.err = ''; }).catch(e => { NR.err = e.message; })
       .finally(() => { NR.loading = false; if (/^#lnr/.test(location.hash) && typeof route === 'function') { const y = window.scrollY; route(); window.scrollTo(0, y); } });
   }
   const gDay = s => s ? Date.parse(s + 'T00:00:00Z') : 0;
@@ -645,7 +645,10 @@
 .nr-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}.nr-l{padding:14px 16px}.nr-l h3{margin:0 0 8px;font-size:15px}.nr-l>div{padding:5px 0;border-top:1px dashed var(--line)}.nr-l small{color:var(--muted)}`;
     document.head.appendChild(s);
   }
+  // معلمة مطّلعة (سلمى القرني): D = { nplan, radio, nrecs } من ملفها، call = طلب برمزها (nallv / nthumbv)
+  function nrView(D, a, call) { style(); NR.call = call; return nrPage(D, a); }
   window.LEADER = {
+    nr: nrView,
     render(D, v, a) { style(); events(); window.__LD = D; prep(D); const tt = document.getElementById('title'); if (tt) tt.textContent = this.title;
       return v === 'lnr' ? nrPage(D, a) : v === 'lt' ? teacher(D, +a) : v === 'ltc' ? teacherClass(D, +a) : v === 'ltn' ? teacherNon(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : v === 'la' ? alerts(D) : home(D); },
     title: 'صفحة رائد النشاط : منى العمري',
