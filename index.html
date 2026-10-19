@@ -356,7 +356,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .cp-th img{width:100%;height:100%;object-fit:cover;display:block}
 .cp-rep{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-top:10px}.cp-rep .cp-th img{object-fit:contain;background:#fff}
 .cp-rn{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cp-rf .cp-rn{white-space:normal;color:var(--ink);font-weight:600}
-.cp-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.cp-form label{display:grid;gap:4px;font-size:13.5px;color:var(--muted)}.cp-form .cp-wide{grid-column:1/-1}
+.cp-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.cp-form label{display:grid;gap:4px;font-size:13.5px;color:var(--muted)}.cp-form .cp-wide{grid-column:1/-1}.cp-ic{display:grid;gap:6px;font-size:13.5px;color:var(--muted)}.cp-ic small{font-size:12px}.cp-ic>div{display:flex;flex-wrap:wrap;gap:8px}.cp-ic label{display:flex!important;align-items:center;gap:6px;color:var(--ink);padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);cursor:pointer}.cp-ic label:has(input:checked){border-color:var(--ok)}.cp-ic input{padding:0;width:auto;margin:0}
 .cp-form input{font:inherit;color:var(--ink);padding:9px 10px;border:1.5px solid var(--line);border-radius:10px;background:var(--card)}
 .cp-bt{display:flex;gap:6px}.cp-bt .btn{flex:1;padding-inline:6px}.cp-del{color:var(--none)}
 .srv-u{font-size:12.5px;overflow-wrap:anywhere;background:var(--soft);border-radius:8px;padding:6px 10px;text-align:left}
@@ -1354,6 +1354,8 @@ function teacherCp(a) {
   ${(() => { const f = p.info || {}, v = x => x == null ? '' : x; return `<div class="card pad" style="margin-top:12px" id="cpInfo" data-k="${esc(one.id)}"><b>بيانات بطاقة التنفيذ</b>
     <p class="muted" style="margin:4px 0 10px">أدخليها ثم اضغطي «حفظ وإصدار البطاقة»؛ تصدر البطاقة بالختم والتواقيع إذا كانت للبرنامج شواهد مرفوعة.${f.at ? ` آخر حفظ: ${esc(f.at)}${f.by ? ' — ' + esc(f.by) : ''}` : ''}</p>
     <div class="cp-form">
+      <div class="cp-wide cp-ic" id="ciI"><span>مجال المشاركة <b style="color:var(--none)">*</b> <small>(إلزامي — اختاري خانة واحدة على الأقل)</small></span>
+        <div>${['بنك الإثراءات', 'التطوير الذاتي', 'قيمنا الغالية', 'نادي القراءة'].map(n => `<label><input type="checkbox" value="${n}"${(f.icons || []).includes(n) ? ' checked' : ''}> ${n}</label>`).join('')}</div></div>
       <label>عدد أولياء الأمور المشاركين<input type="number" min="0" max="999" inputmode="numeric" id="ciP" value="${v(f.parents)}" placeholder="0"></label>
       <label>عدد الشراكات المجتمعية<input type="number" min="0" max="999" inputmode="numeric" id="ciC" value="${v(f.pcount)}" placeholder="0"></label>
       <label>عدد الطالبات من ذوي الإعاقة<input type="number" min="0" max="999" inputmode="numeric" id="ciD" value="${v(f.dis)}" placeholder="0"></label>
@@ -1383,7 +1385,8 @@ document.addEventListener('click', async ev => {
   if (ev.target.id !== 'ciSave' || !D?.ct) return;
   const box = document.getElementById('cpInfo'), one = cpList().find(x => x.id === box.dataset.k), msg = document.getElementById('ciMsg'), b = ev.target;
   const val = id => document.getElementById(id).value.trim(), num = id => val(id) === '' ? 0 : Number(val(id));
-  const body = { a: 'tinfo', tok: one.it.tok, key: one.p.key, parents: num('ciP'), pcount: num('ciC'), dis: num('ciD'), pnames: val('ciN') };
+  const body = { a: 'tinfo', tok: one.it.tok, key: one.p.key, parents: num('ciP'), pcount: num('ciC'), dis: num('ciD'), pnames: val('ciN'), icons: [...document.querySelectorAll('#ciI input:checked')].map(x => x.value) };
+  if (!body.icons.length) { msg.textContent = 'اختاري مجال المشاركة (بنك الإثراءات أو التطوير الذاتي أو قيمنا الغالية أو نادي القراءة)'; msg.style.color = 'var(--none)'; document.getElementById('ciI').scrollIntoView({ block: 'center' }); return; }
   if ([body.parents, body.pcount, body.dis].some(n => !(Number.isInteger(n) && n >= 0 && n < 1000))) { msg.textContent = 'أدخلي أعدادًا صحيحة'; msg.style.color = 'var(--none)'; return; }
   if (body.pcount > 0 && !body.pnames) { msg.textContent = 'اكتبي أسماء الشراكات المجتمعية'; msg.style.color = 'var(--none)'; return; }
   b.disabled = true; msg.style.color = ''; msg.textContent = 'جارٍ الحفظ وإصدار البطاقة… قد يستغرق دقيقة';
