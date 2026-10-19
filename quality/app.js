@@ -35,11 +35,6 @@ tr:last-child td{border-bottom:0}
 .bar{flex:1;height:8px;background:var(--soft);border-radius:4px;min-width:60px;overflow:hidden}
 .bar i{display:block;height:100%;border-radius:4px}
 .tw{overflow-x:auto}
-.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
-.gi{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--soft)}
-.gi .im{aspect-ratio:4/3;background:var(--line) center/cover no-repeat}
-.gi .t{padding:8px 10px;font-size:12px}
-.gi .t b{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .flags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .flag{font-size:11px;padding:1px 7px;border-radius:99px;background:color-mix(in srgb,var(--g4) 14%,transparent)}
 details{font-size:13px;color:var(--muted)}
@@ -63,7 +58,6 @@ const HTML = `
 <div class="grid"><div class="card c12"><h2>الرفع الأسبوعي للصور حسب مستوى الجودة</h2><div class="d">الأسبوع الدراسي حسب تاريخ رفع الملف إلى OneDrive</div><div id="weeks" class="ch"></div></div></div>
 <div class="grid" id="progTblRow"><div class="card c12"><h2>برامج الخطة التشغيلية (الفصل الأول)</h2><div class="d">اضغطي عنوان أي عمود للترتيب</div><div class="tw"><table id="ptbl"></table></div></div></div>
 <div class="grid"><div class="card c12"><h2 id="ownTitle">المعلمات</h2><div class="d">متوسط جودة الصور وعدد الضعيفة</div><div class="tw"><table id="ttbl"></table></div></div></div>
-<div class="grid"><div class="card c12"><h2>أضعف الصور المرفوعة</h2><div class="d">أقل الصور درجة مع سبب الضعف — يُفضَّل إعادة تصويرها (النسخ المكررة مستبعدة)</div><div class="gal" id="gal"></div></div></div>
 <div class="card"><details><summary>كيف تُحسب الدرجات؟</summary>
   <p><b>درجة الصورة (من 100)</b> = 35٪ الدقة + 45٪ الوضوح + 20٪ الإضاءة والتباين، وتُحسب آليًا من ملف الصورة نفسه.</p>
   <ul><li><b>الدقة:</b> 2 ميجابكسل فأكثر = كاملة، وأقل من 0.5 ميجابكسل أو ضلع قصير أقل من 600 بكسل = «دقة منخفضة».</li>
@@ -177,7 +171,7 @@ window.mountQuality = async (host, { code, base = 'quality/' }) => {
         series: [['قوي', 0, 'strong'], ['متوسط', 2, 'mid'], ['ضعيف', 3, 'poor']].map(([n, c, k]) => ({ name: n, type: 'bar', stack: 'c', barWidth: 12, itemStyle: { color: GC()[c], borderColor: card, borderWidth: 1 }, data: cp.map(p => p[k]) })) });
       progTable();
     }
-    ownerTable(I); gallery(I);
+    ownerTable(I);
   }
 
   function progTable() {
@@ -202,13 +196,6 @@ window.mountQuality = async (host, { code, base = 'quality/' }) => {
     $('#ttbl').innerHTML = `<thead><tr><th>${byPlan ? 'البرنامج' : 'المعلمة'}</th><th>الصور</th><th style="width:34%">متوسط الجودة</th><th>دون الجيد</th><th>أبرز مشكلة</th></tr></thead><tbody>`
       + rows.map(r => `<tr><td><b>${esc(r.n)}</b></td><td class="num">${r.c}</td><td><div class="bv">${bar(r.s).slice(16, -6)}${pill(r.s)}</div></td>
         <td class="num">${r.w ? `<b>${r.w}</b> <span class="muted">(${Math.round(r.w / r.c * 100)}٪)</span>` : '0'}</td><td class="muted">${r.top}</td></tr>`).join('') + '</tbody>';
-  }
-  function gallery(I) {
-    const set = new Set(I), W = D.weak.map(k => D.imgs[k]).filter(i => set.has(i));
-    $('#gal').innerHTML = W.length ? W.map(i => `<div class="gi"><div class="im" style="background-image:url('${i.thumb || ''}')"></div><div class="t">
-      <b title="${esc(i.name)}">${esc(i.kind === 'plan' ? i.owner : nameShort(i.owner))}</b><span class="muted">${esc(i.kind === 'plan' ? 'شواهد البرنامج' : i.folder)} · ${i.w}×${i.h}</span>
-      <div style="margin-top:4px">${pill(i.score).replace('</span>' + gradeOf(i.score), '</span>' + i.score + ' · ' + gradeOf(i.score))}</div>
-      <div class="flags">${i.flags.map(f => `<span class="flag">${f}</span>`).join('')}</div></div></div>`).join('') : '<div class="empty">لا توجد صور ضعيفة في هذا النطاق</div>';
   }
 
   root.querySelectorAll('#scope button').forEach(b => b.onclick = () => { root.querySelectorAll('#scope button').forEach(x => x.classList.toggle('on', x === b)); scope = b.dataset.v; render(); });
