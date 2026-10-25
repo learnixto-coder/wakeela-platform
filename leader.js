@@ -113,6 +113,17 @@
   // شريط التنقل: «→ رجوع» إلى الصفحة الأعلى + مسار الصفحات
   const nav = (...L) => `<div class="ld-nav"><button class="btn sm" data-go="${L.length > 1 ? L[L.length - 2][0] : 'start'}">→ رجوع</button><span class="bc">${[['start', 'الرئيسية']].concat(L).map(([h, t], i, A) => i === A.length - 1 ? `<b>${esc(t)}</b>` : `<button data-go="${h}">${esc(t)}</button>`).join(' ‹ ')}</span></div>`;
   const hubBtn = (go, t, sub, c) => `<button class="ld-hb" style="--c:${c}" data-go="${go}"><b>${t}</b><small>${sub}</small></button>`;
+  // «المسابقات» (2026-10-26): زر لكل مسابقة مفعّلة ← رمز QR ورابط مجلدها. المرفوعة يدويًا («الفصل الأول ١٤٤٨/ملف المسابقات») ثابتة هنا،
+  // ومسابقات الأرشيف («7. ملف المسابقات») التي فيها ملفات تُضاف وحدها
+  const COMP_UP = [['مسابقة الأمن السيبراني', '1Ftn9m29akwOfDmYafje8pXGf3Ejv2J4X'], ['مسابقة درع عسير', '1arN7dmt1EECiToIBGm-qcEBB-3wZTG71'], ['مسابقة القرآن الكريم', '1jhVfE0MvG37ADsdGhMJBVAJ8fQkpEtAV'],
+    ['مسابقة المعرفة الإحصائية', '13C4jqjYznIGzcVp-3VILIIlkdiEP1njn'], ['تقارير المسابقات', '16M3kAcprjNu17nP4Is56OsBDKzhrGLhu']].map(([n, id]) => ({ n, url: 'https://drive.google.com/drive/folders/' + id }));
+  const comps = D => COMP_UP.concat((((D.folders || []).find(f => /ملف المسابقات/.test(f.n)) || {}).subs || []).filter(s => s.count > 0).map(s => ({ n: s.n, url: s.url, count: s.count })));
+  const compsPage = D => { const L = comps(D); return nav(['lk', 'المسابقات']) + `<div class="card ld-h"><h2>المسابقات المفعّلة (${ar(L.length)})</h2><p>لكل مسابقة رمز QR ورابط لمجلد ملفاتها: التقارير والشهادات ومشاركات الطالبات</p></div>
+    <div class="ld-hub">${L.map((c, i) => hubBtn('lk/' + i, esc(c.n), c.count ? (c.count === 1 ? 'ملف واحد في الأرشيف' : `${ar(c.count)} ملفات في الأرشيف`) : 'مجلد الملفات المرفوعة', '#2f6fb0')).join('')}</div>`; };
+  const comp = (D, i) => { const c = comps(D)[i]; if (!c) return nav(['lk', 'المسابقات']) + '<p class="ld-empty">المسابقة غير موجودة.</p>';
+    return nav(['lk', 'المسابقات'], ['lk/' + i, c.n]) + `<div class="card ld-h"><h2>${esc(c.n)}</h2></div>
+    <div class="card oc-qr"><div class="qr" data-qr="${esc(c.url)}"></div><div class="oc-qi"><p>امسحي الرمز أو افتحي المجلد لعرض ملفات المسابقة.</p><div class="oc-u">${esc(c.url)}</div>
+    <div class="oc-bt"><a class="btn sm" href="${esc(c.url)}" target="_blank" rel="noopener">فتح المجلد</a></div></div></div>`; };
   // «الأنشطة الصفية»: أربعة أزرار فقط (طلب رائدة النشاط)
   function classHub(D) {
     return nav(['lg', 'الأنشطة الصفية']) + `<div class="card ld-h"><h2>الأنشطة الصفية</h2><p>${ar(D.all.length)} نشاطًا · ${ar(D.teachers.length)} معلمة · الفصل الدراسي الأول ١٤٤٨هـ</p></div>
@@ -354,6 +365,7 @@
       ${hubBtn('ln', 'الأنشطة اللاصفية', `الفترات حسب الأسبوع · ${ar(D.weeks.length)} أسبوعًا`, '#7a4fb5')}
       ${hubBtn('lnr', 'تقارير المعلمات في الأنشطة اللاصفية', 'التقارير حسب الأسبوع · المؤشرات والخطة الزمنية', '#b5477a')}
       ${hubBtn('lo', 'الأيام والمناسبات', 'رسائل الطالبات في المناسبات · رابط ورمز لكل مناسبة', '#b7791f')}
+      ${hubBtn('lk', 'المسابقات', `${ar(comps(D).length)} مسابقات مفعّلة · رمز QR لكل مسابقة`, '#2f6fb0')}
       ${hubBtn('la', 'رسائل التنبيه', (n => n ? `${ar(n)} معلمة لديها برامج انتهت بلا شواهد` : 'لا توجد برامج منتهية بلا شواهد')(overdue(D).length), '#b4443c')}
     </div>
     <h3 class="ld-sec">برامج جارية الآن (${ar(run.length)})</h3>${run.length ? recTable(run) : '<p class="ld-empty">لا يوجد برنامج جارٍ اليوم.</p>'}
@@ -887,7 +899,7 @@
   window.LEADER = {
     nr: nrView,
     render(D, v, a) { style(); events(); ocEvents(); window.__LD = D; prep(D); const tt = document.getElementById('title'); if (tt) tt.textContent = this.title;
-      return v === 'lo' ? occasions(D, a) : v === 'lnr' ? nrPage(D, a) : v === 'lt' ? teacher(D, +a) : v === 'ltc' ? teacherClass(D, +a) : v === 'ltn' ? teacherNon(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : v === 'la' ? alerts(D) : home(D); },
+      return v === 'lo' ? occasions(D, a) : v === 'lk' ? (a === undefined || a === '' ? compsPage(D) : comp(D, +a)) : v === 'lnr' ? nrPage(D, a) : v === 'lt' ? teacher(D, +a) : v === 'ltc' ? teacherClass(D, +a) : v === 'ltn' ? teacherNon(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : v === 'la' ? alerts(D) : home(D); },
     title: 'صفحة رائد النشاط : منى العمري',
   };
 })();
