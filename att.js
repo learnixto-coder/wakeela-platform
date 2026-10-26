@@ -84,13 +84,13 @@
   }
 
   // --- ملف Teams مقروءًا ← حصة: {p, g, s, subj, file, start, end, present, late, flash}
-  // رقم الحصة: ملفات الفصل الواحد مرتبة بوقت البداية تأخذ حصص المعلمة لذلك الفصل في الجدول بالترتيب
-  // (لا تعتمد على أوقات الجرس)؛ وقت الجرس (p0) فقط لفصل ليس في جدولها ذلك اليوم
+  // رقم الحصة من وقت بداية الاجتماع وأوقات الحصص الرسمية (ح١ دائمًا ٧:٠٠–٧:٤٠، المستخدمة 2026-10-26)؛
+  // اجتماع خارج وقت الدوام فقط: يأخذ حصص المعلمة لذلك الفصل في الجدول بالترتيب
   function assign(ttT, iso, L) {
     const exp = ttT ? (ttT.days[wday(iso)] || []) : [], by = {};
-    L.forEach(f => { if (f.p0 === undefined) f.p0 = f.p; (by[ck(f.g, f.s)] ||= []).push(f); });
-    for (const [k, fs] of Object.entries(by)) { const ps = exp.map((c, i) => c && ck(c.g, c.s) === k ? i + 1 : 0).filter(Boolean);
-      fs.sort((a, b) => (a.t0 || 0) - (b.t0 || 0)).forEach((f, i) => { f.p = ps[i] || f.p0; }); }
+    L.forEach(f => { if (f.p0 === undefined) f.p0 = f.p; f.p = f.p0; if (!f.p0) (by[ck(f.g, f.s)] ||= []).push(f); });
+    for (const [k, fs] of Object.entries(by)) { const ps = exp.map((c, i) => c && ck(c.g, c.s) === k && !L.some(o => o.p === i + 1) ? i + 1 : 0).filter(Boolean);
+      fs.sort((a, b) => (a.t0 || 0) - (b.t0 || 0)).forEach((f, i) => { f.p = ps[i] || 0; }); }
     return L;
   }
   function lessonOf(A, r, file) {
@@ -197,7 +197,7 @@
       <h3 class="of-t">تقرير الغياب على مستوى حصة</h3>
       <table class="of-g"><thead><tr><th rowspan="3" class="m">م</th><th rowspan="3" class="nm">اسم الطالبة</th><th colspan="7">اليوم</th></tr>
         <tr><th colspan="7">${DAYS[wday(iso)]} ${hij(iso)}</th></tr>
-        <tr>${P.map((x, i) => `<th${x && !x.L ? ' class="nf"' : ''}>ح${ad(i + 1)}</th>`).join('')}</tr></thead>
+        <tr>${P.map((x, i) => `<th${x && !x.L ? ' class="nf"' : ''}>ح${ad(i + 1)}${x && x.f && x.f.subj ? `<small class="of-sj">${esc(x.f.subj)}</small>` : ''}</th>`).join('')}</tr></thead>
       <tbody>${c.names.map((n, i) => `<tr><td class="m">${ad(i + 1)}</td><td class="nm">${esc(n)}</td>${P.map(x => mark(n, x)).join('')}</tr>`).join('')}</tbody></table>
       <div class="of-k"><span><b>ت</b> تعني تأخير</span><span><b>غ</b> تعني غياب بدون عذر</span><span><b>ع</b> تعني غياب بعذر</span>
         ${P.some(x => x && !x.L) ? '<span><i class="nfk"></i> حصة لم يصل ملف حضورها</span>' : ''}</div>
@@ -316,7 +316,7 @@
     .of-g thead th{background:#cfdcef;color:#1f3b6e}.of-g .m{width:34px}.of-g .nm{width:38%;text-align:right;color:#b45309;font-weight:700}.of-g td.m{background:#cfdcef;font-weight:700}
     .of-g td.g{color:#b91c1c;font-weight:800}.of-g td.t{color:#1d4ed8;font-weight:800}.of-g .nf,.nfk{background:repeating-linear-gradient(45deg,#ddd 0 4px,#f4f4f4 4px 8px)}
     .of-k{display:flex;gap:22px;flex-wrap:wrap;margin:8px 0;font-size:12px}.of-k b{border:1px solid #333;padding:0 5px;margin-left:4px}.nfk{display:inline-block;width:18px;height:12px;border:1px solid #333;vertical-align:middle;margin-left:4px}
-    .of-u{font-size:11.5px;color:#92400e;margin:4px 0}.of-s{text-align:center;width:260px;margin:10px auto 0;font-weight:700;line-height:1.8}`;
+    .of-sj{display:block;font-size:9.5px;font-weight:400;line-height:1.3;color:#334}.of-u{font-size:11.5px;color:#92400e;margin:4px 0}.of-s{text-align:center;width:260px;margin:10px auto 0;font-weight:700;line-height:1.8}`;
   if (!document.getElementById('att-css')) { const st = document.createElement('style'); st.id = 'att-css'; st.textContent = CSS + OCSS; document.head.appendChild(st); }
 
   window.ATT = {
