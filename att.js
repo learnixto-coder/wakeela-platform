@@ -320,17 +320,49 @@
       route(); if (typeof toast === 'function') toast(A.demo ? 'معاينة: لم تُرسل فعليًا' : 'حُفظت المادة ✓ وتظهر في التقارير خلال دقائق'); }
     catch (e) { btn.disabled = false; if (typeof toast === 'function') toast('تعذّر الحفظ، تحققي من الاتصال'); }
   }
+  // ملف مشفّر في data/ap (iv ١٢ بايت + AES-GCM) ← محتواه
+  async function unseal(url, k64) {
+    const r = await fetch(url + '?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) throw new Error('net');
+    const u = new Uint8Array(await r.arrayBuffer()), k = await crypto.subtle.importKey('raw', Uint8Array.from(atob(k64), c => c.charCodeAt(0)), 'AES-GCM', false, ['decrypt']);
+    return crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.subarray(0, 12) }, k, u.subarray(12));
+  }
+  // data-open: تصفح في نافذة جديدة (تُفتح قبل الانتظار حتى لا يمنعها المتصفح)، وإلا تنزيل
   async function getPdf(iso, nm, btn) {
     const A = D.att, x = (((A.pdf || {})[iso] || {})[nm]); if (!x) return;
+    const w = btn.dataset.open ? window.open('', '_blank') : null;
     btn.disabled = true;
     try {
-      const r = await fetch(x.u + '?t=' + Date.now(), { cache: 'no-store' }); if (!r.ok) throw new Error('net');
-      const u = new Uint8Array(await r.arrayBuffer()), k = await crypto.subtle.importKey('raw', Uint8Array.from(atob(x.k), c => c.charCodeAt(0)), 'AES-GCM', false, ['decrypt']);
-      const b = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.subarray(0, 12) }, k, u.subarray(12));
-      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([b], { type: 'application/pdf' }));
-      a.download = (A.mode === 'admin' ? short(nm) + ' - ' : '') + x.n; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
-    } catch (e) { if (typeof toast === 'function') toast('تعذّر تنزيل التقرير، أعيدي المحاولة'); }
+      const url = URL.createObjectURL(new Blob([await unseal(x.u, x.k)], { type: 'application/pdf' }));
+      if (w) w.location.href = url;
+      else { const a = document.createElement('a'); a.href = url; a.download = (A.mode !== 'teacher' ? short(nm) + ' - ' : '') + x.n; document.body.appendChild(a); a.click(); a.remove(); }
+      setTimeout(() => URL.revokeObjectURL(url), 300000);
+    } catch (e) { if (w) w.close(); if (typeof toast === 'function') toast('تعذّر فتح التقرير، أعيدي المحاولة'); }
     btn.disabled = false;
+  }
+
+  // --- «توثيق الحضور في تيمز» (الموجهة الطلابية 2026-10-26): تقرير كل معلمة في اليوم — صورة مصغرة للصفحة الأولى + تصفح + تنزيل
+  function viewPage(A, sel) {
+    const days = daysOf(A), iso = sel && /^\d{4}-\d\d-\d\d$/.test(sel) ? sel : days[0] || today(), w = wday(iso), P = (A.pdf || {})[iso] || {};
+    const T = A.tt.teachers.filter(t => P[t.name] || (t.days[w] || []).some(Boolean))
+      .sort((a, b) => !P[a.name] - !P[b.name] || short(a.name).localeCompare(short(b.name), 'ar')), n = T.filter(t => P[t.name]).length;
+    setTimeout(thumbs, 0);
+    return `<div class="card hero th-hero"><div class="grow"><h2>توثيق الحضور في تيمز — ${DAYS[w]} ${hij(iso)}</h2>
+        <p class="muted">${ad(n)} من ${ad(T.length)} معلمة تقريرها جاهز · اضغطي الصورة للتصفح</p></div></div>
+      ${dayNav(days, iso)}
+      ${w > 4 ? '<div class="empty card">هذا اليوم ليس يوم دراسة.</div>' : !T.length ? '<div class="empty card">لا توجد حصص عن بعد في هذا اليوم.</div>'
+      : `<div class="at-gal">${T.map(t => { const x = P[t.name], k = `${iso}|${esc(t.name)}`;
+        return `<div class="card at-tc${x ? '' : ' off'}"><b>${esc(short(t.name))}</b>
+          ${x ? `<div class="at-th" role="button" data-attpdf="${k}" data-open="1"${x.t ? ` data-attth="${k}"` : ''}><span>تقرير الحصص</span></div>
+          <div class="at-tb"><button class="btn sm" data-attpdf="${k}" data-open="1">تصفح</button><button class="btn sm ghost" data-attpdf="${k}">تنزيل</button></div>`
+          : '<div class="at-th"><span>لم يُجهَّز تقريرها بعد</span></div>'}</div>`; }).join('')}</div>`}`;
+  }
+  const TH = new Map();   // صور مصغرة مفكوكة في هذه الجلسة: الملف ← رابط blob
+  async function thumbs() {
+    for (const el of document.querySelectorAll('[data-attth]')) {
+      const [iso, ...n] = el.dataset.attth.split('|'), x = ((D.att.pdf || {})[iso] || {})[n.join('|')]; el.removeAttribute('data-attth'); if (!x || !x.t) continue;
+      try { let u = TH.get(x.t); if (!u) { u = URL.createObjectURL(new Blob([await unseal(x.t, x.k)], { type: 'image/jpeg' })); TH.set(x.t, u); }
+        el.innerHTML = `<img src="${u}" alt="الصفحة الأولى من تقرير الحصص">`; } catch (e) { /* تبقى البطاقة بلا صورة */ }
+    }
   }
   async function sendEv(iso, btn) {
     const A = D.att, nm = me(A).name, E = EVP.filter(x => x.iso === iso); if (!E.length) return;
@@ -435,7 +467,11 @@
       const sb = t.closest('[data-attsend]'); if (sb) send(sb.dataset.attsend, sb); });
   }
 
-  const CSS = `.at-wrap{overflow-x:auto;padding:0}.at-t{width:100%;border-collapse:collapse;font-size:13.5px;min-width:600px}
+  const CSS = `.at-gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px}
+    .at-tc{padding:10px;display:flex;flex-direction:column;gap:8px;text-align:center;margin:0}.at-tc b{font-size:14px}.at-tc.off{opacity:.65}
+    .at-th{aspect-ratio:210/297;border:1px solid var(--line,#e5e7eb);border-radius:8px;overflow:hidden;background:var(--soft,#f6f6f4);display:flex;align-items:center;justify-content:center;color:var(--muted,#9ca3af);font-size:12.5px}
+    .at-th[data-attpdf]{cursor:pointer}.at-th img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;background:#fff}.at-tb{display:flex;gap:6px;justify-content:center}
+    .at-wrap{overflow-x:auto;padding:0}.at-t{width:100%;border-collapse:collapse;font-size:13.5px;min-width:600px}
     .at-t th,.at-t td{border-bottom:1px solid var(--line,#e5e7eb);padding:8px 6px;text-align:center}.at-t th{background:var(--soft,#f6f6f4);font-weight:700}
     .at-t td.nm{text-align:right;white-space:nowrap;font-weight:600}.at-t td.ok{background:#e7f6ec;color:#166534}.at-t td.miss{background:#fdecec;color:#b91c1c}
     .at-t td i{display:block;font-style:normal;font-size:12px}.at-t td.no{background:transparent}.at-tt tr.ok td{background:#e7f6ec}.at-tt tr.rd td{background:#fff7e6}
@@ -519,6 +555,7 @@
       const [v, x] = String(a || '').split('/');
       if (v === 'all') return allReports(A);
       if (A.mode === 'teacher') return tPage(A, v === 'd' ? x : '');
+      if (A.mode === 'view') return viewPage(A, v === 'd' ? x : '');
       if (v === 'r') return reports(A, x);
       if (v === 'tt') return timetable(A);
       return home(A, v === 'd' ? x : '');
