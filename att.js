@@ -55,7 +55,8 @@
   const today = () => isoOf(new Date());
   const hm = d => d ? `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}` : '';
   // أوقات الحصص عن بعد (من المستخدمة 2026-10-26): ٤٠ دقيقة وبينها ٥ دقائق، ح١ ٧:٠٠ … ح٧ ١١:٣٠–١٢:١٠
-  const BELL = ['7:00', '7:45', '8:30', '9:15', '10:00', '10:45', '11:30'], mins = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+  const BELL = ['7:00', '7:45', '8:30', '9:15', '10:00', '10:45', '11:30'], BELL_END = ['7:40', '8:25', '9:10', '9:55', '10:40', '11:25', '12:10'],
+    slot = p => `${ad(BELL[p - 1])} – ${ad(BELL_END[p - 1])}`, mins = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
   const periodAt = d => { const t = d.getHours() * 60 + d.getMinutes(); if (t < mins(BELL[0]) - 15 || t > mins('12:10')) return 0;
     let p = 1; BELL.forEach((b, i) => { if (t >= mins(b) - 10) p = i + 1; }); return p; };
   const wa = (phone, text) => `https://wa.me/966${String(phone).replace(/\D/g, '').replace(/^0/, '')}?text=${encodeURIComponent(text)}`;
@@ -248,9 +249,14 @@
   const me = A => A.tt.teachers[0];
   // ما أرسلته من هذا الجهاز ولم يصل بعد إلى ون درايف (يظهر «أُرسل» فورًا؛ يُحذف حين يصل أو بعد ٣ أيام)
   const SKEY = 'wk-att-sent', sget = () => { try { return JSON.parse(localStorage.getItem(SKEY) || '[]'); } catch { return []; } }, sset = v => { try { localStorage.setItem(SKEY, JSON.stringify(v)); } catch {} };
+  // ما حذفته ولم يُحذف بعد من ون درايف (يختفي فورًا؛ يُنسى حين يختفي من البيانات أو بعد ٣ أيام)
+  const DKEY = 'wk-att-del', dget = () => { try { return JSON.parse(localStorage.getItem(DKEY) || '[]'); } catch { return []; } }, dset = v => { try { localStorage.setItem(DKEY, JSON.stringify(v)); } catch {} };
   function sentLocal(A) {
-    const nm = me(A).name, have = new Set(Object.values(A.days || {}).flatMap(b => (b[nm] || []).map(x => x.file))), now = Date.now();
-    const keep = sget().filter(x => x.to === nm && !have.has(x.f.file) && now - x.at < 3 * 864e5); sset(keep);
+    const nm = me(A).name, now = Date.now(), has = (iso, f) => (((A.days || {})[iso] || {})[nm] || []).some(x => x.file === f);
+    const dk = dget().filter(x => x.to === nm && has(x.iso, x.file) && now - x.at < 3 * 864e5); dset(dk);
+    dk.forEach(x => { const b = A.days[x.iso]; b[nm] = b[nm].filter(f => f.file !== x.file); });
+    const have = new Set(Object.values(A.days || {}).flatMap(b => (b[nm] || []).map(x => x.file)));
+    const keep = sget().filter(x => x.to === nm && !have.has(x.f.file) && now - x.at < 3 * 864e5 && !dk.some(d => d.iso === x.iso && d.file === x.f.file)); sset(keep);
     keep.forEach(x => { (((A.days ||= {})[x.iso] ||= {})[nm] ||= []).push({ ...x.f, wait: 1 }); });
   }
   function tPage(A, sel) {
@@ -260,9 +266,11 @@
     const M = dayModel(A, iso), r = M.T[0] || { cells: [], exp: [], extra: [], sent: 0 };
     const pend = c => { const q = P.find(x => !used.has(x) && x.f.p === c.p) || P.find(x => !used.has(x) && x.f.g === c.g && x.f.s === c.s && !r.cells.some(o => o.p === x.f.p)); if (q) used.add(q); return q; };
     const rows = r.cells.map(c => ({ c, q: c.f ? null : pend(c) })), extraP = P.filter(x => !used.has(x)), errs = PEND.filter(x => x.err);
-    const info = f => f ? `${esc(f.subj || '')}<br><span class="muted">${esc(f.start || '')}${f.end ? ' – ' + esc(f.end) : ''}</span>` : '<span class="muted">—</span>';
+    // يُعرض وقت الحصة الرسمي (المستخدمة 2026-10-26: وقت الاجتماع تقريبي)؛ وقت الاجتماع فقط لملف لم تُعرف حصته
+    const info = f => f ? `${esc(f.subj || '')}<br><span class="muted">${f.p ? slot(f.p) : esc(f.start || '') + (f.end ? ' – ' + esc(f.end) : '')}</span>` : '<span class="muted">—</span>';
     const cnt = (f, c) => { if (!f || !c.g) return '<span class="muted">—</span>'; const L = lesson(A, { ...f, g: c.g, s: c.s }); return `${ad(L.here.length)} من ${ad(L.names.length)}`; };
     const drop = q => ` <button class="btn sm ghost" data-attdrop="${PEND.indexOf(q)}">إزالة</button>`;
+    const del = f => ` <button class="btn sm ghost" data-attdel="${esc(iso)}|${esc(f.file)}" title="حذف الملف المرسل بالخطأ">حذف</button>`;
     const nP = r.exp.length, word = n => n > 2 && n < 11 ? 'حصص' : 'حصة';
     return `<div class="card hero th-hero"><div class="grow"><h2>توثيق حصص التيمز — ${DAYS[wday(iso)]} ${hij(iso)}</h2>
         <p class="muted">${nP ? (r.sent ? `أرسلتِ ${ad(r.sent)} من ${ad(nP)} ${word(nP)}` : `لم ترسلي بعد · ${nP === 1 ? 'حصة واحدة' : nP === 2 ? 'حصتان' : ad(nP) + ' ' + word(nP)} اليوم`) : 'لا توجد لكِ حصص في هذا اليوم حسب الجدول'}</p></div>
@@ -272,8 +280,8 @@
         <label class="btn">اختيار الملفات<input type="file" multiple accept=".csv,text/csv" data-attf hidden></label></div>
       <div class="card at-wrap"><table class="at-t at-tt"><thead><tr><th>الحصة</th><th>الصف</th><th>المادة / الوقت</th><th>الحاضرات</th><th>الحالة</th></tr></thead><tbody>
       ${rows.map(({ c, q }) => `<tr class="${c.f ? 'ok' : q ? 'rd' : ''}"><td>ح${ad(c.p)}</td><td>${cls(c.g, c.s)}</td><td>${info(c.f || q?.f)}</td><td>${cnt(c.f || q?.f, c)}</td>
-        <td>${c.f ? chipOf(1, c.f.wait ? '✓ أُرسل · قيد النقل' : '✓ أُرسل') : q ? `<span class="chip s-part">جاهز للإرسال</span>${drop(q)}` : chipOf(0, 'لم يُرفق')}</td></tr>`).join('')}
-      ${r.extra.map(f => `<tr class="ok"><td>${f.p ? 'ح' + ad(f.p) : '—'}</td><td>${f.g ? cls(f.g, f.s) : '؟'}</td><td>${info(f)}</td><td>${cnt(f, f)}</td><td>${chipOf(1, '✓ أُرسل')} <span class="chip s-part">خارج جدولك</span></td></tr>`).join('')}
+        <td>${c.f ? chipOf(1, c.f.wait ? '✓ أُرسل · قيد النقل' : '✓ أُرسل') + del(c.f) : q ? `<span class="chip s-part">جاهز للإرسال</span>${drop(q)}` : chipOf(0, 'لم يُرفق')}</td></tr>`).join('')}
+      ${r.extra.map(f => `<tr class="ok"><td>${f.p ? 'ح' + ad(f.p) : '—'}</td><td>${f.g ? cls(f.g, f.s) : '؟'}</td><td>${info(f)}</td><td>${cnt(f, f)}</td><td>${chipOf(1, f.wait ? '✓ أُرسل · قيد النقل' : '✓ أُرسل')} <span class="chip s-part">خارج جدولك</span>${del(f)}</td></tr>`).join('')}
       ${extraP.map(q => `<tr class="rd"><td>${q.f.p ? 'ح' + ad(q.f.p) : '—'}</td><td>${q.f.g ? cls(q.f.g, q.f.s) : 'لم يُعرف الفصل'}</td><td>${info(q.f)}</td><td>${cnt(q.f, q.f)}</td>
         <td><span class="chip s-part">خارج جدولك</span>${drop(q)}</td></tr>`).join('')}
       ${!rows.length && !extraP.length && !r.extra.length ? '<tr><td colspan="5" class="muted">لا توجد حصص</td></tr>' : ''}
@@ -303,10 +311,24 @@
         // الملف الأصلي إلى صندوق المنصة ← tools/inbox.js يكتبه في «رصد الغياب منصة التيمز/<المعلمة>/<اليوم>/»
         if (!A.demo) await sealSend({ kind: 'att', name: A.who, day: iso, file: x.file.name, type: 'text/csv', size: x.file.size }, new Uint8Array(await x.file.arrayBuffer()));
         (((A.days ||= {})[iso] ||= {})[nm] ||= []).push({ ...x.f, wait: 1 });
-        sset([...sget(), { to: nm, iso, at: Date.now(), f: x.f }]); PEND.splice(PEND.indexOf(x), 1); ok++;
+        sset([...sget(), { to: nm, iso, at: Date.now(), f: x.f }]); dset(dget().filter(d => !(d.to === nm && d.iso === iso && d.file === x.f.file))); PEND.splice(PEND.indexOf(x), 1); ok++;
       } catch (e) { x.f.errSend = 1; }
     }
     route(); if (typeof toast === 'function') toast(ok === P.length ? (A.demo ? 'معاينة: سُجّلت هنا فقط ولم تُرسل فعليًا' : 'تم الإرسال ✓') : 'تعذّر إرسال بعض الملفات، تحققي من الاتصال وأعيدي الإرسال');
+  }
+  async function remove(iso, file, btn) {
+    const A = D.att, nm = me(A).name, b = ((A.days || {})[iso] || {})[nm] || [], f = b.find(x => x.file === file); if (!f) return;
+    if (!confirm(`حذف ملف «${f.subj || file}»${f.p ? ' (ح' + ad(f.p) + ')' : ''}؟
+يُنقل من مجلدك إلى «محذوف» ولا يدخل في تقارير الغياب، ويمكنك إرفاق الملف الصحيح بعده.`)) return;
+    btn.disabled = true;
+    try {
+      // tools/inbox.js ينقله إلى «<اليوم>/محذوف/» (لا يُمحى نهائيًا)
+      if (!A.demo) await sealSend({ kind: 'att-del', name: A.who, day: iso, file }, new Uint8Array(0));
+      A.days[iso][nm] = b.filter(x => x !== f);
+      sset(sget().filter(x => !(x.to === nm && x.iso === iso && x.f.file === file)));
+      if (!f.wait) dset([...dget(), { to: nm, iso, file, at: Date.now() }]);
+      route(); if (typeof toast === 'function') toast(A.demo ? 'معاينة: حُذف هنا فقط' : 'حُذف الملف ✓');
+    } catch (e) { btn.disabled = false; if (typeof toast === 'function') toast('تعذّر الحذف، تحققي من الاتصال وأعيدي المحاولة'); }
   }
   if (!window.__attEv) { window.__attEv = 1;
     document.addEventListener('change', e => { const t = e.target;
@@ -314,6 +336,7 @@
       if (t.matches && t.matches('[data-attday]')) location.hash = 'att/d/' + t.value; });
     document.addEventListener('click', e => { const t = e.target.closest ? e.target : null; if (!t) return;
       const dr = t.closest('[data-attdrop]'); if (dr) { PEND.splice(+dr.dataset.attdrop, 1); route(); return; }
+      const dl = t.closest('[data-attdel]'); if (dl) { const [iso, ...f] = dl.dataset.attdel.split('|'); remove(iso, f.join('|'), dl); return; }
       const sb = t.closest('[data-attsend]'); if (sb) send(sb.dataset.attsend, sb); });
   }
 
