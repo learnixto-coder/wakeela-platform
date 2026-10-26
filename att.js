@@ -231,7 +231,7 @@
     return `<section class="of">
       <div class="of-h"><div class="of-r">المملكة العربية السعودية<br>وزارة التعليم<br>الإدارة العامة للتعليم بمنطقة عسير<br>المتوسطة الحادية والعشرون بالخميس</div>
         <img src="${logo}" alt="وزارة التعليم">
-        <div class="of-l"><span>الصف</span>: ${GRN[c.g]}<br><span>القسم</span>: التعليم العام<br><span>الفصل</span>: ${ad(c.s)}<br><span>النظام الدراسي</span>: منتظم<br><span>العام</span>: ١٤٤٧-١٤٤٨</div></div>
+        <div class="of-l"><span>الصف</span>: ${GRN[c.g]}<br><span>القسم</span>: التعليم العام<br><span>الفصل</span>: ${ad(c.s)}<br><span>النظام الدراسي</span>: منتظم<br><span>التاريخ</span>: ${hij(today())}</div></div>
       <h3 class="of-t">تقرير الغياب على مستوى حصة</h3>
       <table class="of-g"><thead><tr><th rowspan="3" class="m">م</th><th rowspan="3" class="nm">اسم الطالبة</th><th colspan="7">اليوم</th></tr>
         <tr><th colspan="7">${DAYS[wday(iso)]} ${hij(iso)}</th></tr>
