@@ -84,13 +84,26 @@
   }
 
   // --- ملف Teams مقروءًا ← حصة: {p, g, s, subj, file, start, end, present, late, flash}
-  // رقم الحصة من وقت بداية الاجتماع وأوقات الحصص الرسمية (ح١ دائمًا ٧:٠٠–٧:٤٠، المستخدمة 2026-10-26)؛
-  // اجتماع خارج وقت الدوام فقط: يأخذ حصص المعلمة لذلك الفصل في الجدول بالترتيب
+  // رقم الحصة: ملفات كل فصل بترتيب وقت بدايتها ← حصص المعلمة لذلك الفصل في الجدول بالتتابع (المستخدمة 2026-10-26:
+  // قد يبدأ الاجتماع متأخرًا عن الجرس، مثل ابتسام الاثنين ح١ وح٢ وملفاها ٧:٥٠ و٨:٣٩). وقت الجرس (ح١ ٧:٠٠–٧:٤٠) يرجّح فقط
+  // أي حصة هي حين ترفع المعلمة ملفات أقل من حصص الفصل؛ فصل ليس في جدولها ذلك اليوم يبقى على وقت الجرس
   function assign(ttT, iso, L) {
     const exp = ttT ? (ttT.days[wday(iso)] || []) : [], by = {};
-    L.forEach(f => { if (f.p0 === undefined) f.p0 = f.p; f.p = f.p0; if (!f.p0) (by[ck(f.g, f.s)] ||= []).push(f); });
-    for (const [k, fs] of Object.entries(by)) { const ps = exp.map((c, i) => c && ck(c.g, c.s) === k && !L.some(o => o.p === i + 1) ? i + 1 : 0).filter(Boolean);
-      fs.sort((a, b) => (a.t0 || 0) - (b.t0 || 0)).forEach((f, i) => { f.p = ps[i] || 0; }); }
+    L.forEach(f => { if (f.p0 === undefined) f.p0 = f.p; f.p = f.p0; (by[ck(f.g, f.s)] ||= []).push(f); });
+    for (const [k, fs] of Object.entries(by)) {
+      const ps = exp.map((c, i) => c && ck(c.g, c.s) === k ? i + 1 : 0).filter(Boolean); if (!ps.length) continue;
+      fs.sort((a, b) => (a.t0 || 0) - (b.t0 || 0));
+      // مطابقة تحفظ الترتيب بأقل بعد عن وقت الجرس؛ ملف زائد عن حصص الفصل يبقى على وقت الجرس
+      const n = fs.length, m = ps.length, SKIP = 100, cost = (f, p) => f.p0 ? Math.abs(f.p0 - p) : 0;
+      const D = [...Array(n + 1)].map(() => Array(m + 1).fill(Infinity)); D[0].fill(0);
+      for (let i = 1; i <= n; i++) for (let j = 0; j <= m; j++)
+        D[i][j] = Math.min(D[i - 1][j] + SKIP, j ? D[i][j - 1] : Infinity, j ? D[i - 1][j - 1] + cost(fs[i - 1], ps[j - 1]) : Infinity);
+      for (let i = n, j = m; i > 0;) {
+        if (j && D[i][j] === D[i][j - 1]) j--;
+        else if (j && D[i][j] === D[i - 1][j - 1] + cost(fs[i - 1], ps[j - 1])) { fs[i - 1].p = ps[j - 1]; i--; j--; }
+        else i--;
+      }
+    }
     return L;
   }
   function lessonOf(A, r, file) {
