@@ -350,11 +350,11 @@
         <p class="muted">${ad(n)} من ${ad(T.length)} معلمة تقريرها جاهز · اضغطي الصورة للتصفح</p></div></div>
       ${dayNav(days, iso)}
       ${w > 4 ? '<div class="empty card">هذا اليوم ليس يوم دراسة.</div>' : !T.length ? '<div class="empty card">لا توجد حصص عن بعد في هذا اليوم.</div>'
-      : `<div class="at-gal">${T.map(t => { const x = P[t.name], k = `${iso}|${esc(t.name)}`;
-        return `<div class="card at-tc${x ? '' : ' off'}"><b>${esc(short(t.name))}</b>
-          ${x ? `<div class="at-th" role="button" data-attpdf="${k}" data-open="1"${x.t ? ` data-attth="${k}"` : ''}><span>تقرير الحصص</span></div>
-          <div class="at-tb"><button class="btn sm" data-attpdf="${k}" data-open="1">تصفح</button><button class="btn sm ghost" data-attpdf="${k}">تنزيل</button></div>`
-          : '<div class="at-th"><span>لم يُجهَّز تقريرها بعد</span></div>'}</div>`; }).join('')}</div>`}`;
+      : `${n ? `<div class="at-gal">${T.filter(t => P[t.name]).map(t => { const x = P[t.name], k = `${iso}|${esc(t.name)}`;
+        return `<div class="card at-tc"><b>${esc(short(t.name))}</b>
+          <div class="at-th" role="button" data-attpdf="${k}" data-open="1"${x.t ? ` data-attth="${k}"` : ''}><span>تقرير الحصص</span></div>
+          <div class="at-tb"><button class="btn sm" data-attpdf="${k}" data-open="1">تصفح</button><button class="btn sm ghost" data-attpdf="${k}">تنزيل</button></div></div>`; }).join('')}</div>` : ''}
+      ${n < T.length ? `<div class="card pad at-wait"><b>لم يُجهَّز تقريرها بعد (${ad(T.length - n)})</b><div>${T.filter(t => !P[t.name]).map(t => `<span class="chip">${esc(short(t.name))}</span>`).join('')}</div></div>` : ''}`}`;
   }
   const TH = new Map();   // صور مصغرة مفكوكة في هذه الجلسة: الملف ← رابط blob
   async function thumbs() {
@@ -468,7 +468,7 @@
   }
 
   const CSS = `.at-gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px}
-    .at-tc{padding:10px;display:flex;flex-direction:column;gap:8px;text-align:center;margin:0}.at-tc b{font-size:14px}.at-tc.off{opacity:.65}
+    .at-tc{padding:10px;display:flex;flex-direction:column;gap:8px;text-align:center;margin:0}.at-tc b{font-size:14px}.at-wait{margin-top:12px}.at-wait>div{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
     .at-th{aspect-ratio:210/297;border:1px solid var(--line,#e5e7eb);border-radius:8px;overflow:hidden;background:var(--soft,#f6f6f4);display:flex;align-items:center;justify-content:center;color:var(--muted,#9ca3af);font-size:12.5px}
     .at-th[data-attpdf]{cursor:pointer}.at-th img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;background:#fff}.at-tb{display:flex;gap:6px;justify-content:center}
     .at-wrap{overflow-x:auto;padding:0}.at-t{width:100%;border-collapse:collapse;font-size:13.5px;min-width:600px}

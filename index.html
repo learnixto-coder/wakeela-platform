@@ -1263,7 +1263,7 @@ function tdPage() {
 let attLoad = null;
 function attPage(a) {
   if (window.ATT) return ATT.render(D.att, a);
-  attLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'att.js?v=20261026r'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  attLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'att.js?v=20261026s'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { attLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
