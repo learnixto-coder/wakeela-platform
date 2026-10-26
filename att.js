@@ -48,7 +48,7 @@
   const DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
   const gd = iso => new Date(iso + 'T12:00:00');
   const hijT = iso => { const P = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(gd(iso)), v = t => P.find(x => x.type === t).value;
-    return `${ad(v('day'))}/${ad(v('month'))}/${ad(v('year'))}هـ`; };
+    return `${ad(v('day'))}‏/${ad(v('month'))}‏/${ad(v('year'))}هـ`; };   // RLM قبل «/»: اليوم في أقصى اليمين
   const hij = iso => `<span dir="rtl">${hijT(iso)}</span>`;
   const wday = iso => gd(iso).getDay();   // 0 = الأحد … 4 = الخميس
   const isoOf = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
