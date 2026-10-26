@@ -11,6 +11,8 @@
     let [, mo, d, y, h, mi, se, ap] = m; y = +y < 100 ? 2000 + +y : +y; h = +h; if (/PM|م/i.test(ap || '') && h < 12) h += 12; if (/AM|ص/i.test(ap || '') && h === 12) h = 0;
     return new Date(y, mo - 1, +d, h, +mi, +(se || 0)); };
   const secs = s => { let t = 0; String(s).replace(/(\d+)\s*(س|د|ث|h|m|s)/g, (_, n, u) => { t += +n * ({ س: 3600, h: 3600, د: 60, m: 60, ث: 1, s: 1 }[u]); }); return t; };
+  // Teams بالعربية أو بالإنجليزية (المستخدمة 2026-10-26: Attendance.csv — «1. Summary / 2. Participants»): أول عمود موجود
+  const get = (o, ...k) => { for (const x of k) if (o[x]) return o[x]; return ''; };
   function parse(buf) {
     const L = dec(buf).split(/\r?\n/).map(l => l.split('\t').map(x => x.trim()));
     const sum = {}, people = new Map(); let sec = 0, head = null;
@@ -21,14 +23,15 @@
       if (sec === 2 || sec === 3) {
         if (!head) { head = r; continue; }
         const o = Object.fromEntries(head.map((h, i) => [h, r[i] || '']));
-        const name = o['الاسم'], role = o['الدور'] || '', mail = (o['البريد الإلكتروني'] || '').toLowerCase();
-        if (sec === 2) people.set(mail || name, { name, mail, role, first: when(o['وقت الانضمام الأول']), last: when(o['وقت المغادرة الأخير']), dur: secs(o['مدة الاجتماع']), parts: 0 });
-        else { const p = people.get(mail || name); if (p) { if (!p.parts) p.dur = 0; p.parts++; p.dur += secs(o['المدة']); } }
+        const name = get(o, 'الاسم', 'Name'), role = get(o, 'الدور', 'Role'), mail = get(o, 'البريد الإلكتروني', 'Email').toLowerCase();
+        if (sec === 2) people.set(mail || name, { name, mail, role, first: when(get(o, 'وقت الانضمام الأول', 'First Join')), last: when(get(o, 'وقت المغادرة الأخير', 'Last Leave')),
+          dur: secs(get(o, 'مدة الاجتماع', 'In-Meeting Duration')), parts: 0 });
+        else { const p = people.get(mail || name); if (p) { if (!p.parts) p.dur = 0; p.parts++; p.dur += secs(get(o, 'المدة', 'Duration')); } }
       }
     }
-    const start = when(sum['وقت البدء']), end = when(sum['وقت الانتهاء']);
+    const start = when(sum['وقت البدء'] || sum['Start time']), end = when(sum['وقت الانتهاء'] || sum['End time']);
     const all = [...people.values()];
-    return { title: sum['عنوان الاجتماع'] || '', start, end, organizer: (all.find(p => /المنظم|organizer/i.test(p.role)) || {}).name || '',
+    return { title: sum['عنوان الاجتماع'] || sum['Meeting title'] || '', start, end, organizer: (all.find(p => /المنظم|organizer/i.test(p.role)) || {}).name || '',
       students: all.filter(p => !/المنظم|organizer|مقدم|presenter/i.test(p.role) && !/^t\d/i.test(p.mail)) };
   }
   // التصنيف: حاضرة / متأخرة (دخلت بعد البداية بأكثر من LATE دقائق) / دخول لحظات (أقل من MIN دقائق كلها) — قيم قابلة للتعديل
@@ -96,9 +99,9 @@
   // رقم الحصة من اسم الملف إن كتبته المعلمة: «الحصة السابعة»، «ح٧»، «حصة 3» (لا الأرقام وحدها مثل 1.csv)
   const PW = ['اول', 'ثاني', 'ثالث', 'رابع', 'خامس', 'سادس', 'سابع'];
   const hintOf = file => {
-    const s = String(file || '').replace(/.csv$/i, '').replace(/[٠-٩]/g, c => AR.indexOf(c)).replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي');
-    let m = s.match(/(?:^|[^؀-ۿ])(?:ح|حصه|الحصه)s*[.-_]?s*([1-7])(?![0-9])/); if (m) return +m[1];
-    m = s.match(/(?:حصهs*|^s*)ال(اول|ثاني|ثالث|رابع|خامس|سادس|سابع)/); return m ? PW.indexOf(m[1]) + 1 : 0;
+    const s = String(file || '').replace(/\.csv$/i, '').replace(/[٠-٩]/g, c => AR.indexOf(c)).replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي');
+    let m = s.match(/(?:^|[^؀-ۿ])(?:ح|حصه|الحصه)\s*[._-]?\s*([1-7])(?![0-9])/); if (m) return +m[1];
+    m = s.match(/(?:حصه\s*|^\s*)ال(اول|ثاني|ثالث|رابع|خامس|سادس|سابع)/); return m ? PW.indexOf(m[1]) + 1 : 0;
   };
   function assign(ttT, iso, L) {
     const exp = ttT ? (ttT.days[wday(iso)] || []) : [];
