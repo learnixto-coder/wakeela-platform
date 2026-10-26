@@ -457,7 +457,9 @@
         <tr><td>عدد الطالبات الكلي</td><td>${ad(n)}</td></tr><tr><td>عدد الحاضرات الفعلي</td><td>${ad(h)}</td></tr><tr><td>نسبة الحضور</td><td>${ad(pct(h, n))}٪</td></tr></table>
       <div class="tp-g"><table class="tp-t tp-n"><tr><th colspan="2" class="tp-c2">أسماء الطالبات الحاضرات</th></tr><tr><th class="m">م</th><th>اسم الطالبة</th></tr>
           ${L.here.map((x, i) => `<tr><td class="m">${ad(i + 1)}</td><td class="nm">${H(x)}</td></tr>`).join('') || '<tr><td colspan="2">—</td></tr>'}</table>
-        <div class="tp-pie"><b>نسبة الحضور مقابل عدد الطالبات</b>${pie(h, n - h)}<div class="tp-k"><span><i style="background:#12a37a"></i>الحاضرات</span><span><i style="background:#c9b68c"></i>الغائبات</span></div></div></div>
+        <div class="tp-pie"><b>نسبة الحضور مقابل عدد الطالبات</b>${pie(h, n - h)}<div class="tp-k"><span><i style="background:#12a37a"></i>الحاضرات</span><span><i style="background:#c9b68c"></i>الغائبات</span></div>
+          <table class="tp-t tp-n tp-a"><tr><th colspan="2" class="tp-c3">أسماء الطالبات الغائبات</th></tr><tr><th class="m">م</th><th>اسم الطالبة</th></tr>
+          ${L.absent.map((x, i) => `<tr><td class="m">${ad(i + 1)}</td><td class="nm">${H(x.n)}</td></tr>`).join('') || '<tr><td colspan="2">لا يوجد</td></tr>'}</table></div></div>
       <div class="tp-sg"><div>مديرة المدرسة:<br><b>أمينة آل مشيط</b></div><div>المعلمة:<br><b>${H(short(nm))}</b></div></div>
     </section>`;
   }
@@ -470,8 +472,8 @@
     .tp-l{text-align:center;color:#0e9f8f;font-size:18px;margin:8px 0}.tp-st td:first-child{text-align:right}.tp-c1{background:#0e8f94!important}
     .tp-g{display:flex;gap:14px;align-items:flex-start;border:1px solid #9ca3af;padding:0}.tp-n{width:58%;margin:0;table-layout:auto}.tp-n th.m,.tp-n td.m{width:34px}
     .tp-n td.nm{text-align:right}.tp-n td{padding:2px 8px;font-size:11.5px}.tp-c2{background:#1f4b5c!important;text-align:right!important}.tp-n tr:nth-child(2) th{background:#1f4b5c}
-    .tp-pie{flex:1;text-align:center;padding-top:40px;color:#1f4b5c}.tp-pie b{display:block;margin-bottom:8px}.tp-k{display:flex;justify-content:center;gap:16px;font-size:11px}
-    .tp-k i{display:inline-block;width:10px;height:10px;margin-left:4px;vertical-align:middle}
+    .tp-pie{flex:1;text-align:center;padding-top:16px;color:#1f4b5c}.tp-pie b{display:block;margin-bottom:8px}.tp-k{display:flex;justify-content:center;gap:16px;font-size:11px}
+    .tp-a{width:100%;margin:12px 0 0}.tp-a th{background:#9a7b3f!important}.tp-c3{text-align:right!important}.tp-k i{display:inline-block;width:10px;height:10px;margin-left:4px;vertical-align:middle}
     .tp-sg{display:flex;justify-content:space-around;margin-top:16px;break-inside:avoid;font-weight:700;line-height:1.8;text-align:center}
     .tp-bar{background:#2b8fb0;color:#fff;text-align:center;padding:6px;font-weight:700;margin-top:4px}
     .tp-ims{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.tp-ims img{width:100%;max-height:118mm;object-fit:contain;border:1px solid #d1d5db;break-inside:avoid}`;
