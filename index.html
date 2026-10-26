@@ -599,6 +599,8 @@ function route() {
     $('#view').innerHTML = v === 'start' || rev ? tHub()
       : v === 'td' && D.td ? tTabs('td') + tdPage()
       : v === 'cp' && D.ct ? tTabs('cp') + teacherCp(a)
+      : v === 'att' && D.att ? tTabs('att') + attPage(location.hash.slice(5))
+      : v === 'attr' && D.att ? tTabs('attr') + attPage('all')
       : v === 'cn' && D.cn ? tTabs('cn') + cnPage(a)
       : v === 'lnr' && D.nv ? nvPage(a)
       : v === 'sig' && D.ct ? tTabs('sig') + teacherSig()
@@ -613,7 +615,7 @@ function route() {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === top));
   const el = $('#view');
   el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folders(+a),
-    plan: planW, ctw: wHub, arc: () => actRepW('c', a), arn: () => actRepW('n', a),plans: plansW, timeline: () => plansW('timeline'), qa: () => qaW(a), quality: qualityW, start: wHub }[v] || me)();
+    plan: planW, ctw: wHub, arc: () => actRepW('c', a), arn: () => actRepW('n', a),plans: plansW, timeline: () => plansW('timeline'), att: () => D.att ? attPage(location.hash.slice(5)) : '<div class="empty card">لا توجد بيانات بعد</div>', attr: () => D.att ? attPage('all') : '<div class="empty card">لا توجد بيانات بعد</div>', qa: () => qaW(a), quality: qualityW, start: wHub }[v] || me)();
   if (v !== 'start') { const h = HUB.find(x => x[0] === (SUB_OF[v] || (v === 'w' ? 'me' : v))); el.insertAdjacentHTML('afterbegin', homeBar(h ? h[1] : '')); }
   bind(el); window.scrollTo(0, 0);
 }
@@ -625,6 +627,8 @@ const HUB_G = [['الخطط والبرامج', [['plans', 'الخطة التشغ
   ['النشاط الطلابي (اطلاع)', [['arc', 'تقارير الأنشطة الصفية', 'ملف PDF واحد يجمع كل التقارير'], ['arn', 'تقارير الأنشطة اللاصفية', 'تقارير الفترات حسب الأسبوع']]],
   ['المعلمات', [['home', 'متابعة المعلمات', 'لوحة التتبع والإنجاز حسب المجلد'], ['teachers', 'قائمة المعلمات', 'صفحة كل معلمة'], ['folders', 'المجلدات', 'محتوى ملفات المعلمات'],
     ['alerts', 'التنبيهات', 'الملفات المكررة والفارغة والتذكير'], ['dash', 'لوحة المؤشرات', 'مؤشرات إنجاز المعلمات']]],
+  // «حضور حصص التيمز» (2026-10-26): متابعة رفع المعلمات وتقارير الغياب، كما عند مسؤولة الغياب
+  ['الغياب — حصص التيمز', [['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات لملفات الحضور'], ['attr', 'تقارير الغياب', 'تقرير الغياب على مستوى حصة لكل يوم']]],
   ['الإداريات', [['admins', 'الإداريات', 'مبادرات الإداريات']]]];
 const HUB = HUB_G.flatMap(g => g[1]);
 const hubBtns = L => `${L.map(([g, l, d]) => `<button class="hub-b" data-go="${g}"><span class="sec-ic">${['me', 'mine', 'home', 'admins'].includes(g) ? secIcon('') : planIcon}</span><span><span class="hub-t">${l}</span><span class="hub-s">${d}</span></span></button>`).join('')}`;
@@ -1234,7 +1238,8 @@ function rvCard(p) {
 }
 // the teacher's «الرئيسية»: the same 4 buttons for every teacher (plan-only accounts have no «ملفاتي»)
 // «جودة شواهد البرامج» (rev) disabled 2026-10-17 at the user's request: no button, #rev → الرئيسية; teacherReview() kept unused
-const tList = () => [D.td && ['td', 'لوحتي', 'مستواكِ مقارنة بالجميع وخطتك الزمنية وما يحتاج منكِ'], ['qa', 'تدقيق الجودة', 'نتيجة تدقيق برامجك وردّك وخطة التحسين'],
+const tList = () => [D.att && (D.att.mode === 'teacher' ? ['att', 'توثيق حصص التيمز', 'ارفعي ملفات حضور حصصك من Teams'] : ['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات لملفات الحضور']),
+  D.att && D.att.mode !== 'teacher' && ['attr', 'تقارير الغياب', 'تقرير الغياب على مستوى حصة لكل يوم'], D.td && ['td', 'لوحتي', 'مستواكِ مقارنة بالجميع وخطتك الزمنية وما يحتاج منكِ'], ['qa', 'تدقيق الجودة', 'نتيجة تدقيق برامجك وردّك وخطة التحسين'],
   ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها'], D.ct && ['cp', 'الأنشطة الصفية', 'برامجك في خطة النشاط ورفع صورها'], D.cn && ['cn', 'الأنشطة اللاصفية', 'أسابيع فصلك: بطاقة التنفيذ والشواهد والتقرير'], D.nv && ['lnr', 'تقارير المعلمات في الأنشطة اللاصفية', 'تقارير الأسابيع ومؤشراتها (اطلاع)'], D.ct && ['sig', 'تسجيل توقيعي', 'ارسمي توقيعك مرة واحدة ليظهر في تقارير برامجك'], !D.planOnly && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
 // «الأنشطة اللاصفية» (2026-10-19): الأسابيع وبطاقة التنفيذ والتقرير المحفوظ في cn.js (يُحمَّل عند أول فتح)؛ teacherCn() القديمة احتياط إن تعذّر تحميله
 // «تقارير المعلمات في الأنشطة اللاصفية» لمعلمة مطّلعة (2026-10-19: سلمى القرني): صفحة رائدة النشاط نفسها (leader.js → LEADER.nr) بطلبات برمز المعلمة
@@ -1253,6 +1258,14 @@ function tdPage() {
   if (window.TD) return TD.render();
   tdLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'td.js?v=20261019'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { tdLoad = null; });
+  return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
+}
+// «حضور حصص التيمز» (2026-10-26): site/att.js يُحمَّل عند أول فتح؛ D.att من tools/export.js (attFor)
+let attLoad = null;
+function attPage(a) {
+  if (window.ATT) return ATT.render(D.att, a);
+  attLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'att.js?v=20261026'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+    .then(() => route(), () => { attLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
 let cnLoad = null;
@@ -1529,6 +1542,7 @@ function tHub() {
   const meta = { qa: P.length && !A.length ? 'لم يبدأ البرنامج · الفصل الدراسي الثاني' : progs,
     rev: !P.length ? progs : !A.length ? 'لم يبدأ البرنامج · الفصل الدراسي الثاني' : avg == null ? 'لم تُقيَّم بعد' : `متوسط التقييم ${nf(avg)} من 100`,
     plan: !P.length ? progs : A.length ? `${nf(done)} من ${nf(A.length)} أُرفقت شواهدها` : 'تبدأ في الفصل الدراسي الثاني', mine: t ? `الإنجاز ${nf(t.pct)}٪` : '',
+    att: D.att ? (D.att.mode === 'teacher' ? 'جدول حصصك اليوم وما أرسلتِه' : 'المعلمات · الحصص الناقصة · التذكير') : '', attr: D.att ? 'لكل فصل: الطالبات × الحصص' : '',
     td: D.td && D.td.me.o != null ? `مؤشرك ${nf(D.td.me.o)} من 100 · متوسط المعلمات ${nf(Math.round(D.td.peers.reduce((s, p) => s + p.o, 0) / Math.max(1, D.td.peers.length)))}` : '',
     cn: D.cn ? `${nf((D.cn.weeks || []).length)} أنشطة لفصلك · ${nf((D.cn.weeks || []).reduce((s, w) => s + w.files.length, 0))} صورة مرفوعة` : '',
     cp: D.ct ? (() => { const L = cpList(); return `${nf(L.length)} برامج · ${nf(L.reduce((a, x) => a + x.p.files.length, 0))} صورة مرفوعة`; })() : '' };
