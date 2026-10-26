@@ -57,7 +57,8 @@
   // أوقات الحصص عن بعد (من المستخدمة 2026-10-26): ٤٠ دقيقة وبينها ٥ دقائق، ح١ ٧:٠٠ … ح٧ ١١:٣٠–١٢:١٠
   const BELL = ['7:00', '7:45', '8:30', '9:15', '10:00', '10:45', '11:30'], BELL_END = ['7:40', '8:25', '9:10', '9:55', '10:40', '11:25', '12:10'],
     pics = n => n === 1 ? 'صورة واحدة' : n === 2 ? 'صورتان' : `${ad(n)} ${n > 2 && n < 11 ? 'صور' : 'صورة'}`,
-    slot = p => `${ad(BELL[p - 1])} – ${ad(BELL_END[p - 1])}`, mins = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+    slot = p => `${ad(BELL[p - 1])}‏ – ‏${ad(BELL_END[p - 1])}`,   // RLM: البداية في اليمين
+    mins = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
   const periodAt = d => { const t = d.getHours() * 60 + d.getMinutes(); if (t < mins(BELL[0]) - 15 || t > mins('12:10')) return 0;
     let p = 1; BELL.forEach((b, i) => { if (t >= mins(b) - 10) p = i + 1; }); return p; };
   const wa = (phone, text) => `https://wa.me/966${String(phone).replace(/\D/g, '').replace(/^0/, '')}?text=${encodeURIComponent(text)}`;
