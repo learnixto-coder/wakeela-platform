@@ -84,15 +84,22 @@
   }
 
   // --- ملف Teams مقروءًا ← حصة: {p, g, s, subj, file, start, end, present, late, flash}
-  function lessonOf(A, r, file, ttT, taken) {
+  // رقم الحصة: ملفات الفصل الواحد مرتبة بوقت البداية تأخذ حصص المعلمة لذلك الفصل في الجدول بالترتيب
+  // (لا تعتمد على أوقات الجرس)؛ وقت الجرس (p0) فقط لفصل ليس في جدولها ذلك اليوم
+  function assign(ttT, iso, L) {
+    const exp = ttT ? (ttT.days[wday(iso)] || []) : [], by = {};
+    L.forEach(f => { if (f.p0 === undefined) f.p0 = f.p; (by[ck(f.g, f.s)] ||= []).push(f); });
+    for (const [k, fs] of Object.entries(by)) { const ps = exp.map((c, i) => c && ck(c.g, c.s) === k ? i + 1 : 0).filter(Boolean);
+      fs.sort((a, b) => (a.t0 || 0) - (b.t0 || 0)).forEach((f, i) => { f.p = ps[i] || f.p0; }); }
+    return L;
+  }
+  function lessonOf(A, r, file) {
     const R = { ...r, start: r.start && new Date(r.start), end: r.end && new Date(r.end), students: (r.students || []).map(x => ({ ...x, first: x.first && new Date(x.first) })) };
     const C = TEAMS.classify(R), iso = R.start ? isoOf(R.start) : '';
     let best = null; for (const k of Object.keys(A.roster)) { const m = matcher(A.roster[k]), n = C.filter(x => m(x.name)).length; if (!best || n > best.n) best = { k, n }; }
     const [g, s] = best && best.n >= Math.min(3, C.length) && best.n > 0 ? best.k.split('-').map(Number) : [0, 0];
-    let p = R.start ? periodAt(R.start) : 0; const exp = ttT ? (ttT.days[wday(iso)] || []) : [];
-    // إذا لم يطابق وقتُها جدولَها: أول حصة لها في اليوم لنفس الفصل لم تُشغل
-    if (ttT && g && !(exp[p - 1] && exp[p - 1].g === g && exp[p - 1].s === s)) { const i = exp.findIndex((c, i) => c && c.g === g && c.s === s && !(taken || []).includes(i + 1)); if (i >= 0) p = i + 1; }
-    return { iso, p, g, s, subj: R.title || '', file, start: hm(R.start), end: hm(R.end),
+    const p = R.start ? periodAt(R.start) : 0;
+    return { iso, p, p0: p, t0: R.start ? R.start.getTime() : 0, g, s, subj: R.title || '', file, start: hm(R.start), end: hm(R.end),
       present: C.filter(x => x.kind === 'present').map(x => x.name), late: C.filter(x => x.kind === 'late').map(x => ({ n: x.name, t: hm(x.first) })),
       flash: C.filter(x => x.kind === 'flash').map(x => ({ n: x.name, d: Math.round(x.dur) + 'ث' })) };
   }
@@ -100,8 +107,7 @@
   function ready(A) {
     if (A.__ok) return; A.__ok = 1;
     for (const [iso, byT] of Object.entries(A.days || {})) for (const [nm, list] of Object.entries(byT)) {
-      const ttT = A.tt.teachers.find(t => t.name === nm), taken = [];
-      byT[nm] = list.map(x => { if (!x.r) return x; const f = lessonOf(A, x.r, x.file, ttT, taken); taken.push(f.p); return f; });
+      byT[nm] = assign(A.tt.teachers.find(t => t.name === nm), iso, list.map(x => x.r ? lessonOf(A, x.r, x.file) : x));
     }
     if (A.mode === 'teacher') sentLocal(A);
   }
@@ -237,7 +243,8 @@
   function tPage(A, sel) {
     const days = [...new Set([...daysOf(A), ...PEND.filter(x => x.iso).map(x => x.iso)])].sort().reverse();
     const iso = sel && /^\d{4}-\d\d-\d\d$/.test(sel) ? sel : days[0] || today();
-    const M = dayModel(A, iso), r = M.T[0] || { cells: [], exp: [], extra: [], sent: 0 }, P = PEND.filter(x => x.iso === iso), used = new Set();
+    const P = PEND.filter(x => x.iso === iso), used = new Set(); assign(me(A), iso, [...((A.days || {})[iso] || {})[me(A).name] || [], ...P.map(x => x.f)]);
+    const M = dayModel(A, iso), r = M.T[0] || { cells: [], exp: [], extra: [], sent: 0 };
     const pend = c => { const q = P.find(x => !used.has(x) && x.f.p === c.p) || P.find(x => !used.has(x) && x.f.g === c.g && x.f.s === c.s && !r.cells.some(o => o.p === x.f.p)); if (q) used.add(q); return q; };
     const rows = r.cells.map(c => ({ c, q: c.f ? null : pend(c) })), extraP = P.filter(x => !used.has(x)), errs = PEND.filter(x => x.err);
     const info = f => f ? `${esc(f.subj || '')}<br><span class="muted">${esc(f.start || '')}${f.end ? ' – ' + esc(f.end) : ''}</span>` : '<span class="muted">—</span>';
@@ -270,8 +277,7 @@
         const r = TEAMS.parse(await file.arrayBuffer()); if (!r.start || !r.students.length) throw new Error('الملف ليس «تقرير حضور» من Teams');
         const iso = isoOf(r.start), nm = me(A).name;
         if (PEND.some(x => x.f && x.f.file === file.name && x.iso === iso) || (A.days?.[iso]?.[nm] || []).some(x => x.file === file.name)) throw new Error('الملف أُرفق من قبل');
-        const taken = [...(A.days?.[iso]?.[nm] || []), ...PEND.filter(x => x.iso === iso).map(x => x.f)].map(x => x.p);
-        PEND.push({ iso, file, f: lessonOf(A, r, file.name, me(A), taken) });
+        PEND.push({ iso, file, f: lessonOf(A, r, file.name) });
       } catch (e) { PEND.push({ name: file.name, err: e.message || 'تعذّرت قراءة الملف' }); }
     }
     const last = PEND.filter(x => x.iso).pop(); if (last && location.hash !== '#att/d/' + last.iso) location.hash = 'att/d/' + last.iso; else route();
