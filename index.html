@@ -628,7 +628,7 @@ const HUB_G = [['الخطط والبرامج', [['plans', 'الخطة التشغ
   ['المعلمات', [['home', 'متابعة المعلمات', 'لوحة التتبع والإنجاز حسب المجلد'], ['teachers', 'قائمة المعلمات', 'صفحة كل معلمة'], ['folders', 'المجلدات', 'محتوى ملفات المعلمات'],
     ['alerts', 'التنبيهات', 'الملفات المكررة والفارغة والتذكير'], ['dash', 'لوحة المؤشرات', 'مؤشرات إنجاز المعلمات']]],
   // «حضور حصص التيمز» (2026-10-26): متابعة رفع المعلمات وتقارير الغياب، كما عند مسؤولة الغياب
-  ['الغياب — حصص التيمز', [['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات لملفات الحضور'], ['attr', 'تقارير الغياب', 'تقرير الغياب على مستوى حصة لكل يوم']]],
+  ['الغياب — حصص التيمز', [['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات وطباعة تقارير الغياب']]],
   ['الإداريات', [['admins', 'الإداريات', 'مبادرات الإداريات']]]];
 const HUB = HUB_G.flatMap(g => g[1]);
 const hubBtns = L => `${L.map(([g, l, d]) => `<button class="hub-b" data-go="${g}"><span class="sec-ic">${['me', 'mine', 'home', 'admins'].includes(g) ? secIcon('') : planIcon}</span><span><span class="hub-t">${l}</span><span class="hub-s">${d}</span></span></button>`).join('')}`;
@@ -1238,8 +1238,7 @@ function rvCard(p) {
 }
 // the teacher's «الرئيسية»: the same 4 buttons for every teacher (plan-only accounts have no «ملفاتي»)
 // «جودة شواهد البرامج» (rev) disabled 2026-10-17 at the user's request: no button, #rev → الرئيسية; teacherReview() kept unused
-const tList = () => [D.att && (D.att.mode === 'teacher' ? ['att', 'توثيق حصص التيمز', 'ارفعي ملفات حضور حصصك من Teams'] : ['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات لملفات الحضور']),
-  D.att && D.att.mode !== 'teacher' && ['attr', 'تقارير الغياب', 'تقرير الغياب على مستوى حصة لكل يوم'], D.td && ['td', 'لوحتي', 'مستواكِ مقارنة بالجميع وخطتك الزمنية وما يحتاج منكِ'], ['qa', 'تدقيق الجودة', 'نتيجة تدقيق برامجك وردّك وخطة التحسين'],
+const tList = () => [D.att && (D.att.mode === 'teacher' ? ['att', 'توثيق حصص التيمز', 'ارفعي ملفات حضور حصصك من Teams'] : ['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات وطباعة تقارير الغياب']), D.td && ['td', 'لوحتي', 'مستواكِ مقارنة بالجميع وخطتك الزمنية وما يحتاج منكِ'], ['qa', 'تدقيق الجودة', 'نتيجة تدقيق برامجك وردّك وخطة التحسين'],
   ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها'], D.ct && ['cp', 'الأنشطة الصفية', 'برامجك في خطة النشاط ورفع صورها'], D.cn && ['cn', 'الأنشطة اللاصفية', 'أسابيع فصلك: بطاقة التنفيذ والشواهد والتقرير'], D.nv && ['lnr', 'تقارير المعلمات في الأنشطة اللاصفية', 'تقارير الأسابيع ومؤشراتها (اطلاع)'], D.ct && ['sig', 'تسجيل توقيعي', 'ارسمي توقيعك مرة واحدة ليظهر في تقارير برامجك'], !D.planOnly && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
 // «الأنشطة اللاصفية» (2026-10-19): الأسابيع وبطاقة التنفيذ والتقرير المحفوظ في cn.js (يُحمَّل عند أول فتح)؛ teacherCn() القديمة احتياط إن تعذّر تحميله
 // «تقارير المعلمات في الأنشطة اللاصفية» لمعلمة مطّلعة (2026-10-19: سلمى القرني): صفحة رائدة النشاط نفسها (leader.js → LEADER.nr) بطلبات برمز المعلمة
@@ -1264,7 +1263,7 @@ function tdPage() {
 let attLoad = null;
 function attPage(a) {
   if (window.ATT) return ATT.render(D.att, a);
-  attLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'att.js?v=20261026b'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  attLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'att.js?v=20261026c'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { attLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
