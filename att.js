@@ -54,9 +54,9 @@
   const isoOf = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const today = () => isoOf(new Date());
   const hm = d => d ? `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}` : '';
-  // أوقات الحصص عن بعد (تقرير المعلمة في منصة مدرستي: ح٥ ٩:٤٠، ح٦ ١٠:٢٠، ٤٠ دقيقة)
-  const BELL = ['7:00', '7:40', '8:20', '9:00', '9:40', '10:20', '11:00'], mins = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
-  const periodAt = d => { const t = d.getHours() * 60 + d.getMinutes(); if (t < mins(BELL[0]) - 15 || t > mins('11:40')) return 0;
+  // أوقات الحصص عن بعد (من المستخدمة 2026-10-26): ٤٠ دقيقة وبينها ٥ دقائق، ح١ ٧:٠٠ … ح٧ ١١:٣٠–١٢:١٠
+  const BELL = ['7:00', '7:45', '8:30', '9:15', '10:00', '10:45', '11:30'], mins = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+  const periodAt = d => { const t = d.getHours() * 60 + d.getMinutes(); if (t < mins(BELL[0]) - 15 || t > mins('12:10')) return 0;
     let p = 1; BELL.forEach((b, i) => { if (t >= mins(b) - 10) p = i + 1; }); return p; };
   const wa = (phone, text) => `https://wa.me/966${String(phone).replace(/\D/g, '').replace(/^0/, '')}?text=${encodeURIComponent(text)}`;
   const chipOf = (ok, txt) => `<span class="chip s-${ok ? 'ok' : 'none'}">${txt}</span>`;
