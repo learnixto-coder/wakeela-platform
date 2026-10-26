@@ -59,8 +59,11 @@
     pics = n => n === 1 ? 'صورة واحدة' : n === 2 ? 'صورتان' : `${ad(n)} ${n > 2 && n < 11 ? 'صور' : 'صورة'}`,
     slot = p => `${ad(BELL[p - 1])}‏ – ‏${ad(BELL_END[p - 1])}`,   // RLM: البداية في اليمين
     mins = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
-  const periodAt = d => { const t = d.getHours() * 60 + d.getMinutes(); if (t < mins(BELL[0]) - 15 || t > mins('12:10')) return 0;
-    let p = 1; BELL.forEach((b, i) => { if (t >= mins(b) - 10) p = i + 1; }); return p; };
+  // الحصة من منتصف الاجتماع (المستخدمة 2026-10-26: «خلك في النصف» — بدء متأخر ٤ دقائق أو تجاوز ٥ لا يغيّرها):
+  // أقرب حصة منتصفُها لمنتصف الاجتماع، من ٦:٤٥ حتى ١٣:٣٠
+  const MID = BELL.map((b, i) => (mins(b) + mins(BELL_END[i])) / 2);
+  const periodAt = d => { const t = d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60; if (t < mins(BELL[0]) - 15 || t > mins('13:30')) return 0;
+    let p = 1; MID.forEach((m, i) => { if (Math.abs(t - m) < Math.abs(t - MID[p - 1])) p = i + 1; }); return p; };
   const wa = (phone, text) => `https://wa.me/966${String(phone).replace(/\D/g, '').replace(/^0/, '')}?text=${encodeURIComponent(text)}`;
   const chipOf = (ok, txt) => `<span class="chip s-${ok ? 'ok' : 'none'}">${txt}</span>`;
   const short = n => String(n).replace(/^أ\.\s*/, '');
@@ -90,14 +93,32 @@
   // رقم الحصة: ملفات كل فصل بترتيب وقت بدايتها ← حصص المعلمة لذلك الفصل في الجدول بالتتابع (المستخدمة 2026-10-26:
   // قد يبدأ الاجتماع متأخرًا عن الجرس، مثل ابتسام الاثنين ح١ وح٢ وملفاها ٧:٥٠ و٨:٣٩). وقت الجرس (ح١ ٧:٠٠–٧:٤٠) يرجّح فقط
   // أي حصة هي حين ترفع المعلمة ملفات أقل من حصص الفصل؛ فصل ليس في جدولها ذلك اليوم يبقى على وقت الجرس
+  // رقم الحصة من اسم الملف إن كتبته المعلمة: «الحصة السابعة»، «ح٧»، «حصة 3» (لا الأرقام وحدها مثل 1.csv)
+  const PW = ['اول', 'ثاني', 'ثالث', 'رابع', 'خامس', 'سادس', 'سابع'];
+  const hintOf = file => {
+    const s = String(file || '').replace(/.csv$/i, '').replace(/[٠-٩]/g, c => AR.indexOf(c)).replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي');
+    let m = s.match(/(?:^|[^؀-ۿ])(?:ح|حصه|الحصه)s*[.-_]?s*([1-7])(?![0-9])/); if (m) return +m[1];
+    m = s.match(/(?:حصهs*|^s*)ال(اول|ثاني|ثالث|رابع|خامس|سادس|سابع)/); return m ? PW.indexOf(m[1]) + 1 : 0;
+  };
   function assign(ttT, iso, L) {
-    const exp = ttT ? (ttT.days[wday(iso)] || []) : [], by = {};
-    L.forEach(f => { if (f.p0 === undefined) f.p0 = f.p; f.p = f.p0; (by[ck(f.g, f.s)] ||= []).push(f); });
+    const exp = ttT ? (ttT.days[wday(iso)] || []) : [];
+    L.forEach(f => { if (f.p0 === undefined) f.p0 = f.p; if (f.ph === undefined) f.ph = hintOf(f.file); });
+    pass(exp, L, 0);
+    // تأخر المعلمة ذلك اليوم: وسيط (منتصف الاجتماع − منتصف حصته)؛ إن كان ١٠ دقائق فأكثر يُعاد التخمين بعد طرحه
+    const dl = L.filter(f => f.tm && f.p && exp[f.p - 1] && ck(exp[f.p - 1].g, exp[f.p - 1].s) === ck(f.g, f.s))
+      .map(f => { const d = new Date(f.tm); return d.getHours() * 60 + d.getMinutes() - MID[f.p - 1]; }).sort((a, b) => a - b);
+    const lag = dl.length ? dl[dl.length >> 1] : 0;
+    if (lag >= 10 && lag <= 90) pass(exp, L, lag);
+    return L;
+  }
+  function pass(exp, L, lag) {
+    const by = {};
+    L.forEach(f => { f.q = lag && f.tm ? periodAt(new Date(f.tm - lag * 60000)) || f.p0 : f.p0; f.p = f.ph || f.q; (by[ck(f.g, f.s)] ||= []).push(f); });
     for (const [k, fs] of Object.entries(by)) {
       const ps = exp.map((c, i) => c && ck(c.g, c.s) === k ? i + 1 : 0).filter(Boolean); if (!ps.length) continue;
       fs.sort((a, b) => (a.t0 || 0) - (b.t0 || 0));
       // مطابقة تحفظ الترتيب بأقل بعد عن وقت الجرس؛ ملف زائد عن حصص الفصل يبقى على وقت الجرس
-      const n = fs.length, m = ps.length, SKIP = 100, cost = (f, p) => f.p0 ? Math.abs(f.p0 - p) : 0;
+      const n = fs.length, m = ps.length, SKIP = 100, cost = (f, p) => f.ph ? (f.ph === p ? 0 : 50) : f.q ? Math.abs(f.q - p) : 0;
       const D = [...Array(n + 1)].map(() => Array(m + 1).fill(Infinity)); D[0].fill(0);
       for (let i = 1; i <= n; i++) for (let j = 0; j <= m; j++)
         D[i][j] = Math.min(D[i - 1][j] + SKIP, j ? D[i][j - 1] : Infinity, j ? D[i - 1][j - 1] + cost(fs[i - 1], ps[j - 1]) : Infinity);
@@ -107,15 +128,14 @@
         else i--;
       }
     }
-    return L;
   }
   function lessonOf(A, r, file) {
     const R = { ...r, start: r.start && new Date(r.start), end: r.end && new Date(r.end), students: (r.students || []).map(x => ({ ...x, first: x.first && new Date(x.first) })) };
     const C = TEAMS.classify(R), iso = R.start ? isoOf(R.start) : '';
     let best = null; for (const k of Object.keys(A.roster)) { const m = matcher(A.roster[k]), n = C.filter(x => m(x.name)).length; if (!best || n > best.n) best = { k, n }; }
     const [g, s] = best && best.n >= Math.min(3, C.length) && best.n > 0 ? best.k.split('-').map(Number) : [0, 0];
-    const p = R.start ? periodAt(R.start) : 0;
-    return { iso, p, p0: p, t0: R.start ? R.start.getTime() : 0, g, s, subj: R.title || '', file, start: hm(R.start), end: hm(R.end),
+    const tm = R.start ? (R.end && R.end > R.start ? (+R.start + +R.end) / 2 : +R.start + 20 * 60000) : 0, p = tm ? periodAt(new Date(tm)) : 0;
+    return { iso, p, p0: p, t0: R.start ? R.start.getTime() : 0, tm, g, s, subj: R.title || '', file, start: hm(R.start), end: hm(R.end),
       present: C.filter(x => x.kind === 'present').map(x => x.name), late: C.filter(x => x.kind === 'late').map(x => ({ n: x.name, t: hm(x.first) })),
       flash: C.filter(x => x.kind === 'flash').map(x => ({ n: x.name, d: Math.round(x.dur) + 'ث' })) };
   }
