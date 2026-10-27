@@ -424,6 +424,7 @@
     const drop = q => ` <button class="btn sm ghost" data-attdrop="${PEND.indexOf(q)}">إزالة</button>`;
     const del = f => ` <button class="btn sm ghost" data-attdel="${esc(iso)}|${esc(f.file)}" title="حذف الملف المرسل بالخطأ">حذف</button>`;
     const nP = r.exp.length, word = n => n > 2 && n < 11 ? 'حصص' : 'حصة';
+    const dup = f => f.t0 && r.cells.some(c => c.f && c.f !== f && c.f.t0 === f.t0);   // نسخة ثانية من ملف حصة مُرسلة (يُحذف بزر «حذف»)
     return `<div class="card hero th-hero"><div class="grow"><h2>توثيق حصص التيمز — ${DAYS[wday(iso)]} ${hij(iso)}</h2>
         <p class="muted">${nP ? (r.sent ? `أرسلتِ ${ad(r.sent)} من ${ad(nP)} ${word(nP)}` : `لم ترسلي بعد · ${nP === 1 ? 'حصة واحدة' : nP === 2 ? 'حصتان' : ad(nP) + ' ' + word(nP)} اليوم`) : 'لا توجد لكِ حصص في هذا اليوم حسب الجدول'}</p></div>
         <div>${nP ? (r.sent === nP ? chipOf(1, 'أرسلتِ كل حصصك') : chipOf(0, `باقي ${ad(nP - r.sent)}`)) : ''}</div></div>
@@ -434,7 +435,7 @@
       <div class="card at-wrap"><table class="at-t at-tt"><thead><tr><th>الحصة</th><th>الصف</th><th>المادة / الوقت</th><th>الحاضرات</th><th>الحالة</th></tr></thead><tbody>
       ${rows.map(({ c, q }) => `<tr class="${c.f ? 'ok' : q ? 'rd' : ''}"><td>ح${ad(c.p)}</td><td>${cls(c.g, c.s)}</td><td>${info(c.f || q?.f)}</td><td>${cnt(c.f || q?.f, c)}</td>
         <td>${c.f ? chipOf(1, c.f.wait ? '✓ أُرسل · قيد النقل' : '✓ أُرسل') + del(c.f) : q ? `<span class="chip s-part">جاهز للإرسال</span>${drop(q)}` : chipOf(0, 'لم يُرفق')}</td></tr>`).join('')}
-      ${r.extra.map(f => `<tr class="ok"><td>${f.p ? 'ح' + ad(f.p) : '—'}</td><td>${f.g ? cls(f.g, f.s) : '؟'}</td><td>${info(f)}</td><td>${cnt(f, f)}</td><td>${chipOf(1, f.wait ? '✓ أُرسل · قيد النقل' : '✓ أُرسل')} <span class="chip s-part">خارج جدولك</span>${del(f)}</td></tr>`).join('')}
+      ${r.extra.map(f => `<tr class="ok"><td>${f.p ? 'ح' + ad(f.p) : '—'}</td><td>${f.g ? cls(f.g, f.s) : '؟'}</td><td>${info(f)}</td><td>${cnt(f, f)}</td><td>${chipOf(1, f.wait ? '✓ أُرسل · قيد النقل' : '✓ أُرسل')} <span class="chip s-part">${dup(f) ? 'ملف مكرر' : 'خارج جدولك'}</span>${del(f)}</td></tr>`).join('')}
       ${extraP.map(q => `<tr class="rd"><td>${q.f.p ? 'ح' + ad(q.f.p) : '—'}</td><td>${q.f.g ? cls(q.f.g, q.f.s) : 'لم يُعرف الفصل'}</td><td>${info(q.f)}</td><td>${cnt(q.f, q.f)}</td>
         <td><span class="chip s-part">خارج جدولك</span>${drop(q)}</td></tr>`).join('')}
       ${!rows.length && !extraP.length && !r.extra.length ? '<tr><td colspan="5" class="muted">لا توجد حصص</td></tr>' : ''}
@@ -451,8 +452,10 @@
         if (file.size > 2 * 1024 * 1024) throw new Error('الملف أكبر من المسموح');
         const r = TEAMS.parse(await file.arrayBuffer()); if (!r.start || !r.students.length) throw new Error('الملف ليس «تقرير حضور» من Teams');
         const iso = isoOf(r.start), nm = me(A).name;
-        if (PEND.some(x => x.f && x.f.file === file.name && x.iso === iso) || (A.days?.[iso]?.[nm] || []).some(x => x.file === file.name)) throw new Error('الملف أُرفق من قبل');
-        PEND.push({ iso, file, f: lessonOf(A, r, file.name) });
+        // مكرر = الاسم نفسه أو الاجتماع نفسه (وقت البداية نفسه) ولو بُدّل اسم الملف، مثل «… (2).csv» (المستخدمة 2026-10-27)
+        const f = lessonOf(A, r, file.name), old = [...PEND.filter(x => x.f && x.iso === iso).map(x => x.f), ...(A.days?.[iso]?.[nm] || [])];
+        if (old.some(x => x.file === file.name || (f.t0 && x.t0 === f.t0))) throw new Error('ملف مكرر — هذه الحصة أُرفقت من قبل');
+        PEND.push({ iso, file, f });
       } catch (e) { PEND.push({ name: file.name, err: e.message || 'تعذّرت قراءة الملف' }); }
     }
     const last = PEND.filter(x => x.iso).pop(); if (last && location.hash !== '#att/d/' + last.iso) location.hash = 'att/d/' + last.iso; else route();
