@@ -47,6 +47,7 @@
    ومن مجموع حضورها أقل من ٥ دقائق «دخول لحظات» = غائبة. المطابقة تتسامح في الهمزات والتاء المربوطة والاسم الأوسط. */
 (() => {
   const AR = '٠١٢٣٤٥٦٧٨٩', ad = n => String(n).replace(/\d/g, d => AR[d]);
+  const SG = ['', 'أول', 'ثاني', 'ثالث'];   // اسم الصف مختصرًا في خانات «حسب حصص اليوم» (أول١)
   const GR = ['', 'الأول', 'الثاني', 'الثالث'], cls = (g, s) => `${GR[g]} متوسط ${ad(s)}`, ck = (g, s) => g + '-' + s;
   const DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
   const gd = iso => new Date(iso + 'T12:00:00');
@@ -176,10 +177,10 @@
   // أيام الدراسة عن بعد = الأيام التي وصلت فيها ملفات، واليوم إن كان يوم دراسة
   const daysOf = A => [...new Set([...Object.keys(A.days || {}), ...(wday(today()) <= 4 ? [today()] : [])])].filter(d => wday(d) <= 4).sort().reverse();
   // اختيار اليوم: قائمة منسدلة + السابق/التالي (قد تصل الأيام إلى ٣٠ يومًا وأكثر)
-  const dayNav = (days, iso) => { if (days.length < 2) return ''; const i = days.indexOf(iso), older = days[i + 1], newer = days[i - 1];
-    return `<div class="at-nav"><button class="btn sm ghost" ${older ? `data-go="att/d/${older}"` : 'disabled'}>→ اليوم السابق</button>
-      <select data-attday>${days.map(d => `<option value="${d}"${d === iso ? ' selected' : ''}>${DAYS[wday(d)]} ${hijT(d)}${d === today() ? ' (اليوم)' : ''}</option>`).join('')}</select>
-      <button class="btn sm ghost" ${newer ? `data-go="att/d/${newer}"` : 'disabled'}>اليوم التالي ←</button></div>`; };
+  const dayNav = (days, iso, pre = 'att/d/') => { if (days.length < 2) return ''; const i = days.indexOf(iso), older = days[i + 1], newer = days[i - 1];
+    return `<div class="at-nav"><button class="btn sm ghost" ${older ? `data-go="${pre}${older}"` : 'disabled'}>→ اليوم السابق</button>
+      <select data-attday="${pre}">${days.map(d => `<option value="${d}"${d === iso ? ' selected' : ''}>${DAYS[wday(d)]} ${hijT(d)}${d === today() ? ' (اليوم)' : ''}</option>`).join('')}</select>
+      <button class="btn sm ghost" ${newer ? `data-go="${pre}${newer}"` : 'disabled'}>اليوم التالي ←</button></div>`; };
 
   // --- متابعة اليوم (مسؤولة الغياب والوكيلة)
   function home(A, sel) {
@@ -196,15 +197,18 @@
       ${dayNav(days, iso)}
       <div class="card pad at-act"><div><b>تقرير الغياب على مستوى حصة</b><div class="muted" style="font-size:13px">لكل فصل: الطالبات × حصص اليوم${all ? '' : ' — يمكن إعداده الآن، والحصص التي لم يصل ملفها تظهر مخططة'}</div></div>
         <span><button class="btn" data-go="att/r/${iso}">إعداد تقارير الفصول ←</button> <button class="btn ghost" data-go="attr">تقارير كل الأيام</button></span></div>
-      <div class="card at-wrap"><table class="at-t"><thead><tr><th>المعلمة</th>${[1, 2, 3, 4, 5, 6, 7].map(p => `<th>ح${ad(p)}</th>`).join('')}<th>الشواهد</th><th>الحالة</th></tr></thead><tbody>
-      ${M.T.slice().sort((a, b) => (a.sent === a.exp.length) - (b.sent === b.exp.length) || a.t.name.localeCompare(b.t.name, 'ar')).map(r => `<tr>
-        <td class="nm">${esc(short(r.t.name))}</td>
-        ${[1, 2, 3, 4, 5, 6, 7].map(p => { const c = r.cells.find(x => x.p === p);
-          return c ? `<td class="${c.f ? 'ok' : 'miss'}" title="${c.f ? esc(c.f.subj || c.f.file || '') : 'لم يصل الملف'}">${ad(c.s)}/${ad(c.g)}<i>${c.f ? '✓' : '—'}</i></td>` : '<td class="no"></td>'; }).join('')}
-        <td>${evN(r) ? chipOf(1, pics(evN(r))) : chipOf(0, 'لا يوجد')}</td>
-        <td>${chipOf(r.sent === r.exp.length, `${ad(r.sent)}/${ad(r.exp.length)}`)}${r.extra.length ? ` <span class="chip s-part">+${ad(r.extra.length)} خارج الجدول</span>` : ''}${remind(r)}${A.pdf?.[iso]?.[r.t.name] ? ` <button class="btn sm ghost" data-attpdf="${iso}|${esc(r.t.name)}">PDF</button>` : ''}</td></tr>`).join('')}
-      </tbody></table></div>
-      <p class="muted" style="font-size:12.5px;margin:8px 4px">الخانة كما في الجدول الورقي: الرقم الأيمن = الصف، والأيسر = الفصل · ✓ وصل الملف · — لم يصل · <a href="#att/tt">مراجعة جدول الحصص</a></p>`;
+      ${A.vw ? `<div class="card pad at-act"><div><b>توثيق الحضور في تيمز</b><div class="muted" style="font-size:13px">تقرير كل معلمة لهذا اليوم: معاينة وتصفح وتنزيل (${ad(Object.keys((A.pdf || {})[iso] || {}).length)} جاهز)</div></div>
+        <span><button class="btn" data-go="att/v/${iso}">عرض تقارير المعلمات ←</button></span></div>` : ''}
+      ${''/* «حسب حصص اليوم» (التصميم ٤ باختيار المستخدمة 2026-10-27): صفوف بلا تمرير جانبي — على الجوال كل معلمة كتلة: الاسم والحالة، ثم ح١–ح٧ في سطر، ثم الأزرار */}
+      <div class="card at-g"><div class="at-gr at-gh"><div>المعلمة</div><div class="at-gc">${[1, 2, 3, 4, 5, 6, 7].map(p => `<span>ح${ad(p)}</span>`).join('')}</div><div>الشواهد</div><div></div></div>
+      ${M.T.slice().sort((a, b) => (a.sent === a.exp.length) - (b.sent === b.exp.length) || a.t.name.localeCompare(b.t.name, 'ar')).map(r => `<div class="at-gr">
+        <div class="at-gn"><b>${esc(short(r.t.name))}</b>${chipOf(r.sent === r.exp.length, `${ad(r.sent)} من ${ad(r.exp.length)}`)}</div>
+        <div class="at-gc">${[1, 2, 3, 4, 5, 6, 7].map(p => { const c = r.cells.find(x => x.p === p);
+          return c ? `<span class="${c.f ? 'ok' : 'miss'}" title="ح${ad(p)} · ${c.f ? esc(c.f.subj || c.f.file || '') : 'لم يصل الملف'}"><i>ح${ad(p)}</i>${SG[c.g]}${ad(c.s)}</span>` : `<span class="no"><i>ح${ad(p)}</i></span>`; }).join('')}</div>
+        <div class="at-ge">${evN(r) ? chipOf(1, pics(evN(r))) : chipOf(0, 'لا شواهد')}</div>
+        <div class="at-ga">${r.extra.length ? `<span class="chip s-part">+${ad(r.extra.length)} خارج الجدول</span>` : ''}${remind(r)}${A.pdf?.[iso]?.[r.t.name] ? ` <button class="btn sm ghost" data-attpdf="${iso}|${esc(r.t.name)}">PDF</button>` : ''}</div></div>`).join('')}
+      </div>
+      <p class="muted" style="font-size:12.5px;margin:8px 4px">الأخضر: وصل ملف الحصة · الأصفر: لم يصل بعد · <a href="#att/tt">مراجعة جدول الحصص</a></p>`;
   }
 
   // --- «تقارير الغياب»: كل الأيام
@@ -340,21 +344,48 @@
     btn.disabled = false;
   }
 
-  // --- «توثيق الحضور في تيمز» (الموجهة الطلابية 2026-10-26): تقرير كل معلمة في اليوم — صورة مصغرة للصفحة الأولى + تصفح + تنزيل
-  function viewPage(A, sel) {
+  // --- «توثيق الحضور في تيمز» (2026-10-27، التصميم ١ «قائمة ومعاينة جانبية» باختيار المستخدمة): للموجهة الطلابية (mode 'view')
+  // وللوكيلة (A.vw، من متابعتها att/v). الأسماء في قائمة، وتقرير المختارة كبيرًا بجانبها: صورة الصفحة الأولى + تفاصيل + تصفح وتنزيل.
+  // على الجوال المعاينة فوق القائمة. pre = بادئة الرابط (att/d للموجهة، att/v للوكيلة)
+  let VSEL = '';   // المعلمة المختارة
+  function viewPage(A, sel, pre) {
     const days = daysOf(A), iso = sel && /^\d{4}-\d\d-\d\d$/.test(sel) ? sel : days[0] || today(), w = wday(iso), P = (A.pdf || {})[iso] || {};
-    const T = A.tt.teachers.filter(t => P[t.name] || (t.days[w] || []).some(Boolean))
-      .sort((a, b) => !P[a.name] - !P[b.name] || short(a.name).localeCompare(short(b.name), 'ar')), n = T.filter(t => P[t.name]).length;
+    const T = A.tt.teachers.filter(t => t.name && (P[t.name] || (t.days[w] || []).some(Boolean))).sort((a, b) => short(a.name).localeCompare(short(b.name), 'ar'));
+    const R = T.filter(t => P[t.name]), Wt = T.filter(t => !P[t.name]), cur = R.find(t => t.name === VSEL) || R[0];
+    const ex = t => (t.days[w] || []).map((c, i) => c && { p: i + 1, ...c }).filter(Boolean);
+    const per = t => { const e = ex(t); const n = e.length; return !n ? '' : n === 1 ? 'حصة واحدة' : n === 2 ? 'حصتان' : ad(n) + (n < 11 ? ' حصص' : ' حصة'); };
+    const back = pre === 'att/v/' ? `<button class="btn ghost" data-go="att/d/${iso}">متابعة الرفع</button>` : '';
     setTimeout(thumbs, 0);
+    // الموجهة الطلابية: «ألبوم حسب المرحلة» (التصميم ٦، المستخدمة 2026-10-27: «يهمها الطالبات») — المعلمة تظهر في كل مرحلة درّستها ذلك اليوم
+    if (A.mode === 'view') {
+      const album = w > 4 ? '<div class="empty card">هذا اليوم ليس يوم دراسة.</div>' : !T.length ? '<div class="empty card">لا توجد حصص عن بعد في هذا اليوم.</div>'
+        : [1, 2, 3].map(g => { const L = R.filter(t => ex(t).some(c => c.g === g)); if (!L.length) return '';
+          return `<h3 class="at-ah">${GR[g]} متوسط <small>${ad(L.length)} ${L.length > 2 && L.length < 11 ? 'تقارير' : 'تقرير'}</small></h3><div class="at-al">${L.map(t => {
+            const x = P[t.name], k = `${iso}|${esc(t.name)}`, e = ex(t).filter(c => c.g === g), C = [...new Set(e.map(c => SG[c.g] + ad(c.s)))];
+            return `<div class="at-doc"><div class="at-stk" role="button" data-attpdf="${k}" data-open="1"><div class="at-th"${x.t ? ` data-attth="${k}"` : ''}><span>تقرير الحصص</span></div>
+                ${x.pg ? `<span class="at-pg">${ad(x.pg)} ص</span>` : ''}</div>
+              <b>${esc(short(t.name))}</b><small>${C.join('، ')} · ${e.map(c => 'ح' + ad(c.p)).join('، ')}</small>
+              <div class="at-tb"><button class="btn sm" data-attpdf="${k}" data-open="1">تصفح</button><button class="btn sm ghost" data-attpdf="${k}">تنزيل</button></div></div>`; }).join('')}</div>`; }).join('')
+          + (R.length ? '' : '<div class="empty card">لم يُجهَّز أي تقرير لهذا اليوم بعد.</div>')
+          + (Wt.length ? `<h3 class="at-ah">لم يُجهَّز بعد <small>${ad(Wt.length)}</small></h3><div class="at-wl">${Wt.map(t => `<span class="chip">${esc(short(t.name))}</span>`).join('')}</div>` : '');
+      return `<div class="card hero th-hero"><div class="grow"><h2>توثيق الحضور في تيمز — ${DAYS[w]} ${hij(iso)}</h2>
+          <p class="muted">${ad(R.length)} من ${ad(T.length)} معلمة تقريرها جاهز · مجمّعة حسب المرحلة</p></div></div>${dayNav(days, iso, pre)}${album}`;
+    }
+    let pv = '<div class="card pad at-pv0 muted">لم يُجهَّز أي تقرير لهذا اليوم بعد.</div>';
+    if (cur) { const x = P[cur.name], k = `${iso}|${esc(cur.name)}`, e = ex(cur), C = [...new Set(e.filter(c => c.g).map(c => cls(c.g, c.s)))];
+      pv = `<div class="card at-pv"><div class="at-th" role="button" data-attpdf="${k}" data-open="1"${x.t ? ` data-attth="${k}"` : ''}><span>تقرير الحصص</span></div>
+        <div class="at-meta"><h3>${esc(short(cur.name))}</h3><div class="muted">${DAYS[w]} ${hij(iso)}</div>
+          <dl>${e.length ? `<dt>الحصص</dt><dd>${e.map(c => 'ح' + ad(c.p)).join('، ')}</dd>` : ''}${C.length ? `<dt>الفصول</dt><dd>${C.join('، ')}</dd>` : ''}
+            ${x.pg ? `<dt>صفحات التقرير</dt><dd>${ad(x.pg)}</dd>` : ''}<dt>الملف</dt><dd>${esc(x.n)}</dd></dl>
+          <div class="at-tb"><button class="btn" data-attpdf="${k}" data-open="1">تصفح</button><button class="btn ghost" data-attpdf="${k}">تنزيل</button></div></div></div>`; }
     return `<div class="card hero th-hero"><div class="grow"><h2>توثيق الحضور في تيمز — ${DAYS[w]} ${hij(iso)}</h2>
-        <p class="muted">${ad(n)} من ${ad(T.length)} معلمة تقريرها جاهز · اضغطي الصورة للتصفح</p></div></div>
-      ${dayNav(days, iso)}
+        <p class="muted">${ad(R.length)} من ${ad(T.length)} معلمة تقريرها جاهز · اختاري اسمًا لعرض تقريرها</p></div>${back}</div>
+      ${dayNav(days, iso, pre)}
       ${w > 4 ? '<div class="empty card">هذا اليوم ليس يوم دراسة.</div>' : !T.length ? '<div class="empty card">لا توجد حصص عن بعد في هذا اليوم.</div>'
-      : `${n ? `<div class="at-gal">${T.filter(t => P[t.name]).map(t => { const x = P[t.name], k = `${iso}|${esc(t.name)}`;
-        return `<div class="card at-tc"><b>${esc(short(t.name))}</b>
-          <div class="at-th" role="button" data-attpdf="${k}" data-open="1"${x.t ? ` data-attth="${k}"` : ''}><span>تقرير الحصص</span></div>
-          <div class="at-tb"><button class="btn sm" data-attpdf="${k}" data-open="1">تصفح</button><button class="btn sm ghost" data-attpdf="${k}">تنزيل</button></div></div>`; }).join('')}</div>` : ''}
-      ${n < T.length ? `<div class="card pad at-wait"><b>لم يُجهَّز تقريرها بعد (${ad(T.length - n)})</b><div>${T.filter(t => !P[t.name]).map(t => `<span class="chip">${esc(short(t.name))}</span>`).join('')}</div></div>` : ''}`}`;
+      : `<div class="at-v"><div class="card at-ls">
+          ${R.map(t => `<button class="at-li${t === cur ? ' on' : ''}" data-attsel="${esc(t.name)}"><i></i>${esc(short(t.name))}<small>${per(t)}</small></button>`).join('')}
+          ${Wt.length ? `<div class="at-sep">لم يُجهَّز بعد (${ad(Wt.length)})</div>${Wt.map(t => `<div class="at-li w"><i></i>${esc(short(t.name))}<small>${per(t)}</small></div>`).join('')}` : ''}
+        </div>${pv}</div>`}`;
   }
   const TH = new Map();   // صور مصغرة مفكوكة في هذه الجلسة: الملف ← رابط blob
   async function thumbs() {
@@ -453,13 +484,15 @@
   if (!window.__attEv) { window.__attEv = 1;
     document.addEventListener('change', e => { const t = e.target;
       if (t.matches && t.matches('[data-attf]') && t.files.length) readFiles([...t.files]);
-      if (t.matches && t.matches('[data-attday]')) location.hash = 'att/d/' + t.value;
+      if (t.matches && t.matches('[data-attday]')) location.hash = (t.dataset.attday || 'att/d/') + t.value;
       if (t.matches && t.matches('[data-atti]') && t.files.length) { const iso = t.dataset.atti, bad = [];
         [...t.files].forEach(file => /^image\//.test(file.type) || /\.(jpe?g|png|heic|heif|webp)$/i.test(file.name) ? EVP.push({ iso, file, url: URL.createObjectURL(file) }) : bad.push(file.name));
         if (bad.length && typeof toast === 'function') toast('تُقبل الصور فقط'); route(); } });
     document.addEventListener('click', e => { const t = e.target.closest ? e.target : null; if (!t) return;
       const dr = t.closest('[data-attdrop]'); if (dr) { PEND.splice(+dr.dataset.attdrop, 1); route(); return; }
       const ed = t.closest('[data-attevdrop]'); if (ed) { const x = EVP.splice(+ed.dataset.attevdrop, 1)[0]; x && URL.revokeObjectURL(x.url); route(); return; }
+      const vs = t.closest('[data-attsel]'); if (vs) { VSEL = vs.dataset.attsel; route();
+        if (innerWidth < 760) document.querySelector('.at-pv')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
       const pb = t.closest('[data-attpdf]'); if (pb) { const [iso, ...n] = pb.dataset.attpdf.split('|'); getPdf(iso, n.join('|'), pb); return; }
       const ss = t.closest('[data-attsubjsave]'); if (ss) { saveSubj(ss); return; }
       const es = t.closest('[data-attevsend]'); if (es) { sendEv(es.dataset.attevsend, es); return; }
@@ -467,8 +500,31 @@
       const sb = t.closest('[data-attsend]'); if (sb) send(sb.dataset.attsend, sb); });
   }
 
-  const CSS = `.at-gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px}
-    .at-tc{padding:10px;display:flex;flex-direction:column;gap:8px;text-align:center;margin:0}.at-tc b{font-size:14px}.at-wait{margin-top:12px}.at-wait>div{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  const CSS = `.at-g{padding:6px 10px}.at-gr{display:grid;grid-template-columns:minmax(140px,1.2fr) minmax(0,4.6fr) minmax(86px,auto) minmax(120px,1.3fr);gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line,#e5e7eb)}
+    .at-gr:last-child{border-bottom:0}.at-gh{font-size:12.5px;color:var(--muted,#6b7280);font-weight:600;padding:4px 0}.at-gh .at-gc span{background:none;color:inherit}
+    .at-gn{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.at-gn b{font-size:14px}.at-ga{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+    .at-gc{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}.at-gc span{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:34px;border-radius:8px;font-size:12.5px;font-weight:600;line-height:1.2}
+    .at-gc span.ok{background:#e6f4ec;color:#1e7f4f}.at-gc span.miss{background:#fbf1dc;color:#8a5a00}.at-gc i{display:none;font-style:normal;font-size:10.5px;font-weight:400;opacity:.75}
+    .at-gr:not(.at-gh) .at-gc span.no{background:var(--soft,#f6f6f4);opacity:.45}
+    @media (max-width:760px){.at-gh{display:none}.at-gr{grid-template-columns:1fr auto;gap:8px;padding:10px 0}.at-gn{grid-column:1/-1}.at-gc{grid-column:1/-1;gap:3px}
+      .at-gc i{display:block}.at-gc span{min-height:40px;font-size:11.5px}.at-ga{justify-content:flex-end}}
+    .at-ah{display:flex;align-items:center;gap:8px;font-size:16px;margin:20px 2px 12px}.at-ah small{font-weight:400;color:var(--muted,#6b7280);font-size:13px}.at-ah::after{content:"";flex:1;height:1px;background:var(--line,#e5e7eb)}
+    .at-al{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:22px 18px}.at-doc{display:flex;flex-direction:column;gap:3px}.at-doc>b{margin-top:8px;font-size:14.5px}.at-doc>small{color:var(--muted,#6b7280);font-size:12.5px}
+    .at-doc .at-tb{justify-content:flex-start;margin-top:6px}.at-stk{position:relative;margin:0 0 8px 8px;cursor:pointer}
+    .at-stk::before,.at-stk::after{content:"";position:absolute;inset:0;background:#fff;border:1px solid var(--line,#e5e7eb);border-radius:8px}
+    .at-stk::before{transform:translate(-8px,8px) rotate(-2deg)}.at-stk::after{transform:translate(-4px,4px) rotate(-1deg)}.at-stk .at-th{position:relative;z-index:1;background:#fff}
+    .at-pg{position:absolute;z-index:2;top:8px;left:8px;background:rgba(43,36,30,.8);color:#fff;border-radius:99px;padding:1px 9px;font-size:12px}
+    .at-wl{display:flex;flex-wrap:wrap;gap:6px}
+    @media (max-width:560px){.at-al{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 14px}}
+    .at-v{display:grid;grid-template-columns:300px minmax(0,1fr);gap:14px;align-items:start}.at-v>.card{margin:0}
+    .at-ls{padding:6px}.at-li{display:flex;align-items:center;gap:10px;width:100%;font:inherit;color:inherit;text-align:start;background:none;border:0;border-radius:10px;padding:10px;cursor:pointer}
+    .at-li:hover{background:var(--soft,#f6f6f4)}.at-li.on{background:#efeaf6;outline:1px solid #cfc4e2}.at-li i{width:10px;height:10px;border-radius:50%;background:var(--ok,#1e7f4f);flex:none}
+    .at-li small{margin-inline-start:auto;color:var(--muted,#6b7280)}.at-li.w{color:var(--muted,#6b7280);cursor:default}.at-li.w:hover{background:none}.at-li.w i{background:#d8b56a}
+    .at-sep{padding:8px 10px 2px;font-size:12.5px;color:var(--muted,#6b7280)}
+    .at-pv{display:grid;grid-template-columns:minmax(0,330px) 1fr;gap:18px;padding:16px;align-items:start;position:sticky;top:12px}.at-pv0{text-align:center}
+    .at-meta h3{margin:0;font-size:20px}.at-meta dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:12px 0 18px}.at-meta dt{color:var(--muted,#6b7280)}.at-meta dd{margin:0;font-weight:600}
+    @media (max-width:900px){.at-pv{grid-template-columns:1fr}.at-pv .at-th{max-width:360px;width:100%;margin:0 auto}}
+    @media (max-width:760px){.at-v{grid-template-columns:1fr}.at-pv{position:static;order:-1}}
     .at-th{aspect-ratio:210/297;border:1px solid var(--line,#e5e7eb);border-radius:8px;overflow:hidden;background:var(--soft,#f6f6f4);display:flex;align-items:center;justify-content:center;color:var(--muted,#9ca3af);font-size:12.5px}
     .at-th[data-attpdf]{cursor:pointer}.at-th img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;background:#fff}.at-tb{display:flex;gap:6px;justify-content:center}
     .at-wrap{overflow-x:auto;padding:0}.at-t{width:100%;border-collapse:collapse;font-size:13.5px;min-width:600px}
@@ -555,7 +611,8 @@
       const [v, x] = String(a || '').split('/');
       if (v === 'all') return allReports(A);
       if (A.mode === 'teacher') return tPage(A, v === 'd' ? x : '');
-      if (A.mode === 'view') return viewPage(A, v === 'd' ? x : '');
+      if (A.mode === 'view') return viewPage(A, v === 'd' ? x : '', 'att/d/');
+      if (v === 'v' && A.vw) return viewPage(A, x, 'att/v/');
       if (v === 'r') return reports(A, x);
       if (v === 'tt') return timetable(A);
       return home(A, v === 'd' ? x : '');
