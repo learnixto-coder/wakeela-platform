@@ -68,17 +68,17 @@ window.TD = (() => {
     const done = X.filter(o => o.s.k === 'done');
     const what = x => x.g === 'cp' ? 'ارفعي الصور' : x.g === 'cn' ? (x.st === 'ev' ? 'أصدري بطاقة التنفيذ' : 'ارفعي الشواهد وأصدري البطاقة') : 'ارفعي الشواهد';
     const runTxt = x => x.g === 'cp' ? (x.files ? AR(x.files) + ' صور مرفوعة' : 'لا صور بعد') : x.g === 'cn' ? 'وثّقي الإذاعة والصلاة' : (x.files ? AR(x.files) + ' شاهد' : 'لا شواهد بعد');
-    const card = (cls, top, n, unit, x, sub) => `<button class="cd-c ${cls}" data-go="${E(x.go)}"><span class="cd-u">${top}</span>
-      <span class="cd-n">${n}</span><span class="cd-u">${unit}</span><b>${E(AR(x.n))}</b><small>${E(GRP[x.g])}</small>${sub ? `<small class="cd-s">${E(sub)}</small>` : ''}</button>`;
+    const card = (cls, top, n, unit, x, sub) => `<button class="cd-c ${cls}" data-go="${E(x.go)}"><span class="cd-k"><span class="cd-u">${top}</span>
+      <span class="cd-n">${n}</span><span class="cd-u">${unit}</span></span><span class="cd-t"><b>${E(AR(x.n))}</b><small>${E(GRP[x.g])}</small>${sub ? `<small class="cd-s">${E(sub)}</small>` : ''}</span></button>`;
     const C = [
       ...late.map(o => card('late', 'متأخر منذ', N(o.n), dl(o.n), o.x, what(o.x))),
       ...run.map(o => o.s.left == null ? card('hot', 'جارٍ الآن', '•', '', o.x, runTxt(o.x))
         : o.s.left === 0 ? card('hot', 'ينتهي', 'اليوم', '', o.x, runTxt(o.x)) : card('hot', 'باقٍ على نهايته', N(o.s.left), dl(o.s.left), o.x, runTxt(o.x))),
       ...next.map(o => card('', 'يبدأ بعد', N(o.s.n), dl(o.s.n), o.x, HD(G(o.x.g0)))),
     ];
-    if (done.length) C.push(`<div class="cd-c ok"><span class="cd-u">منتهٍ وموثّق</span><span class="cd-n">✓ ${N(done.length)}</span>
-      <small>${done.map(o => E(AR(o.x.n))).join('<br>')}</small></div>`);
-    return C.length ? `<div class="cd" tabindex="0" aria-label="مواعيدك">${C.join('')}</div>` : '<p class="td-empty">لا توجد لكِ برامج أو أنشطة بعد.</p>';
+    if (done.length) C.push(`<div class="cd-c ok"><span class="cd-k"><span class="cd-u">منتهٍ وموثّق</span><span class="cd-n">✓ ${N(done.length)}</span></span>
+      <span class="cd-t"><small>${done.map(o => E(AR(o.x.n))).join('<br>')}</small></span></div>`);
+    return C.length ? `<div class="cd" aria-label="مواعيدك">${C.join('')}</div>` : '<p class="td-empty">لا توجد لكِ برامج أو أنشطة بعد.</p>';
   }
 
   // ───────── الصفحة ─────────
@@ -127,11 +127,13 @@ window.TD = (() => {
 .td-go{color:var(--muted)}
 .td-more summary{cursor:pointer;color:var(--brand);font-weight:600;padding:8px 2px;font-size:13.5px}
 .td-empty{color:var(--muted);font-size:13.5px;margin:6px 0}.td-empty.ok{color:var(--ok);font-weight:600}
-.cd{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
-.cd-c{flex:0 0 172px;scroll-snap-align:start;font:inherit;color:inherit;text-align:start;border:0;border-radius:14px;padding:14px;background:var(--soft);display:flex;flex-direction:column;gap:4px;cursor:pointer}
+/* مواعيدك تحت بعضها بلا شريط تمرير (المستخدمة 2026-10-27): الرقم يمينًا والتفاصيل بجانبه */
+.cd{display:flex;flex-direction:column;gap:8px}
+.cd-c{width:100%;font:inherit;color:inherit;text-align:start;border:0;border-radius:14px;padding:12px 14px;background:var(--soft);display:grid;grid-template-columns:104px 1fr;gap:14px;align-items:center;cursor:pointer}
+.cd-k{display:flex;flex-direction:column;align-items:center;text-align:center;border-inline-end:1px solid var(--line);padding-inline-end:12px}.cd-t{display:flex;flex-direction:column;gap:2px;min-width:0}
 .cd-c:hover{filter:brightness(.97)}
 .cd-n{font-size:40px;font-weight:900;line-height:1.05;font-variant-numeric:tabular-nums}.cd-u{font-size:12px;color:var(--muted)}
-.cd-c b{font-size:14px;margin-top:6px;line-height:1.35}.cd-c small{font-size:12px;color:var(--muted);line-height:1.6}.cd-c .cd-s{color:var(--ink);font-weight:600}
+.cd-c b{font-size:15px;line-height:1.4}.cd-c small{font-size:12px;color:var(--muted);line-height:1.6}.cd-c .cd-s{color:var(--ink);font-weight:600}
 .cd-c.late{background:var(--none-bg)}.cd-c.late .cd-n,.cd-c.late .cd-s{color:var(--none)}
 .cd-c.hot{background:var(--run-bg)}.cd-c.hot .cd-n{color:var(--run)}
 .cd-c.ok{background:var(--ok-bg);cursor:default}.cd-c.ok .cd-n{color:var(--ok);font-size:30px}
@@ -145,7 +147,7 @@ window.TD = (() => {
 .td-bar{position:relative;height:8px;border-radius:99px;background:var(--soft)}.td-bar i{position:absolute;inset-block:0;inset-inline-start:0;border-radius:99px;background:var(--brand)}
 .td-bar s{position:absolute;top:-4px;width:2px;height:16px;background:var(--ink);opacity:.55}
 .td-cmp,.td-line{font-size:12.5px;color:var(--muted)}.td-na{color:var(--muted);font-size:13.5px;padding:8px 0}
-@media (max-width:560px){.td-card{padding:14px}.td-big{font-size:44px}.td-areas{grid-template-columns:1fr}.cd-c{flex-basis:150px}.cd-n{font-size:34px}}`;
+@media (max-width:560px){.td-card{padding:14px}.td-big{font-size:44px}.td-areas{grid-template-columns:1fr}.cd-c{grid-template-columns:84px 1fr;gap:10px}.cd-n{font-size:32px}}`;
     document.head.appendChild(s);
   }
   return { render };

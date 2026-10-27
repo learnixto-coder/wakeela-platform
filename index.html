@@ -1255,7 +1255,7 @@ function nvPage(a) {
 let tdLoad = null;
 function tdPage() {
   if (window.TD) return TD.render();
-  tdLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'td.js?v=20261026'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  tdLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'td.js?v=20261027'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { tdLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
