@@ -599,7 +599,7 @@
     .tp-a{width:100%;margin:12px 0 0}.tp-a th{background:#9a7b3f!important}.tp-c3{text-align:right!important}.tp-k i{display:inline-block;width:10px;height:10px;margin-left:4px;vertical-align:middle}
     .tp-sg{display:flex;justify-content:space-around;margin-top:16px;break-inside:avoid;font-weight:700;line-height:1.8;text-align:center}
     .tp-bar{background:#2b8fb0;color:#fff;text-align:center;padding:6px;font-weight:700;margin-top:4px}
-    .tp-ims{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.tp-ims img{width:100%;max-height:118mm;object-fit:contain;border:1px solid #d1d5db;break-inside:avoid}`;
+    .tp-ims{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}.tp-ims img{width:100%;max-height:70mm;object-fit:contain;border:1px solid #d1d5db;break-inside:avoid}`;
   // كل الملف: صفحات الحصص بترتيبها ثم الشواهد. imgs = روابط الصور (file:// على الجهاز)
   function dayDoc(A, nm, iso, { logo = '', imgs = [], subj = '' } = {}) {
     ready(A);
