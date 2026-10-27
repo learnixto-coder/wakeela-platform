@@ -174,8 +174,9 @@
     const need = T.reduce((a, r) => a + r.exp.length, 0), sent = T.reduce((a, r) => a + r.sent, 0);
     return { iso, w, T, need, sent, done: T.filter(r => r.sent === r.exp.length).length };
   }
-  // أيام الدراسة عن بعد = الأيام التي وصلت فيها ملفات، واليوم إن كان يوم دراسة
-  const daysOf = A => [...new Set([...Object.keys(A.days || {}), ...(wday(today()) <= 4 ? [today()] : [])])].filter(d => wday(d) <= 4).sort().reverse();
+  // أيام الدراسة عن بعد = الأيام التي وصلت فيها ملفات، واليوم إن كان يوم دراسة، ويوم الدراسة السابق (المستخدمة 2026-10-27: للرفع المتأخر)
+  const prevDay = iso => { const d = gd(iso); do d.setDate(d.getDate() - 1); while (d.getDay() > 4); return d.toISOString().slice(0, 10); };
+  const daysOf = A => [...new Set([...Object.keys(A.days || {}), prevDay(today()), ...(wday(today()) <= 4 ? [today()] : [])])].filter(d => wday(d) <= 4).sort().reverse();
   // اختيار اليوم: قائمة منسدلة + السابق/التالي (قد تصل الأيام إلى ٣٠ يومًا وأكثر)
   const dayNav = (days, iso, pre = 'att/d/') => { if (days.length < 2) return ''; const i = days.indexOf(iso), older = days[i + 1], newer = days[i - 1];
     return `<div class="at-nav"><button class="btn sm ghost" ${older ? `data-go="${pre}${older}"` : 'disabled'}>→ اليوم السابق</button>
