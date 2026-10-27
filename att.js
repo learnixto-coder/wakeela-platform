@@ -313,7 +313,7 @@
   function pdfCard(A, iso) {
     const nm = me(A).name, x = (((A.pdf || {})[iso] || {})[nm]), has = ((((A.days || {})[iso] || {})[nm]) || []).length, sj = subjOf(A);
     return `<div class="card pad"><div class="at-act" style="margin:0"><div><b>تقرير اليوم في منصة مدرستي (PDF)</b><div class="muted" style="font-size:13px">ملف واحد فيه كل حصص اليوم وأسماء الحاضرات وصور الشواهد، يُحفظ في مجلدك ويتحدّث تلقائيًا بعد كل إرسال</div></div>
-        ${x ? `<button class="btn" data-attpdf="${iso}|${esc(nm)}">تنزيل تقرير اليوم</button>` : `<span class="muted" style="font-size:13px">${has ? 'يُجهَّز خلال دقائق من وصول ملفاتك' : 'يظهر بعد إرسال ملفات الحضور'}</span>`}</div>
+        ${x ? `<button class="btn" data-attpdf="${iso}|${esc(nm)}">تنزيل تقرير اليوم</button>` : `<span class="muted" style="font-size:13px">${has && iso < isoOf(new Date(Date.now() - 30 * 864e5)) ? 'أقدم من ٣٠ يومًا: التقرير محفوظ لدى الإدارة في ون درايف' : has ? 'يُجهَّز خلال دقائق من وصول ملفاتك' : 'يظهر بعد إرسال ملفات الحضور'}</span>`}</div>
       <div class="at-sj"><label>المادة في التقرير: <input data-attsubj value="${esc(sj)}" placeholder="مثل: المهارات الرقمية" maxlength="40"></label>
         <button class="btn sm ghost" data-attsubjsave>حفظ المادة</button>${sj ? '' : ' <span class="chip s-none">لم تُكتب المادة بعد</span>'}</div></div>`;
   }
