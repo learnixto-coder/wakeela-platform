@@ -32,7 +32,8 @@
     const start = when(sum['وقت البدء'] || sum['Start time']), end = when(sum['وقت الانتهاء'] || sum['End time']);
     const all = [...people.values()];
     return { title: sum['عنوان الاجتماع'] || sum['Meeting title'] || '', start, end, organizer: (all.find(p => /المنظم|organizer/i.test(p.role)) || {}).name || '',
-      students: all.filter(p => !/المنظم|organizer|مقدم|presenter/i.test(p.role) && !/^t\d/i.test(p.mail)) };
+      // الطالبة = بريد يبدأ بـ S ولو كان دورها «مقدم العرض» (فاطمة الشهراني 2026-10-27: كل الطالبات مقدمات عرض)؛ المعلمة = بريد t
+      students: all.filter(p => !/المنظم|organizer/i.test(p.role) && !/^t\d/i.test(p.mail) && (/^s\d/i.test(p.mail) || !/مقدم|presenter/i.test(p.role))) };
   }
   // التصنيف: حاضرة / متأخرة (دخلت بعد البداية بأكثر من LATE دقائق) / دخول لحظات (أقل من MIN دقائق كلها) — قيم قابلة للتعديل
   function classify(R, opt = {}) { const LATE = (opt.late ?? 10) * 60, MIN = (opt.min ?? 5) * 60;
