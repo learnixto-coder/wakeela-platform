@@ -285,7 +285,9 @@
   const DKEY = 'wk-att-del', dget = () => { try { return JSON.parse(localStorage.getItem(DKEY) || '[]'); } catch { return []; } }, dset = v => { try { localStorage.setItem(DKEY, JSON.stringify(v)); } catch {} };
   function sentLocal(A) {
     const nm = me(A).name, now = Date.now(), has = (iso, f) => (((A.days || {})[iso] || {})[nm] || []).some(x => x.file === f);
-    const dk = dget().filter(x => x.to === nm && has(x.iso, x.file) && now - x.at < 3 * 864e5); dset(dk);
+    // بيانات صُدّرت بعد الحذف بعشر دقائق وما زال الملف فيها = أُعيد إلى المجلد (المستخدمة 2026-10-27: فاطمة شبنان ظهرت صفحتها فارغة)
+    const gen = Date.parse((typeof D !== 'undefined' && D && D.generated) || '') || 0;
+    const dk = dget().filter(x => x.to === nm && has(x.iso, x.file) && now - x.at < 3 * 864e5 && !(gen > x.at + 6e5)); dset(dk);
     dk.forEach(x => { const b = A.days[x.iso]; b[nm] = b[nm].filter(f => f.file !== x.file); });
     const have = new Set(Object.values(A.days || {}).flatMap(b => (b[nm] || []).map(x => x.file)));
     const keep = sget().filter(x => x.to === nm && !have.has(x.f.file) && now - x.at < 3 * 864e5 && !dk.some(d => d.iso === x.iso && d.file === x.f.file)); sset(keep);
