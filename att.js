@@ -252,13 +252,18 @@
       <div class="of-s">مدير المدرسة<br><b>أمينة حسين مشيط آل مشيط</b></div>
     </section>`;
   }
+  // طباعة النموذج: كل فصل في صفحة واحدة كنموذج الوزارة (المستخدمة 2026-10-28) — الفصل الأطول من الصفحة يُصغَّر ليتسع
+  // (A4 أفقي بهامش 8 مم ≈ 730px ارتفاعًا)؛ تستعملها مسؤولة الغياب والموجهة الطلابية
+  function printOfficial(R, iso) {
+    const logo = new URL('moe-logo.png', location.href).href, w = window.open('', '_blank'); if (!w || !R.length) return;
+    w.document.write(`<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>تقرير الغياب على مستوى حصة ${hijT(iso)}</title><style>${OCSS}@page{size:A4 landscape;margin:8mm}body{margin:0;font-family:Tahoma,Arial,sans-serif}.of{page-break-after:always;break-inside:avoid}.of:last-child{page-break-after:auto}</style>
+      <body>${R.map(c => officialPage(c, iso, logo)).join('')}<script>addEventListener('load', () => document.querySelectorAll('.of').forEach(s => { const h = s.scrollHeight; if (h > 715) s.style.zoom = (715 / h).toFixed(3); }));<\/script></body></html>`);
+    w.document.close(); let done = 0; const pr = () => { if (!done++) w.print(); }; w.onload = pr; setTimeout(pr, 1500);
+  }
   function reports(A, iso) {
     if (!/^\d{4}-\d\d-\d\d$/.test(iso || '')) return allReports(A);
     const R = classReports(A, iso), M = dayModel(A, iso), logo = new URL('moe-logo.png', location.href).href;
-    window.__attPrint = () => { const w = window.open('', '_blank'); if (!w) return;
-      w.document.write(`<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>تقرير الغياب على مستوى حصة ${hijT(iso)}</title><style>${OCSS}@page{size:A4 landscape;margin:8mm}body{margin:0;font-family:Tahoma,Arial,sans-serif}.of{page-break-after:always}</style>
-        <body>${R.map(c => officialPage(c, iso, logo)).join('')}</body></html>`);
-      w.document.close(); let done = 0; const pr = () => { if (!done++) w.print(); }; w.onload = pr; setTimeout(pr, 1500); };
+    window.__attPrint = () => printOfficial(R, iso);
     return `<button class="back" data-go="att/d/${iso}">→ متابعة اليوم</button>
       <div class="card hero th-hero"><div class="grow"><h2>تقرير الغياب على مستوى حصة — ${DAYS[wday(iso)]} ${hij(iso)}</h2>
         <p class="muted">${ad(R.length)} فصول · ${M.sent === M.need ? 'وصلت كل الحصص' : `ناقص ${ad(M.need - M.sent)} حصة (مخططة في التقرير)`}</p></div>
@@ -391,6 +396,145 @@
           ${Wt.length ? `<div class="at-sep">لم يُجهَّز بعد (${ad(Wt.length)})</div>${Wt.map(t => `<div class="at-li w"><i></i>${esc(short(t.name))}<small>${per(t)}</small></div>`).join('')}` : ''}
         </div>${pv}</div>`}`;
   }
+  // --- «حصر الطالبات الغائبات» (2026-10-28، زر مستقل للموجهة الطلابية، النماذج الأربعة باختيار المستخدمة «كلها مفيدة»):
+  // من تقارير الفصول نفسها (classReports). حالة الطالبة في كل حصة: a غائبة (ومنها دخول لحظات)، h حاضرة (المتأخرة حاضرة)،
+  // n حصة في الجدول لم يصل ملفها (لا تُحسب غيابًا)، '' لا حصة. «طوال اليوم» = غائبة في كل الحصص المرصودة لفصلها.
+  const ABC = new WeakMap(), P7 = [1, 2, 3, 4, 5, 6, 7];
+  function absDay(A, iso) {
+    let M = ABC.get(A); if (!M) ABC.set(A, M = new Map()); if (M.has(iso)) return M.get(iso);
+    const R = classReports(A, iso).map(c => {
+      const P = P7.map(p => c.rows.find(r => r.p === p && r.L) || c.rows.find(r => r.p === p) || null);
+      const st = c.names.map(n => { const s = P.map(x => !x ? '' : !x.L ? 'n' : x.L.absent.some(o => o.n === n) ? 'a' : 'h'),
+        rec = s.filter(v => v === 'a' || v === 'h').length, ab = s.filter(v => v === 'a').length;
+        return { n, s, rec, ab, full: rec > 0 && ab === rec }; });
+      return { k: c.k, g: c.g, s: c.s, names: c.names, P, st, nf: P.filter(x => x && !x.L).length };
+    });
+    M.set(iso, R); return R;
+  }
+  const absDays = A => daysOf(A).filter(d => (A.days || {})[d] && wday(d) <= 4);
+  const cnm = (g, s) => SG[g] + ' ' + ad(s);
+  const pchips = s => `<span class="ab-ps">${s.map((v, i) => `<i class="ab-p ${v || 'x'}" title="ح${ad(i + 1)}">ح${ad(i + 1)}</i>`).join('')}</span>`;
+  const absent = s => `<span class="ab-ps">${s.map((v, i) => v === 'a' ? `<i class="ab-p a">ح${ad(i + 1)}</i>` : '').join('')}</span>`;
+  const nmBtn = n => `<button class="ab-nm" data-absp="${esc(n)}">${esc(n)}</button>`;
+  const LEG = `<div class="ab-leg"><span><i class="ab-p a">ح</i>غائبة</span><span><i class="ab-p h">ح</i>حاضرة</span><span><i class="ab-p n">ح</i>غير مرصودة (لم يُرفع الملف)</span><span><i class="ab-p x">ح</i>لا حصة</span></div>`;
+  const stat = (n, l, c = '') => `<div class="ab-st"><b${c ? ` style="color:${c}"` : ''}>${ad(n)}</b><span>${l}</span></div>`;
+  const ABT = [['c', 'تقرير الغياب على مستوى حصة'], ['f', 'غياب كامل / جزئي'], ['s', 'الحصر التراكمي'], ['p', 'بطاقة الطالبة']];
+  const ABF = { cls: '', rng: 'w', min: 3, who: '' };   // اختيارات الصفحة في هذه الجلسة
+  let ABX = null;   // صفوف «تصدير Excel» للعرض الحالي
+  const clsSel = R => `<select data-absf="cls"><option value="">كل الفصول</option>${R.map(c => `<option value="${c.k}"${ABF.cls === c.k ? ' selected' : ''}>${cnm(c.g, c.s)}</option>`).join('')}</select>`;
+  const weekStart = () => { const d = gd(today()); d.setDate(d.getDate() - d.getDay()); return isoOf(d); };
+  const RNG = { w: ['هذا الأسبوع', d => d >= weekStart()], m: ['آخر ٣٠ يومًا', d => (gd(today()) - gd(d)) / 864e5 < 30], a: ['كل الأيام', () => true] };
+  // الحصر التراكمي: لكل طالبة غابت مرة على الأقل
+  function absSum(A, days) {
+    const S = new Map();
+    days.forEach(d => absDay(A, d).forEach(c => c.st.forEach(o => { if (!o.rec) return;
+      const k = c.k + '|' + o.n, x = S.get(k) || { n: o.n, g: c.g, s: c.s, k: c.k, full: 0, ab: 0, rec: 0, dd: 0 };
+      x.rec += o.rec; x.ab += o.ab; x.dd++; if (o.full) x.full++; S.set(k, x); })));
+    return [...S.values()].filter(x => x.ab).map(x => ({ ...x, pct: Math.round(x.ab / x.rec * 100) })).sort((a, b) => b.full - a.full || b.ab - a.ab || a.n.localeCompare(b.n, 'ar'));
+  }
+  const level = (x, min) => x.full >= min ? ['r', 'تحتاج متابعة'] : x.full >= min - 1 || x.pct >= 25 ? ['y', 'قريبة من الحد'] : ['g', 'طبيعي'];
+  function absPage(A, a) {
+    const [, tab0, x = ''] = String(a).split('/'), tab = ABT.some(t => t[0] === tab0) ? tab0 : 'c', days = absDays(A);
+    const iso = /^\d{4}-\d\d-\d\d$/.test(x) ? x : days[0] || '';
+    const tabs = `<div class="ab-tabs">${ABT.map(([k, l], i) => `<button class="${k === tab ? 'on' : ''}" data-go="abs/${k}${(k === 'c' || k === 'f') && iso ? '/' + iso : ''}">${ad(i + 1)} · ${l}</button>`).join('')}</div>`;
+    const day = (tab === 'c' || tab === 'f') && iso;   // في صفحتي اليوم: نموذج الوزارة نفسه الذي تنزّله مسؤولة الغياب (المستخدمة 2026-10-28 بدل Excel)
+    const tools = `<div class="ab-act">${day ? `<button class="btn sm" data-absof="${iso}">تنزيل تقرير الغياب على مستوى حصة</button>` : ''}${tab === 'c' ? '' : `<button class="btn sm${day ? ' ghost' : ''}" data-absprint="1">طباعة هذه الصفحة / PDF</button>`}</div>`;
+    const hero = (h, p) => `<div class="card hero th-hero"><div class="grow"><h2>${h}</h2><p class="muted">${p}</p></div></div>`;
+    if (!days.length) return hero('حصر الطالبات الغائبات', 'من ملفات حضور حصص التيمز') + tabs + '<div class="empty card">لم تصل ملفات حضور بعد</div>';
+    let body = '', title = '';
+    if (tab === 'c' || tab === 'f') {
+      const R = absDay(A, iso), RF = R.filter(c => !ABF.cls || c.k === ABF.cls), day = `${DAYS[wday(iso)]} ${hijT(iso)}`;
+      const nav = dayNav(days, iso, `abs/${tab}/`);
+      if (tab === 'c') {
+        // نموذج الوزارة نفسه الذي عند مسؤولة الغياب (المستخدمة 2026-10-28: «استبدل الصفحة… بنفس نموذج التقرير»)
+        title = `تقرير الغياب على مستوى حصة — ${day}`; ABX = 1;
+        const logo = new URL('moe-logo.png', location.href).href;
+        body = nav + classReports(A, iso).map(c => `<div class="card pad at-of">${officialPage(c, iso, logo)}</div>`).join('');
+      } else {
+        title = `الغياب الكامل والجزئي — ${day}`;
+        const all = RF.flatMap(c => c.st.filter(o => o.ab).map(o => ({ ...o, c }))), F = all.filter(o => o.full), Pt = all.filter(o => !o.full);
+        ABX = [['الحالة', 'الفصل', 'الطالبة', 'حصص الغياب'], ...F.map(o => ['طوال اليوم', cnm(o.c.g, o.c.s), o.n, '']), ...Pt.map(o => ['بعض الحصص', cnm(o.c.g, o.c.s), o.n, o.s.map((v, i) => v === 'a' ? 'ح' + (i + 1) : '').filter(Boolean).join(' ')])];
+        body = nav + `<div class="ab-sts">${stat(F.length, 'غائبة طوال اليوم', '#dc2626')}${stat(Pt.length, 'غائبة عن بعض الحصص', '#d97706')}
+            ${stat(RF.reduce((s, c) => s + c.names.length, 0), 'طالبات الفصول المرصودة')}${stat(RF.reduce((s, c) => s + c.nf, 0), 'حصص غير مرصودة', '#6b7280')}</div>
+          <div class="ab-f">${clsSel(R)}</div>
+          <div class="ab-2"><div><h3 class="ab-h r">غائبة طوال اليوم <small>(كل الحصص المرصودة)</small></h3><div class="card pad">${F.length ? F.map(o => `<div class="ab-r"><span>${nmBtn(o.n)}</span><span class="chip">${cnm(o.c.g, o.c.s)}</span></div>`).join('') : '<div class="muted ab-sm">لا أحد</div>'}</div></div>
+            <div><h3 class="ab-h y">غائبة عن بعض الحصص</h3><div class="card pad">${Pt.length ? Pt.map(o => `<div class="ab-r"><span>${nmBtn(o.n)} <span class="chip">${cnm(o.c.g, o.c.s)}</span></span>${absent(o.s)}</div>`).join('') : '<div class="muted ab-sm">لا أحد</div>'}</div></div></div>`;
+      }
+    } else if (tab === 's') {
+      const D2 = days.filter(RNG[ABF.rng][1]), L = absSum(A, D2).filter(x => !ABF.cls || x.k === ABF.cls), R = absDay(A, days[0]);
+      const lv = L.map(x => level(x, ABF.min)), need = lv.filter(v => v[0] === 'r').length, near = lv.filter(v => v[0] === 'y').length;
+      title = `الحصر التراكمي — ${RNG[ABF.rng][0]}`;
+      ABX = [['م', 'الطالبة', 'الفصل', 'أيام غياب كامل', 'حصص الغياب', 'من الحصص المرصودة', 'نسبة الغياب', 'الحالة'], ...L.map((x, i) => [i + 1, x.n, cnm(x.g, x.s), x.full, x.ab, x.rec, x.pct + '%', lv[i][1]])];
+      body = `<div class="ab-f"><select data-absf="rng">${Object.entries(RNG).map(([k, [l]]) => `<option value="${k}"${ABF.rng === k ? ' selected' : ''}>${l}</option>`).join('')}</select>${clsSel(R)}
+          <select data-absf="min">${[2, 3, 4, 5].map(n => `<option value="${n}"${ABF.min === n ? ' selected' : ''}>حد المتابعة: ${ad(n)} ${n === 2 ? 'يومان' : 'أيام'} غياب كامل</option>`).join('')}</select></div>
+        <div class="ab-sts">${stat(D2.length, 'أيام تعليم عن بُعد مرصودة')}${stat(need, 'تحتاج متابعة', '#dc2626')}${stat(near, 'قريبة من الحد', '#d97706')}${stat(L.length, 'طالبات غبن مرة أو أكثر')}</div>
+        ${L.length ? `<div class="card ab-tw"><table class="ab-t"><thead><tr><th>م</th><th>الطالبة</th><th>الفصل</th><th>أيام غياب كامل</th><th>حصص الغياب</th><th>نسبة الغياب</th><th>الحالة</th></tr></thead><tbody>
+          ${L.map((x, i) => `<tr><td>${ad(i + 1)}</td><td>${nmBtn(x.n)}</td><td>${cnm(x.g, x.s)}</td><td>${ad(x.full)}</td><td>${ad(x.ab)} <small class="muted">من ${ad(x.rec)}</small></td>
+            <td><span class="ab-bar"><i style="width:${x.pct}%"></i></span> ${ad(x.pct)}٪</td><td><span class="ab-lv ${lv[i][0]}">${lv[i][1]}</span></td></tr>`).join('')}</tbody></table></div>`
+          : '<div class="empty card">لا غياب في هذه المدة</div>'}`;
+    } else {
+      const all = Object.entries(A.roster).flatMap(([k, ns]) => ns.map(n => ({ n, k }))), me = all.find(o => o.n === ABF.who);
+      title = me ? `سجل غياب الطالبة ${me.n}` : 'بطاقة الطالبة';
+      const inp = `<div class="ab-f ab-q"><input list="ab-names" data-absf="who" value="${esc(ABF.who)}" placeholder="اكتبي اسم الطالبة…" autocomplete="off">
+        <datalist id="ab-names">${all.map(o => `<option value="${esc(o.n)}">${cnm(...o.k.split('-').map(Number))}</option>`).join('')}</datalist></div>`;
+      ABX = null;
+      if (!me) body = inp + `<div class="empty card">${ABF.who ? 'لم يُعثر على الاسم — اختاريه من القائمة' : 'اكتبي جزءًا من الاسم ثم اختاريه من القائمة، أو اضغطي اسم أي طالبة في الصفحات الأخرى'}</div>`;
+      else {
+        const [g, s] = me.k.split('-').map(Number), H2 = days.slice().reverse().map(d => ({ d, o: (absDay(A, d).find(c => c.k === me.k) || { st: [] }).st.find(o => o.n === me.n) })).filter(h => h.o && h.o.rec);
+        const full = H2.filter(h => h.o.full).length, ab = H2.reduce((t, h) => t + h.o.ab, 0), rec = H2.reduce((t, h) => t + h.o.rec, 0);
+        ABX = [['اليوم', 'التاريخ', 'حصص الغياب', 'الحالة'], ...H2.map(h => [DAYS[wday(h.d)], hijT(h.d), h.o.s.map((v, i) => v === 'a' ? 'ح' + (i + 1) : '').filter(Boolean).join(' '), h.o.full ? 'غائبة طوال اليوم' : h.o.ab ? h.o.ab + ' حصص' : 'حاضرة'])];
+        body = inp + `<div class="card pad"><div class="ab-pr"><span class="ab-av">${esc(me.n.trim()[0] || '')}</span><div><b>${esc(me.n)}</b><div class="muted ab-sm">${cls(g, s)}، ${ad(H2.length)} ${H2.length > 2 && H2.length < 11 ? 'أيام' : 'يومًا'} عن بُعد مرصودة</div></div></div>
+          <div class="ab-sts">${stat(full, 'أيام غياب كامل', '#dc2626')}${stat(ab, `حصص غياب من ${ad(rec)}`, '#d97706')}${stat(rec ? Math.round(ab / rec * 100) + '٪' : '—', 'نسبة الغياب')}</div>
+          ${LEG}<div class="ab-cal">${H2.map(h => `<div class="ab-d"><div class="ab-dh">${DAYS[wday(h.d)]} ${hij(h.d)}${h.o.full ? '<span class="chip s-none">طوال اليوم</span>' : h.o.ab ? `<span class="chip s-part">${ad(h.o.ab)} ${h.o.ab === 1 ? 'حصة' : h.o.ab === 2 ? 'حصتان' : 'حصص'}</span>` : '<span class="chip s-ok">حاضرة</span>'}</div>${pchips(h.o.s)}</div>`).join('')}</div></div>`;
+      }
+    }
+    window.__absTitle = title;
+    return hero('حصر الطالبات الغائبات', 'من ملفات حضور حصص التيمز · الحصص التي لم يصل ملفها لا تُحسب غيابًا') + tabs
+      + `<div class="ab-bar0"><b>${esc(title)}</b>${ABX ? tools : ''}</div><div id="abp">${body}</div>`;
+  }
+  function absPrint() {
+    const el = document.getElementById('abp'); if (!el) return; const w = window.open('', '_blank'); if (!w) return;
+    const c = el.cloneNode(true); c.querySelectorAll('.at-nav,.ab-f').forEach(x => x.remove());
+    w.document.write(`<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>${esc(window.__absTitle || 'حصر الغائبات')}</title><style>${ACSS}
+      body{margin:0;padding:10mm;font-family:Tahoma,Arial,sans-serif;color:#111;font-size:12.5px}.card{border:1px solid #ddd;border-radius:8px;margin-bottom:8px;break-inside:avoid}.pad{padding:8px 10px}
+      .chip{font-size:11px;border-radius:99px;padding:1px 8px;background:#f3f4f6}.s-none{background:#fee2e2;color:#b91c1c}.s-part{background:#fef3c7;color:#92400e}.s-ok{background:#dcfce7;color:#166534}
+      .muted{color:#6b7280}h1{font-size:16px;margin:0 0 4px}.ab-nm{all:unset}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style>
+      <body><h1>${esc(window.__absTitle || '')}</h1><div class="muted" style="margin-bottom:8px">المتوسطة الحادية والعشرون · من ملفات حضور حصص التيمز · طُبع ${hijT(today())}</div>${c.innerHTML}</body></html>`);
+    w.document.close(); let done = 0; const pr = () => { if (!done++) w.print(); }; w.onload = pr; setTimeout(pr, 1200);
+  }
+  // «تقرير الغياب على مستوى حصة» (officialPage) لكل فصول اليوم، أو للفصل المختار في «غياب كامل / جزئي»
+  function absOfficial(A, iso) {
+    printOfficial(classReports(A, iso).filter(c => !ABF.cls || c.k === ABF.cls), iso);
+  }
+  if (!window.__absEv) { window.__absEv = 1;
+    document.addEventListener('change', e => { const t = e.target; if (!t.matches || !t.matches('[data-absf]')) return;
+      const k = t.dataset.absf; ABF[k] = k === 'min' ? +t.value : t.value; if (k !== 'who' || !t.value || Object.values(D.att.roster).some(L => L.includes(t.value))) route(); });
+    document.addEventListener('click', e => { const t = e.target.closest ? e.target : null; if (!t) return;
+      const p = t.closest('[data-absp]'); if (p) { ABF.who = p.dataset.absp; location.hash = 'abs/p'; route(); return; }
+      const of = t.closest('[data-absof]'); if (of) { absOfficial(D.att, of.dataset.absof); return; }
+      if (t.closest('[data-absprint]')) absPrint(); });
+  }
+  const ACSS = `.ab-ps{display:inline-flex;gap:3px;flex-wrap:wrap;direction:rtl}.ab-p{font-style:normal;font-size:11px;min-width:25px;text-align:center;border-radius:5px;padding:2px 3px;line-height:1.4}
+    .ab-p.a{background:#dc2626;color:#fff}.ab-p.h{background:#dcfce7;color:#166534}.ab-p.n{background:repeating-linear-gradient(45deg,#e5e7eb 0 4px,#f9fafb 4px 8px);color:#6b7280}.ab-p.x{background:transparent;color:#c7c7c7;border:1px dashed #e5e7eb}
+    .ab-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#6b7280;margin:6px 4px 12px}.ab-leg .ab-p{margin-left:4px}
+    .ab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}.ab-c h3{margin:0 0 6px;font-size:15.5px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .ab-r{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px dashed var(--line,#e5e7eb);font-size:14px;flex-wrap:wrap}.ab-r:first-of-type{border-top:0}
+    .ab-sm{font-size:12.5px}.ab-sts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:0 0 12px}
+    .ab-st{background:var(--card,#fff);border:1px solid var(--line,#e5e7eb);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column}.ab-st b{font-size:24px}.ab-st span{font-size:12.5px;color:var(--muted,#6b7280)}
+    .ab-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.ab-h{font-size:15px;margin:0 0 6px;padding:7px 12px;border-radius:10px}.ab-h small{font-weight:400;font-size:12px}.ab-h.r{background:#fee2e2;color:#b91c1c}.ab-h.y{background:#fef3c7;color:#92400e}
+    .ab-tw{overflow-x:auto}.ab-t{width:100%;border-collapse:collapse}.ab-t th,.ab-t td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line,#e5e7eb);font-size:13.5px;white-space:nowrap}.ab-t th{font-size:12.5px;color:var(--muted,#6b7280)}
+    .ab-bar{display:inline-block;vertical-align:middle;width:70px;height:8px;background:#eee;border-radius:4px;overflow:hidden}.ab-bar i{display:block;height:100%;background:#dc2626}
+    .ab-lv{font-size:12px;border-radius:99px;padding:2px 10px;font-weight:700}.ab-lv.r{background:#fee2e2;color:#b91c1c}.ab-lv.y{background:#fef3c7;color:#92400e}.ab-lv.g{background:#dcfce7;color:#166534}
+    .ab-pr{display:flex;gap:12px;align-items:center;margin-bottom:12px}.ab-pr b{font-size:16.5px}.ab-av{width:50px;height:50px;border-radius:50%;background:var(--soft,#eee);display:grid;place-items:center;font-weight:800;font-size:21px}
+    .ab-cal{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}.ab-d{border:1px solid var(--line,#e5e7eb);border-radius:10px;padding:8px}.ab-dh{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:13px;font-weight:700;margin-bottom:6px}
+    @media(max-width:700px){.ab-2{grid-template-columns:1fr}}`;
+  const ABCSS = ACSS + `.ab-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.ab-tabs button{font:inherit;font-size:13.5px;border:1px solid var(--line,#e5e7eb);background:var(--card,#fff);color:inherit;border-radius:99px;padding:7px 14px;cursor:pointer}
+    .ab-tabs button.on{background:var(--brand,#6b5d82);color:#fff;border-color:var(--brand,#6b5d82)}
+    .ab-bar0{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin:0 2px 10px}.ab-bar0 b{font-size:15px}.ab-act{display:flex;gap:6px}
+    .ab-f{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.ab-f select,.ab-f input{font:inherit;padding:7px 10px;border:1px solid var(--line,#e5e7eb);border-radius:9px;background:var(--card,#fff);color:inherit}.ab-q input{flex:1;min-width:0;padding:10px 14px}
+    .ab-nm{all:unset;cursor:pointer;border-bottom:1px dotted currentColor}.ab-nm:hover{color:var(--brand,#6b5d82)}
+    @media(max-width:520px){.ab-tabs button{flex:1 1 45%;padding:7px 8px;font-size:12.5px}}`;
+  if (!document.getElementById('abs-css')) { const st = document.createElement('style'); st.id = 'abs-css'; st.textContent = ABCSS; document.head.appendChild(st); }
   const TH = new Map();   // صور مصغرة مفكوكة في هذه الجلسة: الملف ← رابط blob
   async function thumbs() {
     for (const el of document.querySelectorAll('[data-attth]')) {
@@ -618,6 +762,7 @@
       const [v, x] = String(a || '').split('/');
       if (v === 'all') return allReports(A);
       if (A.mode === 'teacher') return tPage(A, v === 'd' ? x : '');
+      if (v === 'a' && A.mode === 'view') return absPage(A, a);
       if (A.mode === 'view') return viewPage(A, v === 'd' ? x : '', 'att/d/');
       if (v === 'v' && A.vw) return viewPage(A, x, 'att/v/');
       if (v === 'r') return reports(A, x);
