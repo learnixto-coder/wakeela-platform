@@ -762,7 +762,7 @@
       const [v, x] = String(a || '').split('/');
       if (v === 'all') return allReports(A);
       if (A.mode === 'teacher') return tPage(A, v === 'd' ? x : '');
-      if (v === 'a' && A.mode === 'view') return absPage(A, a);
+      if (v === 'a' && (A.mode === 'view' || A.vw)) return absPage(A, a);   // الموجهة الطلابية والوكيلة
       if (A.mode === 'view') return viewPage(A, v === 'd' ? x : '', 'att/d/');
       if (v === 'v' && A.vw) return viewPage(A, x, 'att/v/');
       if (v === 'r') return reports(A, x);

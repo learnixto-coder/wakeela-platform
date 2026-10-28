@@ -616,7 +616,7 @@ function route() {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === top));
   const el = $('#view');
   el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folders(+a),
-    plan: planW, ctw: wHub, arc: () => actRepW('c', a), arn: () => actRepW('n', a),plans: plansW, timeline: () => plansW('timeline'), att: () => D.att ? attPage(location.hash.slice(5)) : '<div class="empty card">لا توجد بيانات بعد</div>', attr: () => D.att ? attPage('all') : '<div class="empty card">لا توجد بيانات بعد</div>', qa: () => qaW(a), quality: qualityW, start: wHub }[v] || me)();
+    plan: planW, ctw: wHub, arc: () => actRepW('c', a), arn: () => actRepW('n', a),plans: plansW, timeline: () => plansW('timeline'), att: () => D.att ? attPage(location.hash.slice(5)) : '<div class="empty card">لا توجد بيانات بعد</div>', abs: () => D.att ? attPage('a/' + location.hash.slice(5)) : '<div class="empty card">لا توجد بيانات بعد</div>', attr: () => D.att ? attPage('all') : '<div class="empty card">لا توجد بيانات بعد</div>', qa: () => qaW(a), quality: qualityW, start: wHub }[v] || me)();
   if (v !== 'start') { const h = HUB.find(x => x[0] === (SUB_OF[v] || (v === 'w' ? 'me' : v))); el.insertAdjacentHTML('afterbegin', homeBar(h ? h[1] : '')); }
   bind(el); window.scrollTo(0, 0);
 }
@@ -629,7 +629,8 @@ const HUB_G = [['الخطط والبرامج', [['plans', 'الخطة التشغ
   ['المعلمات', [['home', 'متابعة المعلمات', 'لوحة التتبع والإنجاز حسب المجلد'], ['teachers', 'قائمة المعلمات', 'صفحة كل معلمة'], ['folders', 'المجلدات', 'محتوى ملفات المعلمات'],
     ['alerts', 'التنبيهات', 'الملفات المكررة والفارغة والتذكير'], ['dash', 'لوحة المؤشرات', 'مؤشرات إنجاز المعلمات']]],
   // «حضور حصص التيمز» (2026-10-26): متابعة رفع المعلمات وتقارير الغياب، كما عند مسؤولة الغياب
-  ['الغياب — حصص التيمز', [['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات وطباعة تقارير الغياب']]],
+  // «حصر الطالبات الغائبات» (2026-10-28): صفحة الموجهة الطلابية نفسها، والوكيلة كذلك (طلب المستخدمة)
+  ['الغياب — حصص التيمز', [['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات وطباعة تقارير الغياب'], ['abs', 'حصر الطالبات الغائبات', 'تقرير الغياب على مستوى حصة، والغياب الكامل والجزئي، والحصر التراكمي، وسجل كل طالبة']]],
   ['الإداريات', [['admins', 'الإداريات', 'مبادرات الإداريات']]]];
 const HUB = HUB_G.flatMap(g => g[1]);
 const hubBtns = L => `${L.map(([g, l, d]) => `<button class="hub-b" data-go="${g}"><span class="sec-ic">${['me', 'mine', 'home', 'admins'].includes(g) ? secIcon('') : planIcon}</span><span><span class="hub-t">${l}</span><span class="hub-s">${d}</span></span></button>`).join('')}`;
@@ -1264,7 +1265,7 @@ function tdPage() {
 let attLoad = null;
 function attPage(a) {
   if (window.ATT) return ATT.render(D.att, a);
-  attLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'att.js?v=20261028a'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  attLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'att.js?v=20261028b'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { attLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
