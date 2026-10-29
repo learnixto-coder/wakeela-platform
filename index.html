@@ -1283,7 +1283,7 @@ function attPage(a) {
 let cnLoad = null;
 function cnPage(a) {
   if (window.CN) return CN.render(a);
-  cnLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'cn.js?v=20261019b'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  cnLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'cn.js?v=20261029a'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { cnLoad = null; window.CN = { render: () => teacherCn() }; route(); });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
@@ -1296,7 +1296,6 @@ function teacherCn() {
   return `<div class="card hero th-hero"><div class="grow"><h2>الأنشطة اللاصفية</h2><p class="muted">${esc(D.cn.cls)} · برامج أسابيع فصلك (الاصطفاف الصباحي والصلاة) · اختاري النشاط ثم أرفقي صور الشواهد فقط</p></div></div>
   <div class="card pad up" id="cnUp" data-cn="${k}"><label class="up-l" for="cnW">النشاط اللاصفي</label>
     <select class="search" id="cnW">${W.map((x, i) => `<option value="${i}"${i === k ? ' selected' : ''}>الأسبوع ${nf(x.w)} — ${x.kind === 'الصلاة' ? 'الصلاة' : 'الاصطفاف الصباحي (الإذاعة)'}${x.prog ? ': ' + esc(x.prog) : ''} — ${cnHd(x.from)}${x.to !== x.from ? ' إلى ' + cnHd(x.to) : ''}</option>`).join('')}</select>
-    <div class="muted" style="font-size:13px;margin:6px 0 2px">موضوع إذاعة فصلك في هذا الأسبوع: <b>${esc(w.topic)}</b></div>
     <label class="up-drop"><input type="file" id="cnI" multiple accept="image/*" hidden><span><b>اختاري الصور أو صوّري الشاهد</b><br><span class="muted">تُصغَّر الصور قبل الرفع، وتصل إلى مجلد الفصل المشترك</span></span></label>
     <div class="muted" id="cnMsg" style="font-size:13px;margin-top:8px">${w.files.length ? `${nf(w.files.length)} صورة مرفوعة لهذا النشاط` : 'لم تُرفع صور لهذا النشاط بعد'}</div>
     ${w.files.length ? `<ul class="files">${w.files.map(f => `<li>${esc(f.n)}</li>`).join('')}</ul>` : ''}</div>`;
