@@ -148,18 +148,34 @@
   function ready(A) {
     if (A.__ok) return; A.__ok = 1;
     for (const [iso, byT] of Object.entries(A.days || {})) for (const [nm, list] of Object.entries(byT)) {
-      byT[nm] = assign(A.tt.teachers.find(t => t.name === nm), iso, list.map(x => x.r ? lessonOf(A, x.r, x.file) : x));
+      byT[nm] = assign(A.tt.teachers.find(t => t.name === nm), iso, list.map(x => x.r ? { ...lessonOf(A, x.r, x.file), ...(x.m && { m: x.m }) } : x));
     }
-    if (A.mode === 'teacher') sentLocal(A);
+    if (A.mode === 'teacher') { sentLocal(A); manLocal(A); }
   }
+  // --- «مراجعة الغائبات» (2026-10-29): المعلمة تحضّر يدويًا غائبة في ملف التيمز (لون موف «ي»). f.m = أسماء من الكشف (tools/att.js من keys/att/manual.json).
+  // في تقرير الوزارة حاضرة؛ عند المعلمة والوكيلة والموجهة ومسؤولة الغياب يظهر أنه تحضير يدوي وعدده — للضبط حتى لا تُحضَّر الجميع
+  const MKEY = 'wk-att-man', mget = () => { try { return JSON.parse(localStorage.getItem(MKEY) || '[]'); } catch { return []; } }, mset = v => { try { localStorage.setItem(MKEY, JSON.stringify(v)); } catch {} };
+  function manLocal(A) {   // ما حفظته على هذا الجهاز ولم يصل في البيانات بعد (٣ أيام)
+    const nm = me(A).name, L = mget().filter(x => Date.now() - x.at < 3 * 864e5); mset(L);
+    L.filter(x => x.to === nm).forEach(x => { const f = (((A.days || {})[x.iso] || {})[nm] || []).find(f => f.file === x.file); if (f) f.m = x.m; });
+  }
+  // عدد الحضور اليدوي للمعلمة في اليوم، وتنبيه إن زاد في حصة عن ربع غائباتها في التيمز
+  function manStat(A, iso, nm) {
+    let n = 0, flag = false;
+    ((((A.days || {})[iso] || {})[nm]) || []).forEach(f => { if (!f.m || !f.m.length || !f.g) return;
+      const L = lesson(A, f), k = L.man.length; n += k; if (k && k > (L.absent.length + k) / 4) flag = true; });
+    return { n, flag };
+  }
+  const manChip = s => s.n ? ` <span class="chip s-man" title="حضور يدوي من المعلمة">ي ${ad(s.n)}</span>${s.flag ? ' <span class="chip s-part" title="الحضور اليدوي أكثر من ربع غائبات الحصة في التيمز">تنبيه</span>' : ''}` : '';
   // تقرير حصة: الحاضرات والغائبات بأسماء قائمة الفصل
   function lesson(A, x) {
     const names = A.roster[ck(x.g, x.s)] || [], m = matcher(names), got = new Map(), un = [];
     const take = (raw, kind, extra) => { const n = m(raw); if (n) { if (!got.has(n) || kind === 'present') got.set(n, { kind, extra }); } else un.push({ raw, kind, extra }); };
     (x.present || []).forEach(n => take(n, 'present')); (x.late || []).forEach(o => take(o.n, 'late', o.t)); (x.flash || []).forEach(o => take(o.n, 'flash', o.d));
-    const here = names.filter(n => got.has(n) && got.get(n).kind !== 'flash');
+    const teams = names.filter(n => got.has(n) && got.get(n).kind !== 'flash'), mm = new Set(x.m || []);
+    const man = names.filter(n => mm.has(n) && !teams.includes(n)), here = names.filter(n => teams.includes(n) || man.includes(n));   // man: حضور يدوي من المعلمة
     const absent = names.filter(n => !here.includes(n)).map(n => ({ n, flash: got.has(n) ? got.get(n).extra || true : null }));
-    return { names, here, late: names.filter(n => got.get(n)?.kind === 'late'), absent, un, pct: names.length ? Math.round(here.length / names.length * 100) : null };
+    return { names, here, man, late: names.filter(n => got.get(n)?.kind === 'late'), absent, un, pct: names.length ? Math.round(here.length / names.length * 100) : null };
   }
 
   // --- اليوم: المتوقع من الجدول مقابل المرفوع
@@ -206,13 +222,13 @@
       ${''/* «حسب حصص اليوم» (التصميم ٤ باختيار المستخدمة 2026-10-27): صفوف بلا تمرير جانبي — على الجوال كل معلمة كتلة: الاسم والحالة، ثم ح١–ح٧ في سطر، ثم الأزرار */}
       <div class="card at-g"><div class="at-gr at-gh"><div>المعلمة</div><div class="at-gc">${[1, 2, 3, 4, 5, 6, 7].map(p => `<span>ح${ad(p)}</span>`).join('')}</div><div>الشواهد</div><div></div></div>
       ${M.T.slice().sort((a, b) => (a.sent === a.exp.length) - (b.sent === b.exp.length) || a.t.name.localeCompare(b.t.name, 'ar')).map(r => `<div class="at-gr">
-        <div class="at-gn"><b>${esc(short(r.t.name))}</b>${chipOf(r.sent === r.exp.length, `${ad(r.sent)} من ${ad(r.exp.length)}`)}</div>
+        <div class="at-gn"><b>${esc(short(r.t.name))}</b>${chipOf(r.sent === r.exp.length, `${ad(r.sent)} من ${ad(r.exp.length)}`)}${manChip(manStat(A, iso, r.t.name))}</div>
         <div class="at-gc">${[1, 2, 3, 4, 5, 6, 7].map(p => { const c = r.cells.find(x => x.p === p);
           return c ? `<span class="${c.f ? 'ok' : 'miss'}" title="ح${ad(p)} · ${c.f ? esc(c.f.subj || c.f.file || '') : 'لم يصل الملف'}"><i>ح${ad(p)}</i>${SG[c.g]}${ad(c.s)}</span>` : `<span class="no"><i>ح${ad(p)}</i></span>`; }).join('')}</div>
         <div class="at-ge">${evN(r) ? chipOf(1, pics(evN(r))) : chipOf(0, 'لا شواهد')}</div>
         <div class="at-ga">${r.extra.length ? `<span class="chip s-part">+${ad(r.extra.length)} خارج الجدول</span>` : ''}${remind(r)}${A.pdf?.[iso]?.[r.t.name] ? ` <button class="btn sm ghost" data-attpdf="${iso}|${esc(r.t.name)}">PDF</button>` : ''}</div></div>`).join('')}
       </div>
-      <p class="muted" style="font-size:12.5px;margin:8px 4px">الأخضر: وصل ملف الحصة · الأصفر: لم يصل بعد · <a href="#att/tt">مراجعة جدول الحصص</a></p>`;
+      <p class="muted" style="font-size:12.5px;margin:8px 4px">الأخضر: وصل ملف الحصة · الأصفر: لم يصل بعد · <span class="chip s-man">ي</span> عدد الحضور اليدوي من المعلمة · <a href="#att/tt">مراجعة جدول الحصص</a></p>`;
   }
 
   // --- «تقارير الغياب»: كل الأيام
@@ -375,7 +391,7 @@
             const x = P[t.name], k = `${iso}|${esc(t.name)}`, e = ex(t).filter(c => c.g === g), C = [...new Set(e.map(c => SG[c.g] + ad(c.s)))];
             return `<div class="at-doc"><div class="at-stk" role="button" data-attpdf="${k}" data-open="1"><div class="at-th"${x.t ? ` data-attth="${k}"` : ''}><span>تقرير الحصص</span></div>
                 ${x.pg ? `<span class="at-pg">${ad(x.pg)} ص</span>` : ''}</div>
-              <b>${esc(short(t.name))}</b><small>${C.join('، ')} · ${e.map(c => 'ح' + ad(c.p)).join('، ')}</small>
+              <b>${esc(short(t.name))}${manChip(manStat(A, iso, t.name))}</b><small>${C.join('، ')} · ${e.map(c => 'ح' + ad(c.p)).join('، ')}</small>
               <div class="at-tb"><button class="btn sm" data-attpdf="${k}" data-open="1">تصفح</button><button class="btn sm ghost" data-attpdf="${k}">تنزيل</button></div></div>`; }).join('')}</div>`; }).join('')
           + (R.length ? '' : '<div class="empty card">لم يُجهَّز أي تقرير لهذا اليوم بعد.</div>')
           + (Wt.length ? `<h3 class="at-ah">لم يُجهَّز بعد <small>${ad(Wt.length)}</small></h3><div class="at-wl">${Wt.map(t => `<span class="chip">${esc(short(t.name))}</span>`).join('')}</div>` : '');
@@ -394,7 +410,7 @@
       ${dayNav(days, iso, pre)}
       ${w > 4 ? '<div class="empty card">هذا اليوم ليس يوم دراسة.</div>' : !T.length ? '<div class="empty card">لا توجد حصص عن بعد في هذا اليوم.</div>'
       : `<div class="at-v"><div class="card at-ls">
-          ${R.map(t => `<button class="at-li${t === cur ? ' on' : ''}" data-attsel="${esc(t.name)}"><i></i>${esc(short(t.name))}<small>${per(t)}</small></button>`).join('')}
+          ${R.map(t => `<button class="at-li${t === cur ? ' on' : ''}" data-attsel="${esc(t.name)}"><i></i>${esc(short(t.name))}${manChip(manStat(A, iso, t.name))}<small>${per(t)}</small></button>`).join('')}
           ${Wt.length ? `<div class="at-sep">لم يُجهَّز بعد (${ad(Wt.length)})</div>${Wt.map(t => `<div class="at-li w"><i></i>${esc(short(t.name))}<small>${per(t)}</small></div>`).join('')}` : ''}
         </div>${pv}</div>`}`;
   }
@@ -406,8 +422,9 @@
     let M = ABC.get(A); if (!M) ABC.set(A, M = new Map()); if (M.has(iso)) return M.get(iso);
     const R = classReports(A, iso).map(c => {
       const P = P7.map(p => c.rows.find(r => r.p === p && r.L) || c.rows.find(r => r.p === p) || null);
-      const st = c.names.map(n => { const s = P.map(x => !x ? '' : !x.L ? 'n' : x.L.absent.some(o => o.n === n) ? 'a' : 'h'),
-        rec = s.filter(v => v === 'a' || v === 'h').length, ab = s.filter(v => v === 'a').length;
+      // m = حضور يدوي من المعلمة (حاضرة، بلون موف)
+      const st = c.names.map(n => { const s = P.map(x => !x ? '' : !x.L ? 'n' : x.L.absent.some(o => o.n === n) ? 'a' : x.L.man.includes(n) ? 'm' : 'h'),
+        rec = s.filter(v => v === 'a' || v === 'h' || v === 'm').length, ab = s.filter(v => v === 'a').length;
         return { n, s, rec, ab, full: rec > 0 && ab === rec }; });
       return { k: c.k, g: c.g, s: c.s, names: c.names, P, st, nf: P.filter(x => x && !x.L).length };
     });
@@ -418,7 +435,7 @@
   const pchips = s => `<span class="ab-ps">${s.map((v, i) => `<i class="ab-p ${v || 'x'}" title="ح${ad(i + 1)}">ح${ad(i + 1)}</i>`).join('')}</span>`;
   const absent = s => `<span class="ab-ps">${s.map((v, i) => v === 'a' ? `<i class="ab-p a">ح${ad(i + 1)}</i>` : '').join('')}</span>`;
   const nmBtn = n => `<button class="ab-nm" data-absp="${esc(n)}">${esc(n)}</button>`;
-  const LEG = `<div class="ab-leg"><span><i class="ab-p a">ح</i>غائبة</span><span><i class="ab-p h">ح</i>حاضرة</span><span><i class="ab-p n">ح</i>غير مرصودة (لم يُرفع الملف)</span><span><i class="ab-p x">ح</i>لا حصة</span></div>`;
+  const LEG = `<div class="ab-leg"><span><i class="ab-p a">ح</i>غائبة</span><span><i class="ab-p h">ح</i>حاضرة</span><span><i class="ab-p m">ح</i>حضور يدوي من المعلمة</span><span><i class="ab-p n">ح</i>غير مرصودة (لم يُرفع الملف)</span><span><i class="ab-p x">ح</i>لا حصة</span></div>`;
   const stat = (n, l, c = '') => `<div class="ab-st"><b${c ? ` style="color:${c}"` : ''}>${ad(n)}</b><span>${l}</span></div>`;
   const ABT = [['c', 'تقرير الغياب على مستوى حصة'], ['f', 'غياب كامل / جزئي'], ['s', 'الحصر التراكمي'], ['p', 'بطاقة الطالبة']];
   const ABF = { cls: '', rng: 'w', min: 3, who: '' };   // اختيارات الصفحة في هذه الجلسة
@@ -517,7 +534,7 @@
       if (t.closest('[data-absprint]')) absPrint(); });
   }
   const ACSS = `.ab-ps{display:inline-flex;gap:3px;flex-wrap:wrap;direction:rtl}.ab-p{font-style:normal;font-size:11px;min-width:25px;text-align:center;border-radius:5px;padding:2px 3px;line-height:1.4}
-    .ab-p.a{background:#dc2626;color:#fff}.ab-p.h{background:#dcfce7;color:#166534}.ab-p.n{background:repeating-linear-gradient(45deg,#e5e7eb 0 4px,#f9fafb 4px 8px);color:#6b7280}.ab-p.x{background:transparent;color:#c7c7c7;border:1px dashed #e5e7eb}
+    .ab-p.a{background:#dc2626;color:#fff}.ab-p.h{background:#dcfce7;color:#166534}.ab-p.m{background:#efe3fb;color:#7a3db8;box-shadow:inset 0 0 0 1.5px #7a3db8}.ab-p.n{background:repeating-linear-gradient(45deg,#e5e7eb 0 4px,#f9fafb 4px 8px);color:#6b7280}.ab-p.x{background:transparent;color:#c7c7c7;border:1px dashed #e5e7eb}
     .ab-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#6b7280;margin:6px 4px 12px}.ab-leg .ab-p{margin-left:4px}
     .ab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}.ab-c h3{margin:0 0 6px;font-size:15.5px;display:flex;justify-content:space-between;align-items:center;gap:8px}
     .ab-r{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px dashed var(--line,#e5e7eb);font-size:14px;flex-wrap:wrap}.ab-r:first-of-type{border-top:0}
@@ -567,7 +584,7 @@
     const rows = r.cells.map(c => ({ c, q: c.f ? null : pend(c) })), extraP = P.filter(x => !used.has(x)), errs = PEND.filter(x => x.err);
     // يُعرض وقت الحصة الرسمي (المستخدمة 2026-10-26: وقت الاجتماع تقريبي)؛ وقت الاجتماع فقط لملف لم تُعرف حصته
     const info = f => f ? `${esc(f.subj || '')}<br><span class="muted">${f.p ? slot(f.p) : esc(f.start || '') + (f.end ? ' – ' + esc(f.end) : '')}</span>` : '<span class="muted">—</span>';
-    const cnt = (f, c) => { if (!f || !c.g) return '<span class="muted">—</span>'; const L = lesson(A, { ...f, g: c.g, s: c.s }); return `${ad(L.here.length)} من ${ad(L.names.length)}`; };
+    const cnt = (f, c) => { if (!f || !c.g) return '<span class="muted">—</span>'; const L = lesson(A, { ...f, g: c.g, s: c.s }); return `${ad(L.here.length)} من ${ad(L.names.length)}${L.man.length ? ` <span class="chip s-man">منها ي ${ad(L.man.length)}</span>` : ''}`; };
     const drop = q => ` <button class="btn sm ghost" data-attdrop="${PEND.indexOf(q)}">إزالة</button>`;
     const del = f => ` <button class="btn sm ghost" data-attdel="${esc(iso)}|${esc(f.file)}" title="حذف الملف المرسل بالخطأ">حذف</button>`;
     const nP = r.exp.length, word = n => n > 2 && n < 11 ? 'حصص' : 'حصة';
@@ -588,10 +605,52 @@
         <td><span class="chip s-part">خارج جدولك</span>${drop(q)}</td></tr>`).join('')}
       ${!rows.length && !extraP.length && !r.extra.length ? '<tr><td colspan="5" class="muted">لا توجد حصص</td></tr>' : ''}
       </tbody></table></div>
+      ${revCard(A, iso, r)}
       ${errs.length ? `<div class="card pad" style="color:#b91c1c">${errs.map(x => `«${esc(x.name)}»: ${esc(x.err)}${drop(x)}`).join('<br>')}</div>` : ''}
       <div class="at-act" style="justify-content:flex-end"><button class="btn" data-attsend="${iso}" ${P.length ? '' : 'disabled'}>إرسال${P.length ? ` (${ad(P.length)})` : ''}</button></div>
       ${evCard(A, iso)}
       <p class="muted" style="font-size:12.5px;margin:8px 4px">يُحفظ كل ملف في مجلدك داخل «رصد الغياب منصة التيمز» على ون درايف ويصل لمسؤولة الغياب خلال دقائق.</p>`;
+  }
+  // «مراجعة الغائبات»: لكل فصل، الغائبات في ملفات التيمز فقط × حصصها المرسلة؛ لمسة على «غ» ← «ي» وأخرى ترجعها، ولا يُرسل شيء قبل «حفظ»
+  // الاسم مختصرًا للجوال: الأول والأب والعائلة (بلا «بنت/بن»)، والكامل في title
+  const nm3 = n => { const w = String(n).split(/\s+/).filter(x => !/^(بنت|بن|ابن)$/.test(x)); return w.length > 3 ? [w[0], w[1], w[w.length - 1]].join(' ') : w.join(' '); };
+  let MED = { iso: '', E: {} };   // E[الملف] = Set الأسماء (تعديل لم يُحفظ)
+  function revCard(A, iso, r) {
+    const F = [...r.cells.map(c => c.f && { f: c.f, g: c.g, s: c.s, p: c.p }), ...r.extra.map(f => f.g && { f, g: f.g, s: f.s, p: f.p })].filter(Boolean);
+    if (!F.length) return '';
+    if (MED.iso !== iso) MED = { iso, E: {} };
+    const sel = x => MED.E[x.f.file] || new Set(x.f.m || []), dirty = Object.keys(MED.E).length;
+    const by = {}; F.forEach(x => (by[ck(x.g, x.s)] ||= []).push(x));
+    const blocks = Object.entries(by).map(([k, L]) => { L.sort((a, b) => (a.p || 9) - (b.p || 9));
+      const ab = L.map(x => new Set(lesson(A, { ...x.f, g: x.g, s: x.s, m: [] }).absent.map(o => o.n)));
+      const rows = (A.roster[k] || []).filter(n => ab.some(S => S.has(n)));
+      const [g, s] = k.split('-').map(Number);
+      return `<div class="at-rv"><b>${cls(g, s)}</b>${rows.length ? `<div class="at-of"><table class="at-mg"><tr><th></th>${L.map(x => `<th>${x.p ? 'ح' + ad(x.p) : '—'}</th>`).join('')}</tr>
+        ${rows.map(n => `<tr><td class="nm" title="${esc(n)}">${esc(nm3(n))}</td>${L.map((x, j) => !ab[j].has(n) ? '<td><span class="mc h" title="حاضرة في التيمز">✓</span></td>'
+          : `<td><button class="mc ${sel(x).has(n) ? 'm' : 'a'}" data-attman="${esc(x.f.file)}|${esc(n)}" aria-label="${esc(n)}: ${sel(x).has(n) ? 'حضور يدوي' : 'غائبة'}">${sel(x).has(n) ? 'ي' : 'غ'}</button></td>`).join('')}</tr>`).join('')}</table></div>`
+        : '<div class="muted" style="font-size:13px">لا توجد غائبات في ملفات هذا الفصل</div>'}</div>`; }).join('');
+    return `<div class="card pad"><div class="at-act" style="margin:0 0 6px"><div><b>مراجعة الغائبات</b> <span class="muted" style="font-size:12.5px">(اختياري)</span>
+        <div class="muted" style="font-size:13px">إن حضرت طالبة ولم يحسبها التيمز: المسي «غ» فتصير <span class="chip s-man">ي</span> حضور يدوي، ولمسة ثانية ترجعها. يظهر للإدارة أنه تحضير منكِ.</div></div></div>
+      ${blocks}
+      <div class="at-act" style="justify-content:flex-end;margin:8px 0 0">${dirty ? '<span class="muted" style="font-size:12.5px">تعديلات لم تُحفظ</span>' : ''}<button class="btn" data-attmansave="${iso}"${dirty ? '' : ' disabled'}>حفظ</button></div></div>`;
+  }
+  function manToggle(v) {
+    const A = D.att, [file, ...n] = v.split('|'), name = n.join('|'), f = ((((A.days || {})[MED.iso] || {})[me(A).name]) || []).find(x => x.file === file); if (!f) return;
+    const S = new Set(MED.E[file] || f.m || []); S.has(name) ? S.delete(name) : S.add(name);
+    const same = S.size === (f.m || []).length && (f.m || []).every(x => S.has(x));
+    if (same) delete MED.E[file]; else MED.E[file] = S; route();
+  }
+  async function manSave(iso, btn) {
+    const A = D.att, nm = me(A).name, E = MED.E, files = {}; if (MED.iso !== iso || !Object.keys(E).length) return;
+    for (const [file, S] of Object.entries(E)) files[file] = [...S];
+    btn.disabled = true; btn.textContent = 'جارٍ الحفظ…';
+    try {
+      const body = new TextEncoder().encode(JSON.stringify({ files }));
+      if (!A.demo) await sealSend({ kind: 'att-man', name: A.who, day: iso, size: body.length }, body);
+      const L = mget().filter(x => !(x.to === nm && x.iso === iso && files[x.file]));
+      for (const [file, m] of Object.entries(files)) { const f = A.days[iso][nm].find(x => x.file === file); if (f) f.m = m; L.push({ to: nm, iso, file, m, at: Date.now() }); }
+      mset(L); MED.E = {}; route(); if (typeof toast === 'function') toast(A.demo ? 'معاينة: حُفظ هنا فقط ولم يُرسل' : 'حُفظ ✓ ويظهر في التقارير خلال دقائق');
+    } catch (e) { btn.disabled = false; btn.textContent = 'حفظ'; if (typeof toast === 'function') toast('تعذّر الحفظ، تحققي من الاتصال وأعيدي المحاولة'); }
   }
   // dir = اختيار مجلد كامل (مجلدات الأيام): ما ليس تقرير حضور أو أُرسل من قبل يُتخطّى بصمت (المستخدمة 2026-10-29)
   async function readFiles(files, dir) {
@@ -653,12 +712,18 @@
         if (innerWidth < 760) document.querySelector('.at-pv')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
       const pb = t.closest('[data-attpdf]'); if (pb) { const [iso, ...n] = pb.dataset.attpdf.split('|'); getPdf(iso, n.join('|'), pb); return; }
       const ss = t.closest('[data-attsubjsave]'); if (ss) { saveSubj(ss); return; }
+      const mt = t.closest('[data-attman]'); if (mt) { manToggle(mt.dataset.attman); return; }
+      const ms = t.closest('[data-attmansave]'); if (ms) { manSave(ms.dataset.attmansave, ms); return; }
       const es = t.closest('[data-attevsend]'); if (es) { sendEv(es.dataset.attevsend, es); return; }
       const dl = t.closest('[data-attdel]'); if (dl) { const [iso, ...f] = dl.dataset.attdel.split('|'); remove(iso, f.join('|'), dl); return; }
       const sb = t.closest('[data-attsend]'); if (sb) send(sb.dataset.attsend, sb); });
   }
 
-  const CSS = `.at-g{padding:6px 10px}.at-gr{display:grid;grid-template-columns:minmax(140px,1.2fr) minmax(0,4.6fr) minmax(86px,auto) minmax(120px,1.3fr);gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line,#e5e7eb)}
+  const CSS = `.chip.s-man{background:#efe3fb;color:#7a3db8;font-weight:700}
+    .at-rv{margin:8px 0}.at-rv>b{display:block;margin-bottom:4px}.at-mg{border-collapse:separate;border-spacing:3px;font-size:13.5px}.at-mg th{font-weight:500;color:var(--muted,#6b7280);font-size:12px}
+    .at-mg td.nm{text-align:right;white-space:nowrap;padding-inline-end:8px}.mc{display:flex;align-items:center;justify-content:center;width:40px;height:36px;border-radius:8px;border:0;font:inherit;font-weight:700;margin:auto}
+    .mc.a{background:#fde7e4;color:#b42318;cursor:pointer}.mc.m{background:#efe3fb;color:#7a3db8;box-shadow:inset 0 0 0 2px #7a3db8;cursor:pointer}.mc.h{background:#e1f3e8;color:#1d7a46}
+    .at-g{padding:6px 10px}.at-gr{display:grid;grid-template-columns:minmax(140px,1.2fr) minmax(0,4.6fr) minmax(86px,auto) minmax(120px,1.3fr);gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line,#e5e7eb)}
     .at-gr:last-child{border-bottom:0}.at-gh{font-size:12.5px;color:var(--muted,#6b7280);font-weight:600;padding:4px 0}.at-gh .at-gc span{background:none;color:inherit}
     .at-gn{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.at-gn b{font-size:14px}.at-ga{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
     .at-gc{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}.at-gc span{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:34px;border-radius:8px;font-size:12.5px;font-weight:600;line-height:1.2}
@@ -728,9 +793,9 @@
         <tr><td>${WN[weekOf(iso)] || ''}</td><td>${DAYS[wday(iso)]}</td><td>${hij(iso)}</td><td>${f.p ? slot(f.p) : H(f.start + (f.end ? ' – ' + f.end : ''))}</td></tr></table>
       ${f.subj ? `<h2 class="tp-l">${H(f.subj)}</h2>` : ''}
       <table class="tp-t tp-st"><tr><th colspan="2" class="tp-c1">إحصائية الحضور</th></tr><tr><th>البيان</th><th>العدد</th></tr>
-        <tr><td>عدد الطالبات الكلي</td><td>${ad(n)}</td></tr><tr><td>عدد الحاضرات الفعلي</td><td>${ad(h)}</td></tr><tr><td>نسبة الحضور</td><td>${ad(pct(h, n))}٪</td></tr></table>
+        <tr><td>عدد الطالبات الكلي</td><td>${ad(n)}</td></tr><tr><td>عدد الحاضرات الفعلي</td><td>${ad(h)}</td></tr>${L.man.length ? `<tr><td>منها حضور يدوي من المعلمة <span class="y">(ي)</span></td><td class="y">${ad(L.man.length)}</td></tr>` : ''}<tr><td>نسبة الحضور</td><td>${ad(pct(h, n))}٪</td></tr></table>
       <div class="tp-g"><table class="tp-t tp-n"><tr><th colspan="2" class="tp-c2">أسماء الطالبات الحاضرات</th></tr><tr><th class="m">م</th><th>اسم الطالبة</th></tr>
-          ${L.here.map((x, i) => `<tr><td class="m">${ad(i + 1)}</td><td class="nm">${H(x)}</td></tr>`).join('') || '<tr><td colspan="2">—</td></tr>'}</table>
+          ${L.here.map((x, i) => `<tr><td class="m">${ad(i + 1)}</td><td class="nm">${H(x)}${L.man.includes(x) ? ' <span class="y">(ي)</span>' : ''}</td></tr>`).join('') || '<tr><td colspan="2">—</td></tr>'}</table>
         <div class="tp-pie"><b>نسبة الحضور مقابل عدد الطالبات</b>${pie(h, n - h)}<div class="tp-k"><span><i style="background:#12a37a"></i>الحاضرات</span><span><i style="background:#c9b68c"></i>الغائبات</span></div>
           <table class="tp-t tp-n tp-a"><tr><th colspan="2" class="tp-c3">أسماء الطالبات الغائبات</th></tr><tr><th class="m">م</th><th>اسم الطالبة</th></tr>
           ${L.absent.map((x, i) => `<tr><td class="m">${ad(i + 1)}</td><td class="nm">${H(x.n)}</td></tr>`).join('') || '<tr><td colspan="2">لا يوجد</td></tr>'}</table></div></div>
@@ -749,6 +814,7 @@
     .tp-pie{flex:1;text-align:center;padding-top:16px;color:#1f4b5c}.tp-pie b{display:block;margin-bottom:8px}.tp-k{display:flex;justify-content:center;gap:16px;font-size:11px}
     .tp-a{width:100%;margin:12px 0 0}.tp-a th{background:#9a7b3f!important}.tp-c3{text-align:right!important}.tp-k i{display:inline-block;width:10px;height:10px;margin-left:4px;vertical-align:middle}
     .tp-sg{display:flex;justify-content:space-around;margin-top:16px;break-inside:avoid;font-weight:700;line-height:1.8;text-align:center}
+    .y{color:#7a3db8;font-weight:700}
     .tp-bar{background:#2b8fb0;color:#fff;text-align:center;padding:6px;font-weight:700;margin-top:4px}
     .tp-ims{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}.tp-ims img{width:100%;max-height:70mm;object-fit:contain;border:1px solid #d1d5db;break-inside:avoid}`;
   // كل الملف: صفحات الحصص بترتيبها ثم الشواهد. imgs = روابط الصور (file:// على الجهاز)
