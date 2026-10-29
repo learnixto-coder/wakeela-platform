@@ -36,7 +36,7 @@ window.TD = (() => {
       line = [run && N(run) + ' جارٍ', done && N(done) + ' موثّق', miss && N(miss) + ' بلا توثيق', st.filter(s => s === 'plan').length && N(st.filter(s => s === 'plan').length) + ' مخطط'].filter(Boolean).join(' · '); }
     const go = { rec: 'mine', cp: 'cp', cn: 'cn', plan: 'plan' }[k];
     const body = v == null ? `<div class="td-na">${it.length ? 'يبدأ لاحقًا — لا يدخل في مؤشرك الآن' : 'لا توجد لكِ عناصر في هذا المحور'}</div>`
-      : `<div class="td-av"><b>${N(v)}</b><span>/١٠٠</span><em class="lv-${LEVEL(v)[1]}">${LEVEL(v)[0]}</em></div>
+      : `<div class="td-av"><b>${N(v)}</b><span>/١٠٠</span></div>
         <div class="td-bar"><i style="width:${v}%"></i>${av != null ? `<s style="inset-inline-start:${av}%" title="متوسط المعلمات"></s>` : ''}</div>
         <div class="td-cmp">${av != null ? (v > av + 0.5 ? `أعلى من متوسط المعلمات (${N(av)}) بـ ${N(v - av)}` : v < av - 0.5 ? `أقل من متوسط المعلمات (${N(av)}) بـ ${N(av - v)}` : `مساوٍ لمتوسط المعلمات (${N(av)})`) : ''}</div>`;
     return `<button class="td-area" data-go="${go}"><div class="td-ah"><span>${E(lbl)}</span><small>الوزن ${N(T.w[k])}٪</small></div>${body}${line ? `<div class="td-line">${line}</div>` : ''}</button>`;
@@ -91,7 +91,7 @@ window.TD = (() => {
     return `<div class="td">
       <section class="td-card td-hero"><h2>أهلًا أ. ${E(name)}</h2>
         ${me.o != null ? `<div class="td-score"><span class="td-big">${N(me.o)}</span><span class="td-of">من ١٠٠</span>
-          <div class="td-sc"><span class="td-lv lv-${lv[1]}">${lv[0]}</span><span class="td-cmpt">${cmp}</span></div></div>`
+          <div class="td-sc"><span class="td-cmpt">${cmp}</span></div></div>`
         : '<p class="td-empty">يظهر مؤشرك عند بدء أول برنامج أو نشاط لكِ.</p>'}</section>
       <section class="td-card"><h3>المطلوب منكِ${td.n ? ` <span class="td-n">${N(td.n)}</span>` : ''}</h3>${td.h}</section>
       <section class="td-card"><h3>مواعيدك</h3>${countdown(T)}</section>

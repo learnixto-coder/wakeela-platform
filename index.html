@@ -1324,7 +1324,7 @@ function nvPage(a) {
 let tdLoad = null;
 function tdPage() {
   if (window.TD) return TD.render();
-  tdLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'td.js?v=20261027'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  tdLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'td.js?v=20261029'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { tdLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
@@ -2232,7 +2232,7 @@ function bindQa(host) {
       if (t.dataset.sure !== '1') { t.dataset.sure = '1'; t.textContent = `تأكيد الإرسال بمستوى «${QA_LV[d.level]}»${d.running ? ' (مرحلي)' : ''}`; return; }
       Object.assign(d, { status: d.reply ? 'replied' : 'sent', sentAt: now }); qaD.statusSet = true;
       if (await qaSaveNow(host, 'أُرسلت النتيجة للمعلمة'))
-        qaAlert(`صدرت نتيجة تدقيق جودة برنامج «${qaD.p.name}»: المستوى «${QA_LV[d.level]}»${d.running ? ' (تقييم مرحلي، البرنامج لا يزال يُنفَّذ)' : ''}. افتحي صفحة البرنامج للاطلاع والرد.`);
+        qaAlert(`صدرت نتيجة تدقيق جودة برنامج «${qaD.p.name}»${d.running ? ' (تقييم مرحلي، البرنامج لا يزال يُنفَّذ)' : ''}. افتحي صفحة البرنامج للاطلاع والرد.`);
       return;
     }
     if (a === 'close') { Object.assign(d, { status: 'closed', closedAt: now }); qaD.statusSet = true; await qaSaveNow(host, 'أُغلق التدقيق'); return; }
@@ -2258,7 +2258,7 @@ function qaPrint() {
   const hd = v => v.replace(/(\d{1,2})\/(\d{1,2})\/(\d{4})/g, (_, d, m, y) => `<bdi dir="ltr">${ar(`${y}/${m}/${d}`)}</bdi>`).replace(/^(.*<\/bdi>هـ?)\s*[–-]\s*(<bdi.*)$/, 'من $1 إلى $2');
   const head = (title, lines) => `<div class="pf-h"><div class="pf-t"><b>${title}</b>${lines.map(([k, v]) => `<div>${k}: <span class="pf-v">${hd(esc(v || ''))}</span></div>`).join('')}</div>
     <div class="pf-moe">وزارة التعليم<small>المتوسطة الحادية والعشرون</small><img src="moe-logo.png?v=3" alt="شعار وزارة التعليم"></div></div>`;
-  const res = `<div class="pf-res">مستوى الجودة: <b>${d.level ? QA_LV[d.level] : '—'}</b>${d.running ? ' — تقييم مرحلي: البرنامج لا يزال يُنفَّذ' : ''}${d.guide ? `<br>التوجيه: ${esc(d.guide)}` : ''}</div>`;
+  const res = d.running || d.guide ? `<div class="pf-res">${d.running ? 'تقييم مرحلي: البرنامج لا يزال يُنفَّذ' : ''}${d.running && d.guide ? '<br>' : ''}${d.guide ? `التوجيه: ${esc(d.guide)}` : ''}</div>` : '';
   const box = document.createElement('div'); box.id = 'pfBox';
   box.innerHTML = `<section>${head('نموذج بطاقة ملاحظة تنفيذ البرامج والبرامج المدرسية', [['اسم البرنامج', p.name], ['تاريخ التنفيذ', o.date], ['القائم بالتنفيذ', p.people.map(x => x.label).join('، ')], ['اسم الملاحظ', o.observer]])}
     <table class="pf"><tr><th>م</th><th>عنصر الملاحظة</th><th>متحقق</th><th>متحقق جزئيًا</th><th>غير متحقق</th><th>الملاحظات</th></tr>
@@ -2306,7 +2306,7 @@ function qaResT(p, d) {
   if (!d || !QA_DONE.includes(d.status)) return '';
   const it = d.obs?.items || [], c = v => it.filter(x => x === v).length, weak = QA_OBS.map((t, i) => ({ t, i, v: it[i], n: d.obs.notes?.[i] })).filter(x => x.v != null && x.v < 2);
   const r = d.reply, closed = d.status === 'closed';
-  return `<div class="card pad qa-card inbox"><div class="qa-h"><b>نتيجة تدقيق البرنامج</b>${lvChip(d.level, d.running)}${closed ? '<span class="chip s-ok">مغلق</span>' : ''}</div>
+  return `<div class="card pad qa-card inbox"><div class="qa-h"><b>نتيجة تدقيق البرنامج</b>${closed ? '<span class="chip s-ok">مغلق</span>' : ''}</div>
     ${d.running ? '<div class="warnbox">تقييم مرحلي: البرنامج لا يزال يُنفَّذ، استمري في إرفاق الشواهد.</div>' : ''}
     <div class="qa-cnt"><span class="chip s-ok">متحقق ${nf(c(2))}</span><span class="chip s-part">جزئيًا ${nf(c(1))}</span><span class="chip s-none">غير متحقق ${nf(c(0))}</span></div>
     ${weak.length ? `<div style="font-weight:600;margin-top:10px">يحتاج عناية</div><ul class="qa-plan">${weak.map(x => `<li>${nf(x.i + 1)}. ${esc(x.t)} — <b>${x.v ? 'متحقق جزئيًا' : 'غير متحقق'}</b>${x.n ? `<br><span class="muted">${esc(x.n)}</span>` : ''}</li>`).join('')}</ul>` : ''}

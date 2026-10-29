@@ -477,8 +477,8 @@
     return nav(['lg', 'الأنشطة الصفية'], ['lm', 'لوحة المؤشرات']) + `<div class="card ld-h"><h2>لوحة مؤشرات الشواهد والتنفيذ</h2><p>تقيس قوة الشواهد وتحقق التنفيذ لكل برنامج بدأ أو انتهى، وتُحدَّث تلقائيًا مع كل شاهد يُرفع.</p></div>
     ${ev ? '' : '<div class="ld-m-note">لم تُرفع شواهد بعد؛ تكتمل المؤشرات تلقائيًا عندما تبدأ المعلمات رفع الصور من زر «برامج الأنشطة الصفية» في المنصة.</div>'}
     <div class="card ld-hero"><div class="ld-ring" style="--v:${ov || 0}"><div>${pc(ov)}</div></div>
-      <div><span class="ld-lv ${lv[1]}">${lv[0]}</span><p>المؤشر العام لـ ${ar(st.length)} برنامجًا بدأت أو انتهت من ${ar(D.all.length)} برنامجًا</p></div></div>
-    <div class="ld-k">${[[ar(ev), 'شاهدًا مرفوعًا'], [ar(st.filter(p => p.sc.n > 0).length) + ' من ' + ar(st.length), 'برامج بدأت ولها شواهد'], [ar(st.filter(p => !p.sc.n).length), 'بدأت بلا شواهد'], [ar(noRep), 'انتهت بلا تقرير أو قياس أثر'], [ar(st.filter(p => p.sc.v >= 80).length), 'برامج متميزة']]
+      <div><p>المؤشر العام لـ ${ar(st.length)} برنامجًا بدأت أو انتهت من ${ar(D.all.length)} برنامجًا</p></div></div>
+    <div class="ld-k">${[[ar(ev), 'شاهدًا مرفوعًا'], [ar(st.filter(p => p.sc.n > 0).length) + ' من ' + ar(st.length), 'برامج بدأت ولها شواهد'], [ar(st.filter(p => !p.sc.n).length), 'بدأت بلا شواهد'], [ar(noRep), 'انتهت بلا تقرير أو قياس أثر']]
       .map(([n, l]) => `<div class="card"><b>${n}</b><span>${l}</span></div>`).join('')}</div>
     <div class="ld-2">
       <div class="card"><h4>مكونات المؤشر (متوسط البرامج)</h4>${bars(W.map(([nm, w], i) => [nm + ' (' + ar(w) + '٪)', avg(st.map(p => p.sc.c[i] === null ? null : Math.round(p.sc.c[i] * 100)))]))}</div>
@@ -492,14 +492,14 @@
     <h3 class="ld-sec">برامج تحتاج متابعة (${ar(need.length)})</h3>
     ${need.length ? `<div class="card ld-tw"><table class="ld-t"><thead><tr><th>المعلمة</th><th>البرنامج</th><th>الحالة</th><th>الشواهد / المتوقع</th><th>المؤشر</th><th>المجلد</th></tr></thead><tbody>${need.map(p => `<tr>
       <td><button class="btn sm ghost" data-go="lt/${p.t.i}">${esc(p.t.name)}</button><span class="ld-d">${esc(p.t.cls)}</span></td><td class="ld-p" style="--c:${DOM[p.dom] || 'var(--line)'}">${esc(p.n)}</td>
-      <td><span class="chip s-${ST[p.s][1]}">${ST[p.s][0]}</span></td><td>${ar(p.sc.n)} / ${ar(p.sc.E)}</td><td><span class="ld-lv ${LV(p.sc.v)[1]}">${pc(p.sc.v)} · ${LV(p.sc.v)[0]}</span></td><td>${btn(p.evUrl, 'الشواهد')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="ld-empty">لا يوجد.</p>'}
+      <td><span class="chip s-${ST[p.s][1]}">${ST[p.s][0]}</span></td><td>${ar(p.sc.n)} / ${ar(p.sc.E)}</td><td><span class="ld-lv ${LV(p.sc.v)[1]}">${pc(p.sc.v)}</span></td><td>${btn(p.evUrl, 'الشواهد')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="ld-empty">لا يوجد.</p>'}
     <details class="card" style="padding:12px 16px;margin-top:14px"><summary style="cursor:pointer;font-weight:700">كيف يُحسب المؤشر؟</summary>
       <ul style="margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.9">
         <li><b>تحقق التنفيذ (٥٠٪):</b> شاهد واحد لكل حصتين انقضتا من البرنامج يكفي للدرجة الكاملة.</li>
         <li><b>انتظام الرفع (٢٠٪):</b> نسبة الشواهد المرفوعة خلال مدة البرنامج أو خلال أسبوعين بعد نهايته.</li>
         <li><b>تنوع الشواهد (١٥٪):</b> نوع واحد (صور مثلًا) = ٧٥٪ من الدرجة، ونوعان أو أكثر = كاملة.</li>
         <li><b>التقرير وقياس الأثر (١٥٪):</b> وجود ملف في مجلد «قياس الأثر والتقرير» بعد انتهاء البرنامج (لا يُحسب للبرنامج الجاري).</li>
-        <li>المستويات: متميز ٨٠٪ فأكثر · متقدم ٦٥٪ · مقبول ٥٠٪ · يحتاج تحسين أقل من ٥٠٪. البرامج التي لم تبدأ لا تدخل في الحساب.</li></ul></details>`;
+        <li>البرامج التي لم تبدأ لا تدخل في الحساب.</li></ul></details>`;
   }
   function domCards(D) {
     return `<div class="ld-dg">${D.doms.map((d, k) => { const L = D.all.filter(p => p.dom === d), n = s => L.filter(p => p.s === s).length;
