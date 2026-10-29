@@ -579,6 +579,12 @@
     rows.forEach(x => { x.s = x.rec ? 'rep' : x.ev.length ? 'ev' : x.state === 'past' ? 'none' : x.state === 'now' ? 'now' : 'later'; x.k = x.c.cls + '|' + (x.r.sid || ''); });
     return rows.sort((a, b) => hNum((a.rec && a.rec.days[0]) || a.r.days[0]) - hNum((b.rec && b.rec.days[0]) || b.r.days[0]) || a.c.cls.localeCompare(b.c.cls, 'ar'));
   }
+  // عنوان الاصطفاف الصباحي كاملًا من أدلة المكتبة (كما في cn.js)، لا موضوع جدول الإذاعة — 2026-10-29
+  const NR_T = { 1: 'حياكم — معًا لوطنٍ يسوده العدل والوفاء', 2: 'رحلة نجاح — التخطيط يصنع النجاح', 3: 'سفراء الاستدامة والوعي البيئي — قادة الاستدامة البيئية',
+    4: 'صحتي مسؤوليتي — موهبة تُصقل… وهوية نعتز بها', 5: 'الإرث والأمجاد — مسيرة وطن… وطموح جيل', 6: 'الإرث والأمجاد — أمن وطن… وعطاء رجال',
+    7: 'صانع الأثر — ما وراء الظواهر الفلكية', 8: 'مهارات المستقبل — الذكاء الاصطناعي.. قدرات وتطبيقات', 9: 'مهارات المستقبل — الإحصاء.. قراءة للواقع',
+    10: 'سفراء الاستدامة والوعي البيئي — الغطاء النباتي… ثروة ومسؤولية' };
+  const nrRad = r => NR_T[r.w] || r.radio || '';
   const nrSpan = days => !days || !days.length ? '—' : days.length === 1 ? hd(days[0]) : hd(days[0]) + ' – ' + hd(days[days.length - 1]);
   const nrTabs = tab => `<div class="nr-tabs"><button class="${tab ? '' : 'on'}" data-go="lnr">التقارير</button><button class="${tab ? 'on' : ''}" data-go="lnr/m">المؤشرات</button></div>`;
   const nrThumb = f => `<a class="nr-ev" href="https://drive.google.com/file/d/${esc(f.id)}/view" target="_blank" rel="noopener" title="${esc(f.n)}">${/^image\//.test(f.m)
@@ -601,9 +607,9 @@
       <select id="nrS"><option value="">كل الحالات</option>${Object.entries(NS).map(([k, v]) => `<option value="${k}"${F.st === k ? ' selected' : ''}>${v[0]}</option>`).join('')}</select>
       <span class="muted">${ar(groups.length)} أسبوعًا · ${ar(shown.length)} تقريرًا مطلوبًا</span></div>
     ${groups.map(({ x, rows: G }) => { const r = x.r, c = x.c;
-      return `<div class="card nr-g"><div class="nr-h"><div><b>${r.manual ? 'نشاط يدوي: ' + esc(r.topic) : `الأسبوع ${WK[r.w] || ar(r.w)} — ${esc(r.topic)}`}</b>
+      return `<div class="card nr-g"><div class="nr-h"><div><b>${r.manual ? 'نشاط يدوي: ' + esc(r.topic) : `الأسبوع ${WK[r.w] || ar(r.w)}`}</b>
           <span>${esc(c.cls)} · ${nrSpan(r.days)}${r.dn ? ' (' + r.dn.join('، ') + ')' : ''}</span>
-          ${r.radio || r.prayer ? `<span>الاصطفاف الصباحي: ${esc(r.radio || '—')} · الصلاة: ${esc(r.prayer || '—')}</span>` : ''}</div>
+          ${r.manual ? '' : `<span>عنوان الاصطفاف الصباحي: ${esc(nrRad(r) || '—')}</span><span>عنوان الصلاة: ${esc(r.prayer || '—')}</span>`}</div>
         ${x.url ? `<a class="btn sm ghost" href="${esc(x.url)}" target="_blank" rel="noopener">رابط الشواهد</a>` : ''}</div>${G.map(nrRow).join('')}</div>`; }).join('') || '<p class="ld-empty">لا نتائج.</p>'}`;
   }
   function nrMetrics(D, rows) {
@@ -619,20 +625,20 @@
     const cell = (c, w) => { const r = c.runs.find(q => q.w === w); if (!r) return '<td></td>';
       const X = rows.filter(x => x.c === c && x.r === r), all = X.every(x => x.s === 'rep'), some = X.some(x => x.s === 'rep' || x.s === 'ev');
       const s = X[0].state === 'later' ? 'na' : X[0].state === 'now' ? (all ? 'ok' : 'part') : all ? 'ok' : some ? 'part' : 'none';
-      return `<td class="nr-c s-${s}" title="${esc(r.topic)} — ${nrSpan(r.days)} — ${X.map(x => x.t + ': ' + NS[x.s][0]).join('، ')}">${esc(r.topic)}<small>${X.filter(x => x.s === 'rep').length ? ar(X.filter(x => x.s === 'rep').length) + '/' + ar(X.length) : ''}</small></td>`; };
+      return `<td class="nr-c s-${s}" title="${esc(nrRad(r) || '—')} · ${esc(r.prayer || '—')} — ${nrSpan(r.days)} — ${X.map(x => x.t + ': ' + NS[x.s][0]).join('، ')}">${esc(r.radio || r.prayer || '—')}<small>${X.filter(x => x.s === 'rep').length ? ar(X.filter(x => x.s === 'rep').length) + '/' + ar(X.length) : ''}</small></td>`; };
     const curW = (() => { let w = 0; (D.nplan || []).forEach(c => c.runs.forEach(r => { if (today >= gDay(r.g0)) w = Math.max(w, r.w); })); return w; })();
     const byT = {}; due.forEach(x => { (byT[x.t] ||= { t: x.t, cls: x.c.cls, due: 0, rep: 0, miss: [], ev: [] }); const b = byT[x.t]; b.due++;
       if (x.s === 'rep') b.rep++; else if (x.s === 'ev') b.ev.push(x); else b.miss.push(x); });
     const T = Object.values(byT), okT = T.filter(b => b.rep === b.due), missT = T.filter(b => b.miss.length), evT = T.filter(b => b.ev.length);
-    const lbl = x => `الأسبوع ${WK[x.r.w] || ar(x.r.w)} (${esc(x.r.topic)})`;
+    const lbl = x => `الأسبوع ${WK[x.r.w] || ar(x.r.w)}`;
     return `<div class="ld-k">${kpi.map(([n, l, s]) => `<div class="card"><b>${n}</b><span>${l}</span><small class="nr-ks">${esc(s)}</small></div>`).join('')}</div>
     <h3 class="ld-sec">الخطة الزمنية للأنشطة اللاصفية</h3>
     <div class="nr-leg"><span class="nr-c s-ok">صدرت تقاريره</span><span class="nr-c s-part">جزئي / جارٍ</span><span class="nr-c s-none">انتهى بلا شواهد</span><span class="nr-c s-na">لم يحن</span></div>
     <div class="card ld-tw"><table class="ld-t nr-plan"><thead><tr><th>الفصل</th>${Array.from({ length: 19 }, (_, i) => `<th${i + 1 === curW ? ' class="nr-cur"' : ''}>${ar(i + 1)}</th>`).join('')}</tr></thead>
       <tbody>${(D.nplan || []).map(c => `<tr><th>${esc(c.cls)}<small>${c.teachers.map(esc).join(' و')}</small></th>${Array.from({ length: 19 }, (_, i) => cell(c, i + 1)).join('')}</tr>`).join('')}</tbody></table></div>
-    <div class="card ld-tw" style="margin-top:12px"><table class="ld-t"><thead><tr><th>الأسبوع</th><th>الفصل</th><th>الموضوع والبرنامجان</th><th>الأيام</th><th>المعلمات</th></tr></thead><tbody>
+    <div class="card ld-tw" style="margin-top:12px"><table class="ld-t"><thead><tr><th>الأسبوع</th><th>الفصل</th><th>عنوان الاصطفاف الصباحي وعنوان الصلاة</th><th>الأيام</th><th>المعلمات</th></tr></thead><tbody>
       ${(D.nplan || []).flatMap(c => c.runs.map(r => ({ c, r }))).sort((a, b) => a.r.w - b.r.w).map(({ c, r }) => `<tr><td>${WK[r.w] || ar(r.w)}</td><td>${esc(c.cls)}</td>
-        <td><b>${esc(r.topic)}</b><br><small>${esc(r.radio || '—')} · ${esc(r.prayer || '—')}</small></td><td>${nrSpan(r.days)}</td>
+        <td><b>الاصطفاف الصباحي:</b> ${esc(nrRad(r) || '—')}<br><b>الصلاة:</b> ${esc(r.prayer || '—')}</td><td>${nrSpan(r.days)}</td>
         <td>${rows.filter(x => x.c === c && x.r === r).map(x => `${esc(x.t)} <span class="chip s-${NS[x.s][1]}">${NS[x.s][0]}</span>`).join('<br>')}</td></tr>`).join('')}</tbody></table></div>
     <div class="nr-cols">
       <div class="card nr-l"><h3>المعلمات المنجزات (${ar(okT.length)})</h3>${okT.length ? okT.map(b => `<div><b>${esc(b.t)}</b> <small>${esc(b.cls)} · ${ar(b.rep)} من ${ar(b.due)}</small></div>`).join('') : '<p class="ld-empty">لا توجد بعد.</p>'}</div>

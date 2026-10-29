@@ -45,14 +45,15 @@ window.CN = (() => {
     4: 'صحتي مسؤوليتي — موهبة تُصقل… وهوية نعتز بها', 5: 'الإرث والأمجاد — مسيرة وطن… وطموح جيل', 6: 'الإرث والأمجاد — أمن وطن… وعطاء رجال',
     7: 'صانع الأثر — ما وراء الظواهر الفلكية', 8: 'مهارات المستقبل — الذكاء الاصطناعي.. قدرات وتطبيقات', 9: 'مهارات المستقبل — الإحصاء.. قراءة للواقع',
     10: 'سفراء الاستدامة والوعي البيئي — الغطاء النباتي… ثروة ومسؤولية' };
-  const progName = x => x.kind === 'الصلاة' ? (x.prog ? 'على وقتها — ' + x.prog : '') : LIB_R[x.w] || x.prog || x.topic || '';
+  // العنوان = عنوان الاصطفاف الصباحي + عنوان الصلاة لنفس الأسبوع من المكتبة، لا موضوع جدول الإذاعة («الذكاء الاصطناعي»، «التطوع»…) — طلب المستخدمة 2026-10-29
+  const progName = x => x.kind === 'الصلاة' ? x.prog || '' : LIB_R[x.w] || '';
   function weeks() {
     const m = new Map();
     (D.cn.weeks || []).forEach(x => { const k = x.w + '|' + x.topic;
       if (!m.has(k)) m.set(k, { w: x.w, topic: x.topic, days: (x.days || [x.from, x.to]).filter((v, i, a) => v && a.indexOf(v) === i), radio: '', prayer: '' });
       const o = m.get(k); if (x.kind === 'الصلاة') o.prayer = progName(x); else o.radio = progName(x); });
     return [...m.values()].sort((a, b) => a.w - b.w || (a.days[0] < b.days[0] ? -1 : 1))
-      .map((o, i) => ({ ...o, key: 'w' + i, type: 'w', sid: 'w|' + String(o.w).padStart(2, '0') + '|' + o.topic, title: 'الأسبوع ' + (ORD[o.w] || AR(o.w)), sub: o.topic }));
+      .map((o, i) => ({ ...o, key: 'w' + i, type: 'w', sid: 'w|' + String(o.w).padStart(2, '0') + '|' + o.topic, title: 'الأسبوع ' + (ORD[o.w] || AR(o.w)), sub: [o.radio, o.prayer].filter(Boolean).join(' · ') || '—' }));
   }
   const manuals = () => (S.mine || []).filter(x => x.sid.startsWith('m|'))
     .map(x => ({ key: 'm' + x.sid.slice(2), type: 'm', sid: x.sid, title: x.name || 'نشاط يدوي', sub: 'نشاط يدوي', days: [], radio: '', prayer: '', mname: x.name }));
@@ -109,7 +110,7 @@ window.CN = (() => {
     if (!s) return back() + '<div class="card pad"><p class="muted" style="margin:0">هذا النشاط غير موجود.</p></div>';
     const L = S.slot[s.sid];
     const head = `${back()}<div class="card pad nc-head"><div class="nc-t1">بطاقة تنفيذ الفترات اللاصفية بالنشاط الطلابي</div>
-      <h2 style="margin:2px 0 0">${esc(s.title)}${s.type === 'w' ? ` — ${esc(s.topic)}` : ''}</h2><p class="muted" style="margin:2px 0 0">${esc(D.cn.cls)} · ${esc(D.cn.name || '')}</p></div>`;
+      <h2 style="margin:2px 0 0">${esc(s.title)}</h2>${s.type === 'w' ? `<p style="margin:4px 0 0"><b>عنوان الاصطفاف الصباحي:</b> ${esc(s.radio || '—')}<br><b>عنوان الصلاة:</b> ${esc(s.prayer || '—')}</p>` : ''}<p class="muted" style="margin:2px 0 0">${esc(D.cn.cls)} · ${esc(D.cn.name || '')}</p></div>`;
     if (!L) { load(s); return head + '<div class="card pad" style="margin-top:12px"><p class="muted" style="margin:0">جارٍ فتح الأسبوع وجلب الشواهد…</p></div>'; }
     if (L.err) return head + `<div class="card pad nc-err" style="margin-top:12px">تعذّر الفتح: ${esc(L.err)} <button class="btn sm ghost" data-nc="reload">إعادة المحاولة</button></div>`;
     return head + (L.rec && !(S.ui[s.sid] || {}).edit ? preview(s, L) : form(s, L));
@@ -164,7 +165,7 @@ window.CN = (() => {
       ${s.type === 'm' ? `<label class="nc-l">اسم النشاط<input type="text" maxlength="80" data-f="mname" value="${esc(F.mname)}"></label>` : ''}
       <div class="nc-two"><label class="nc-l">برنامج الاصطفاف الصباحي (الإذاعة)<input type="text" maxlength="90" data-f="p0" value="${esc(F.progs[0])}" placeholder="${s.type === 'm' ? 'اختياري' : 'اسم برنامج الأسبوع'}"></label>
         <label class="nc-l">برنامج الصلاة<input type="text" maxlength="90" data-f="p1" value="${esc(F.progs[1])}" placeholder="${s.type === 'm' ? 'اختياري' : 'اسم برنامج الأسبوع'}"></label></div>
-      ${s.type === 'w' ? `<p class="muted nc-hint">جاهزة من مكتبة النشاط لأسبوعك، وموضوع إذاعة فصلك: <b>${esc(s.topic)}</b>.</p>` : ''}
+      ${s.type === 'w' ? `<p class="muted nc-hint">جاهزة من مكتبة النشاط لأسبوعك.</p>` : ''}
 
       <div class="nc-sec">٢. تاريخ التنفيذ</div>
       <div class="nc-days">${F.days.map((h, i) => `<div class="nc-day"><select data-day="${i}">${known.has(h) ? '' : `<option value="${esc(h)}" selected>${HD(h)}</option>`}${dayOpts(h)}</select>
@@ -358,7 +359,7 @@ window.CN = (() => {
 
   function pageCard(s, F, X, photo, qr, logo) {
     const A = S.A, P = F.progs, took = !!(D.cn.partner && F.took), days = F.days.slice().sort((a, b) => (S.A.cal || []).indexOf(calOf(a)) - (S.A.cal || []).indexOf(calOf(b)));
-    const progA = P[0] ? P[0] + (s.type === 'w' ? ' (موضوع الإذاعة: ' + s.topic + ')' : '') : '', progB = P[1];
+    const progA = P[0] || '', progB = P[1];
     const prog = s.type === 'm' && !P[0] && !P[1] ? `<div>${esc(F.mname)}</div>` : `<div class="stack sm"><div><span class="k">الاصطفاف الصباحي:</span>${esc(progA || '—')}</div><div><span class="k">الصلاة:</span>${esc(progB || '—')}</div></div>`;
     const sig = src => src ? `<img src="${src}" alt="">` : '';
     return `<div class="ncp">
@@ -390,7 +391,7 @@ window.CN = (() => {
       <div class="s-bar">WWW.MOE.GOV.SA</div></div>`;
   }
   function pageAnnex(s, imgs, n, of) {
-    return `<div class="ncp annex"><div class="a-head"><b>ملحق صور الشواهد</b> — ${esc(s.title)}${s.type === 'w' ? ' — ' + esc(s.topic) : ''} · ${esc(AR(D.cn.cls))} · ${esc(D.cn.name)}<span>صفحة ${AR(n)} من ${AR(of)}</span></div>
+    return `<div class="ncp annex"><div class="a-head"><b>ملحق صور الشواهد</b> — ${esc(s.title)} · ${esc(AR(D.cn.cls))} · ${esc(D.cn.name)}<span>صفحة ${AR(n)} من ${AR(of)}</span></div>
       <div class="a-grid">${imgs.map(i => `<div class="a-cell"><img src="${i.src}" style="width:${i.w}px;height:${i.h}px" alt=""></div>`).join('')}</div><div class="s-bar">WWW.MOE.GOV.SA</div></div>`;
   }
   const fit = (src, W, H) => new Promise(o => { const im = new Image(); im.onload = () => { const k = Math.min(W / im.naturalWidth, H / im.naturalHeight); o({ src, w: Math.round(im.naturalWidth * k), h: Math.round(im.naturalHeight * k) }); }; im.onerror = () => o(null); im.src = src; });
