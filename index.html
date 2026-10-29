@@ -519,6 +519,13 @@ header.top{background:rgba(255,255,255,.86);color:var(--ink);backdrop-filter:sat
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nf = n => Number(n).toLocaleString('en-US');
+// التاريخ الهجري: أرقام عربية، اليوم أقصى اليمين (١٧‏/٣‏/١٤٤٨هـ)
+const hH = (y, m, d) => [d, m, y].map(v => String(+v).replace(/\d/g, x => '٠١٢٣٤٥٦٧٨٩'[x])).join('‏/') + 'هـ';
+const hStr = h => { const [y, m, d] = String(h).split('/'); return d ? hH(y, m, d) : ''; };
+const hIso = t => { const P = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(new Date(t)), g = k => (P.find(q => q.type === k) || {}).value; return hH(g('year'), g('month'), g('day')); };
+const dtTxt = x => x.dt && x.dt.length ? `من ${hStr(x.dt[0])} إلى ${hStr(x.dt[1])}` : '';
+// الأسبوع الدراسي n: من الأحد إلى الخميس (13 أسبوعًا من 23/8/2026 ثم 6 من 29/11/2026، كما في tools/export.js)
+const wkTxt = n => { const s = n >= 1 && n <= 13 ? Date.UTC(2026, 7, 23 + 7 * (n - 1)) : n >= 14 && n <= 19 ? Date.UTC(2026, 10, 29 + 7 * (n - 14)) : 0; return s ? `من الأحد ${hIso(s + 432e5)} إلى الخميس ${hIso(s + 4 * 864e5 + 432e5)}` : ''; };
 const KEY = 'wk-platform-code';
 let D = null;           // decrypted data
 let state = { fFilter: 'all', fSort: 'pct', pFilter: 'all' };
@@ -1339,7 +1346,7 @@ function attPage(a) {
 let cnLoad = null;
 function cnPage(a) {
   if (window.CN) return CN.render(a);
-  cnLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'cn.js?v=20261029a'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  cnLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'cn.js?v=20261029d'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { cnLoad = null; window.CN = { render: () => teacherCn() }; route(); });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
@@ -1408,7 +1415,7 @@ function teacherCp(a) {
     <div class="list" style="margin-top:12px">${L.map(({ it, p, id }) => { const st = cpState(p); return `<button class="row" data-go="cp/${id}"><span class="grow"><b>${esc(p.n)}</b><span class="muted" style="display:block;font-size:13px">${esc(p.dom)} · ${esc(it.cls)}${D.ct.items.length > 1 ? ' · ' + esc(it.name) : ''} · ${cpPer(p.need)} · من ${cpD(p.from)} إلى ${cpD(p.to)}</span></span>
       <span class="chip s-${st[1]}">${st[0]}</span><span class="chip ${p.files.length ? 's-ok' : 's-none'}">${p.files.length ? nf(p.files.length) + ' شاهد' : 'لا شواهد'}</span>${p.note ? '<span class="chip s-part">ملاحظة من رائدة النشاط</span>' : ''}</button>`; }).join('')}</div>`;
   const { it, p } = one, st = cpState(p);
-  const day = f => new Date(f.t).toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'long' });
+  const day = f => hIso(f.t);
   const fBtns = f => f.id ? `<button class="btn sm ghost" data-ctf="open" data-id="${esc(f.id)}" data-k="${esc(one.id)}">فتح</button><button class="btn sm ghost" data-ctf="dl" data-id="${esc(f.id)}" data-k="${esc(one.id)}">تحميل</button>` : '';
   // شبكة معاينات: شواهدها (فتح + حذف) وشواهد زميلتها (فتح فقط)
   const fList = (F, own) => `<div class="cp-grid">${F.slice().reverse().map(f => `<div class="cp-it">${f.id ? `<div class="cp-th sm" data-ctth="${esc(f.id)}" data-sz="300" data-k="${esc(one.id)}"><span class="muted">${/^video\//.test(f.m || '') ? 'فيديو' : '…'}</span></div>` : ''}
@@ -1628,7 +1635,7 @@ const arSize = n => n >= 1048576 ? `${(n / 1048576).toFixed(1)} م.ب` : `${nf(M
 const arBtns = (bin, name) => `<button class="btn sm" data-arbin="${esc(bin)}" data-arname="${esc(name)}">فتح</button> <button class="btn sm ghost" data-arbin="${esc(bin)}" data-arname="${esc(name)}" data-ardl="1">تحميل</button>`;
 // التقارير الصفية حسب الفصل: معلمتا الفصل معًا (البرامج المشتركة)، ثم «الأنشطة الخاصة» بكل معلمة
 function arGroups(L) {
-  const row = x => `<div class="card pad" style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><span>${esc(x.n)}<br><span class="muted" style="font-size:12.5px">${esc(x.dom)}</span></span><span class="muted" style="font-size:13px">صفحة ${nf(x.page)}</span></div>`;
+  const row = x => `<div class="card pad" style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><span>${esc(x.n)}<br><span class="muted" style="font-size:12.5px">${esc(x.dom)}${dtTxt(x) ? ' · ' + dtTxt(x) : ''}</span></span><span class="muted" style="font-size:13px">صفحة ${nf(x.page)}</span></div>`;
   const C = [...new Set(L.map(x => x.cls || ''))];
   return C.map(cl => { const I = L.filter(x => (x.cls || '') === cl), pair = I[0].pair || [], S = I.filter(x => !x.own), own = [...new Set(I.filter(x => x.own).map(x => x.own))];
     return `<h3 class="hub-h">${esc(cl)}${pair.length ? ' — ' + pair.map(esc).join(' و ') : ''}</h3>
@@ -1641,14 +1648,14 @@ function actRepW(k, ti) {
   const back = t ? `<button class="back" data-go="t/${t.i}">→ ${esc(t.name)}</button>` : '', who = t ? ' — ' + esc(t.name) : '';
   if (k === 'c') { const c = A.cls, L = c ? c.items.filter(mine) : [];
     if (t) return back + `<div class="card hero th-hero"><div class="grow"><h2>تقارير الأنشطة الصفية${who}</h2><p class="muted">${L.length ? arN(L.length) : 'لا توجد لها تقارير بعد'} · للاطلاع فقط</p></div></div>
-      <div class="list">${L.map(x => `<div class="card pad" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span>${esc(x.n)}<br><span class="muted" style="font-size:12.5px">${esc(x.cls)} · ${esc(x.who)} · ${esc(x.dom)}</span></span><span>${x.bin ? arBtns(x.bin, x.cls + ' - ' + x.n + '.pdf') : ''}</span></div>`).join('')}</div>`;
+      <div class="list">${L.map(x => `<div class="card pad" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span>${esc(x.n)}<br><span class="muted" style="font-size:12.5px">${esc(x.cls)} · ${esc(x.who)} · ${esc(x.dom)}${dtTxt(x) ? ' · ' + dtTxt(x) : ''}</span></span><span>${x.bin ? arBtns(x.bin, x.cls + ' - ' + x.n + '.pdf') : ''}</span></div>`).join('')}</div>`;
     return `<div class="card hero th-hero"><div class="grow"><h2>تقارير الأنشطة الصفية</h2><p class="muted">${c ? `${arN(c.items.length)} في ملف واحد · ${nf(c.pages)} ${c.pages <= 10 && c.pages > 2 ? 'صفحات' : 'صفحة'} · ${arSize(c.size)}` : 'لا توجد تقارير بعد'} · للاطلاع فقط</p></div>
       ${c ? arBtns(c.bin, 'تقارير الأنشطة الصفية - 1448هـ.pdf') : ''}</div>
       ${c ? arGroups(c.items) : ''}`;
   }
   const W = A.non.map(w => ({ ...w, files: w.files.filter(mine) })).filter(w => w.files.length), n = W.reduce((s, w) => s + w.files.length, 0);
   return back + `<div class="card hero th-hero"><div class="grow"><h2>تقارير الأنشطة اللاصفية${who}</h2><p class="muted">${n ? `${arN(n)} في ${nf(W.length)} ${W.length <= 10 && W.length > 2 ? 'أسابيع' : 'أسبوعًا'}` : 'لا توجد تقارير بعد'} · للاطلاع فقط</p></div></div>
-    ${W.map(w => `<h3 class="hub-h">${esc(w.w.replace(/^d+.s*/, ''))}</h3><div class="list">${w.files.map(f => `<div class="card pad" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+    ${W.map(w => `<h3 class="hub-h">${esc(w.w.replace(/^d+.s*/, ''))}${wkTxt(parseInt(w.w, 10)) ? `<span class="muted" style="display:block;font-size:13px;font-weight:400">${wkTxt(parseInt(w.w, 10))}</span>` : ''}</h3><div class="list">${w.files.map(f => `<div class="card pad" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
       <span>${esc(f.n)}${f.sub ? `<br><span class="muted" style="font-size:12.5px">${esc(f.sub)}</span>` : ''}</span><span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:12px">${arSize(f.size)}</span>${arBtns(f.bin, f.n + '.pdf')}</span></div>`).join('')}</div>`).join('')}`;
 }
 document.addEventListener('click', async e => {

@@ -110,7 +110,7 @@ window.CN = (() => {
     if (!s) return back() + '<div class="card pad"><p class="muted" style="margin:0">هذا النشاط غير موجود.</p></div>';
     const L = S.slot[s.sid];
     const head = `${back()}<div class="card pad nc-head"><div class="nc-t1">بطاقة تنفيذ الفترات اللاصفية بالنشاط الطلابي</div>
-      <h2 style="margin:2px 0 0">${esc(s.title)}</h2>${s.type === 'w' ? `<p style="margin:4px 0 0"><b>عنوان الاصطفاف الصباحي:</b> ${esc(s.radio || '—')}<br><b>عنوان الصلاة:</b> ${esc(s.prayer || '—')}</p>` : ''}<p class="muted" style="margin:2px 0 0">${esc(D.cn.cls)} · ${esc(D.cn.name || '')}</p></div>`;
+      <h2 style="margin:2px 0 0">${esc(s.title)}</h2>${(() => { const it = mineOf(s.sid), dd = it && it.days && it.days.length ? it.days : s.days || []; return dd.length ? `<p style="margin:4px 0 0;font-weight:600">${span(dd)}</p>` : ''; })()}${s.type === 'w' ? `<p style="margin:4px 0 0"><b>عنوان الاصطفاف الصباحي:</b> ${esc(s.radio || '—')}<br><b>عنوان الصلاة:</b> ${esc(s.prayer || '—')}</p>` : ''}<p class="muted" style="margin:2px 0 0">${esc(D.cn.cls)} · ${esc(D.cn.name || '')}</p></div>`;
     if (!L) { load(s); return head + '<div class="card pad" style="margin-top:12px"><p class="muted" style="margin:0">جارٍ فتح الأسبوع وجلب الشواهد…</p></div>'; }
     if (L.err) return head + `<div class="card pad nc-err" style="margin-top:12px">تعذّر الفتح: ${esc(L.err)} <button class="btn sm ghost" data-nc="reload">إعادة المحاولة</button></div>`;
     return head + (L.rec && !(S.ui[s.sid] || {}).edit ? preview(s, L) : form(s, L));
