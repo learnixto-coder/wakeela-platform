@@ -577,8 +577,9 @@
         <div>${nP ? (r.sent === nP ? chipOf(1, 'أرسلتِ كل حصصك') : chipOf(0, `باقي ${ad(nP - r.sent)}`)) : ''}</div></div>
       ${dayNav(days, iso)}
       ${pdfCard(A, iso)}
-      <div class="card pad at-act"><div><b>إرفاق ملفات الحضور</b><div class="muted" style="font-size:13px">نزّلي «تقرير الحضور» من Teams لكل حصة، واختاري الملفات كلها مرة واحدة؛ تُوزَّع على حصصك تلقائيًا.</div></div>
-        <label class="btn">اختيار الملفات<input type="file" multiple accept=".csv,text/csv" data-attf hidden></label></div>
+      <div class="card pad at-act"><div><b>إرفاق ملفات الحضور</b><div class="muted" style="font-size:13px">نزّلي «تقرير الحضور» من Teams لكل حصة، واختاري الملفات كلها مرة واحدة، أو مجلدًا كاملًا بمجلدات أيامه (في الكمبيوتر)؛ تُوزَّع على أيامها وحصصها تلقائيًا.</div></div>
+        <label class="btn">اختيار الملفات<input type="file" multiple accept=".csv,text/csv" data-attf hidden></label>
+        ${matchMedia('(pointer:fine)').matches ? '<label class="btn ghost">📁 اختيار مجلد<input type="file" webkitdirectory multiple data-attdir hidden></label>' : ''}</div>
       <div class="card at-wrap"><table class="at-t at-tt"><thead><tr><th>الحصة</th><th>الصف</th><th>المادة / الوقت</th><th>الحاضرات</th><th>الحالة</th></tr></thead><tbody>
       ${rows.map(({ c, q }) => `<tr class="${c.f ? 'ok' : q ? 'rd' : ''}"><td>ح${ad(c.p)}</td><td>${cls(c.g, c.s)}</td><td>${info(c.f || q?.f)}</td><td>${cnt(c.f || q?.f, c)}</td>
         <td>${c.f ? chipOf(1, c.f.wait ? '✓ أُرسل · قيد النقل' : '✓ أُرسل') + del(c.f) : q ? `<span class="chip s-part">جاهز للإرسال</span>${drop(q)}` : chipOf(0, 'لم يُرفق')}</td></tr>`).join('')}
@@ -592,19 +593,22 @@
       ${evCard(A, iso)}
       <p class="muted" style="font-size:12.5px;margin:8px 4px">يُحفظ كل ملف في مجلدك داخل «رصد الغياب منصة التيمز» على ون درايف ويصل لمسؤولة الغياب خلال دقائق.</p>`;
   }
-  async function readFiles(files) {
-    const A = D.att;
+  // dir = اختيار مجلد كامل (مجلدات الأيام): ما ليس تقرير حضور أو أُرسل من قبل يُتخطّى بصمت (المستخدمة 2026-10-29)
+  async function readFiles(files, dir) {
+    const A = D.att, sk = { dup: 0, bad: 0 }; let add = 0;
+    if (dir) files = files.filter(f => !/^(desktop\.ini|thumbs\.db)$/i.test(f.name) && !f.name.startsWith('~$') && (/\.csv$/i.test(f.name) || !/\.[a-z0-9]{2,5}$/i.test(f.name)));
     for (const file of files) {
       try {
         if (file.size > 2 * 1024 * 1024) throw new Error('الملف أكبر من المسموح');
-        const r = TEAMS.parse(await file.arrayBuffer()); if (!r.start || !r.students.length) throw new Error('الملف ليس «تقرير حضور» من Teams');
+        const r = TEAMS.parse(await file.arrayBuffer()); if (!r.start || !r.students.length) throw Object.assign(new Error('الملف ليس «تقرير حضور» من Teams'), { k: 'bad' });
         const iso = isoOf(r.start), nm = me(A).name;
         // مكرر = الاسم نفسه أو الاجتماع نفسه (وقت البداية نفسه) ولو بُدّل اسم الملف، مثل «… (2).csv» (المستخدمة 2026-10-27)
         const f = lessonOf(A, r, file.name), old = [...PEND.filter(x => x.f && x.iso === iso).map(x => x.f), ...(A.days?.[iso]?.[nm] || [])];
-        if (old.some(x => x.file === file.name || (f.t0 && x.t0 === f.t0))) throw new Error('ملف مكرر — هذه الحصة أُرفقت من قبل');
-        PEND.push({ iso, file, f });
-      } catch (e) { PEND.push({ name: file.name, err: e.message || 'تعذّرت قراءة الملف' }); }
+        if (old.some(x => x.file === file.name || (f.t0 && x.t0 === f.t0))) throw Object.assign(new Error('ملف مكرر — هذه الحصة أُرفقت من قبل'), { k: 'dup' });
+        PEND.push({ iso, file, f }); add++;
+      } catch (e) { if (dir) sk[e.k || 'bad']++; else PEND.push({ name: file.name, err: e.message || 'تعذّرت قراءة الملف' }); }
     }
+    if (dir && typeof toast === 'function') toast(`أُضيف ${ad(add)} ملف` + (sk.dup ? ` · تُخطّي ${ad(sk.dup)} أُرسل من قبل` : '') + (sk.bad ? ` · ${ad(sk.bad)} ليس تقرير حضور` : ''));
     const last = PEND.filter(x => x.iso).pop(); if (last && location.hash !== '#att/d/' + last.iso) location.hash = 'att/d/' + last.iso; else route();
   }
   async function send(iso, btn) {
@@ -637,6 +641,7 @@
   if (!window.__attEv) { window.__attEv = 1;
     document.addEventListener('change', e => { const t = e.target;
       if (t.matches && t.matches('[data-attf]') && t.files.length) readFiles([...t.files]);
+      if (t.matches && t.matches('[data-attdir]') && t.files.length) readFiles([...t.files], 1);
       if (t.matches && t.matches('[data-attday]')) location.hash = (t.dataset.attday || 'att/d/') + t.value;
       if (t.matches && t.matches('[data-atti]') && t.files.length) { const iso = t.dataset.atti, bad = [];
         [...t.files].forEach(file => /^image\//.test(file.type) || /\.(jpe?g|png|heic|heif|webp)$/i.test(file.name) ? EVP.push({ iso, file, url: URL.createObjectURL(file) }) : bad.push(file.name));
