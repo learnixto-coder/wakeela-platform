@@ -179,7 +179,7 @@
   const prevDay = () => { const d = gd(today()); do d.setDate(d.getDate() - 1); while (d.getDay() > 4); return d.toISOString().slice(0, 10); };
   // أيام تفتحها المستخدمة يدويًا للرفع المتأخر (2026-10-28: الاثنين لنورة عسيري)
   const OPEN = ['2026-10-26'];
-  const daysOf = A => [...new Set([...Object.keys(A.days || {}), prevDay(), ...OPEN, ...(wday(today()) <= 4 ? [today()] : [])])].filter(d => wday(d) <= 4).sort().reverse();
+  const daysOf = A => [...new Set([...Object.keys(A.days || {}), ...(A.rd || []), prevDay(), ...OPEN, ...(wday(today()) <= 4 ? [today()] : [])])].filter(d => wday(d) <= 4).sort().reverse();
   // اختيار اليوم: قائمة منسدلة + السابق/التالي (قد تصل الأيام إلى ٣٠ يومًا وأكثر)
   const dayNav = (days, iso, pre = 'att/d/') => { if (days.length < 2) return ''; const i = days.indexOf(iso), older = days[i + 1], newer = days[i - 1];
     return `<div class="at-nav"><button class="btn sm ghost" ${older ? `data-go="${pre}${older}"` : 'disabled'}>→ اليوم السابق</button>
