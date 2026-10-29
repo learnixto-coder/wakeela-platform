@@ -527,7 +527,7 @@ async function unlock(code, remember) {
 }
 let sessionCode = null;
 $('#lockForm').addEventListener('submit', e => { e.preventDefault(); if ($('#code').value.trim()) unlock($('#code').value, $('#remember').checked); });
-$('#logout').onclick = () => { store.set(null); sessionCode = null; D = null; $('#app').hidden = true; $('#lock').hidden = false; $('#code').value = ''; document.body.classList.remove('tmode', 'pmode', 'lmode');
+$('#logout').onclick = () => { store.set(null); sessionCode = null; D = null; $('#app').hidden = true; $('#lock').hidden = false; $('#code').value = ''; document.body.classList.remove('tmode', 'pmode', 'lmode', 'mmode');
   try { sessionStorage.removeItem('wk-plans-code'); localStorage.removeItem('wk-plans-code'); } catch {} window.__plansCache = null; prevReset(); location.hash = ''; };
 $('#reload').onclick = async () => {
   const b = $('#reload'), lbl = b.querySelector('span'), before = D && D.generated;
@@ -572,6 +572,7 @@ function prep() {
     p.s = p.t2 ? 'later' : !p.ev ? 'na' : p.n ? 'ok' : 'none'; });
   const tm = D.kind === 'teacher';
   document.body.classList.toggle('tmode', tm);
+  document.body.classList.toggle('mmode', !!D.ro);   // حساب مديرة المدرسة: اطلاع فقط
   $('#title').textContent = tm ? (D.teachers.length === 1 ? D.teachers[0].name : D.planOnly ? D.teachers.map(t => t.name).join(' · ') : 'متابعة إنجازي') : 'منصة المتوسطة الحادية والعشرون';
   const d = new Date(D.generated);
   $('#meta').textContent = `${D.week} · آخر تحديث ${d.toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'long' })} ${d.toLocaleTimeString('ar-SA-u-nu-latn', { hour: 'numeric', minute: '2-digit' })} · العام الدراسي 1448هـ`;
@@ -612,12 +613,13 @@ function route() {
       : tTabs('mine') + (i >= 0 ? teacher(i) : `<h2 style="margin:6px 0 12px">اختاري اسمك</h2><div class="list">${D.teachers.map(teacherRow).join('')}</div>`);
     bind($('#view')); window.scrollTo(0, 0); return;
   }
+  if (D.ro && v !== 'start' && !MUD_OK.has(v)) { history.replaceState(null, '', location.pathname + location.search); return route(); }
   const top = TAB_OF[v] || v;
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === top));
   const el = $('#view');
   el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folders(+a),
     plan: planW, ctw: wHub, arc: () => actRepW('c', a), arn: () => actRepW('n', a),plans: plansW, timeline: () => plansW('timeline'), att: () => D.att ? attPage(location.hash.slice(5)) : '<div class="empty card">لا توجد بيانات بعد</div>', abs: () => D.att ? attPage('a/' + location.hash.slice(5)) : '<div class="empty card">لا توجد بيانات بعد</div>', attr: () => D.att ? attPage('all') : '<div class="empty card">لا توجد بيانات بعد</div>', qa: () => qaW(a), quality: qualityW, start: wHub }[v] || me)();
-  if (v !== 'start') { const h = HUB.find(x => x[0] === (SUB_OF[v] || (v === 'w' ? 'me' : v))); el.insertAdjacentHTML('afterbegin', homeBar(h ? h[1] : '')); }
+  if (v !== 'start') { const h = (D.ro ? MUD_G.flatMap(g => g[1]) : HUB).find(x => x[0] === (SUB_OF[v] || (v === 'w' ? 'me' : v))); el.insertAdjacentHTML('afterbegin', homeBar(h ? h[1] : '')); }
   bind(el); window.scrollTo(0, 0);
 }
 // «الرئيسية»: big buttons instead of a tab bar (the user's choice, to keep the وكيلة and the teacher focused); every page gets a «الرئيسية» button
@@ -633,6 +635,15 @@ const HUB_G = [['الخطط والبرامج', [['plans', 'الخطة التشغ
   ['الغياب — حصص التيمز', [['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات وطباعة تقارير الغياب'], ['abs', 'حصر الطالبات الغائبات', 'تقرير الغياب على مستوى حصة، والغياب الكامل والجزئي، والحصر التراكمي، وسجل كل طالبة']]],
   ['الإداريات', [['admins', 'الإداريات', 'مبادرات الإداريات']]]];
 const HUB = HUB_G.flatMap(g => g[1]);
+// «حساب مديرة المدرسة» (2026-10-29): اطلاع فقط — بلا تدقيق الجودة ولا التنبيهات ولا الإداريات؛ الحضور والغياب كالموجهة الطلابية
+const MUD_G = [['الخطط والبرامج', [['plans', 'الخطة التشغيلية وخطة التحسين', 'الخطتان وبطاقات البرامج ومؤشراتها'], ['timeline', 'الخطة الزمنية', 'مواعيد تنفيذ البرامج'],
+    ['plan', 'برامج الخطة 1448هـ', 'شواهد البرامج ومجلداتها']]],
+  ['ملفات الوكيلة', [['me', 'مجلدات وكيلة المدرسة', 'أقسام ملفات الوكيلة وما فيها']]],
+  ['المعلمات', [['home', 'متابعة المعلمات', 'لوحة التتبع والإنجاز حسب المجلد'], ['teachers', 'قائمة المعلمات', 'صفحة كل معلمة'], ['folders', 'المجلدات', 'محتوى ملفات المعلمات'],
+    ['dash', 'لوحة المؤشرات', 'مؤشرات إنجاز المعلمات']]],
+  ['النشاط الطلابي (اطلاع)', [['arc', 'تقارير الأنشطة الصفية', 'ملف PDF واحد يجمع كل التقارير'], ['arn', 'تقارير الأنشطة اللاصفية', 'تقارير الفترات حسب الأسبوع']]],
+  ['الحضور والغياب', [['att', 'توثيق الحضور في تيمز', 'تقارير حصص المعلمات اليومية: تصفّح وتنزيل'], ['abs', 'حصر الطالبات الغائبات', 'تقرير الغياب على مستوى حصة، والغياب الكامل والجزئي، والحصر التراكمي، وسجل كل طالبة']]]];
+const MUD_OK = new Set(['plans', 'timeline', 'plan', 'me', 'w', 'home', 'board', 'teachers', 't', 'folders', 'f', 'dash', 'arc', 'arn', 'att', 'abs']);
 const hubBtns = L => `${L.map(([g, l, d]) => `<button class="hub-b" data-go="${g}"><span class="sec-ic">${['me', 'mine', 'home', 'admins'].includes(g) ? secIcon('') : planIcon}</span><span><span class="hub-t">${l}</span><span class="hub-s">${d}</span></span></button>`).join('')}`;
 const hub = (t, L, G) => `<h2 style="margin:4px 0 14px">${t}</h2>${G ? G.map(([gt, gl]) => `<h3 class="hub-h">${gt}</h3><div class="hub">${hubBtns(gl)}</div>`).join('') : `<div class="hub">${hubBtns(L)}</div>`}`;
 const homeBar = t => `<div class="homebar"><button class="btn sm" data-go="start">→ الرئيسية</button>${t ? `<b>${t}</b>` : ''}</div>`;
@@ -650,7 +661,7 @@ function bind(el) {
   const txt = id => { const n = document.getElementById(id); return n.value ?? n.innerText; };
   el.querySelectorAll('[data-copy]').forEach(x => x.addEventListener('click', () => copy(txt(x.dataset.copy))));
   el.querySelectorAll('[data-wa]').forEach(x => x.addEventListener('click', () => window.open('https://wa.me/?text=' + encodeURIComponent(txt(x.dataset.wa)), '_blank')));
-  const sent = el.querySelector('#sent'); if (sent) renderSent(+sent.dataset.t);
+  const sent = !D.ro && el.querySelector('#sent'); if (sent) renderSent(+sent.dataset.t);
   const up = el.querySelector('#up'); if (up) bindUpload(up, D.teachers[+up.dataset.t]);
   el.querySelectorAll('[data-attach]').forEach(x => x.addEventListener('click', () => {
     $('#upF').value = x.dataset.attach; $('#up').scrollIntoView({ behavior: 'smooth', block: 'start' }); $('#upI').click(); }));
@@ -905,7 +916,7 @@ function teacher(i) {
   ${D.actRep ? `<div class="toolbar" style="margin:0 0 14px"><button class="btn sm ghost" data-go="arc/${i}">الأنشطة الصفية (${nf(D.actRep.cls ? D.actRep.cls.items.filter(x => (x.tf || []).includes(t.name)).length : 0)})</button>
     <button class="btn sm ghost" data-go="arn/${i}">الأنشطة اللاصفية (${nf(D.actRep.non.reduce((s, w) => s + w.files.filter(f => (f.tf || []).includes(t.name)).length, 0))})</button><span class="muted" style="font-size:12.5px">تقاريرها للاطلاع فقط</span></div>` : ''}
   ${msg ? '' : `<div class="card pad" style="margin-bottom:14px;color:var(--ok);font-weight:600">جميع مجلداتها مكتملة حسب المعايير</div>`}
-  <div class="card pad" style="margin-bottom:14px"><div style="font-weight:600;margin-bottom:8px">تنبيه للمعلمة <span class="muted" style="font-weight:400;font-size:13px">· يمكنك تعديل النص قبل الإرسال</span></div>
+  <div class="card pad" style="margin-bottom:14px"${D.ro ? ' hidden' : ''}><div style="font-weight:600;margin-bottom:8px">تنبيه للمعلمة <span class="muted" style="font-weight:400;font-size:13px">· يمكنك تعديل النص قبل الإرسال</span></div>
     <textarea class="msg note-in" id="msg" rows="${msg ? Math.min(12, msg.split('\n').length + 3) : 3}" placeholder="اكتبي التنبيه هنا…">${esc(msg)}</textarea>
     <div class="toolbar" style="margin:10px 0 0"><button class="btn sm" id="sendNote" data-t="${i}" disabled>إرسال إلى حسابها في المنصة</button><button class="btn sm ghost" data-copy="msg">نسخ</button><button class="btn sm ghost" data-wa="msg">إرسال عبر واتساب</button></div>
     <div id="sent" data-t="${i}"><div class="muted" style="font-size:13px;margin-top:10px">جارٍ تحميل التنبيهات المرسلة…</div></div></div>
@@ -1609,6 +1620,8 @@ function wHub() {
     folders: cnt(D.folders.length, 'مجلد واحد', 'مجلدان', 'مجلدات', 'مجلدًا'), alerts: flags ? `${nf(flags)} ملاحظة على الملفات` : '', dash: `${nf(full)} من ${nf(T.length)} أكملن مجلداتهن`,
     admins: D.admins?.length ? cnt(D.admins.length, 'إدارية واحدة', 'إداريتان', 'إداريات', 'إدارية') : '',
     arc: D.actRep?.cls ? `${arN(D.actRep.cls.items.length)}` : '', arn: D.actRep ? arN(D.actRep.non.reduce((s, w) => s + w.files.length, 0)) : '' };
+  if (D.ro) return thHero('أهلًا وسهلًا بكِ، الأستاذة ' + esc(short(D.me || 'أمينة آل مشيط')), 'مديرة المدرسة. بين يديكِ صورة شاملة ومتجددة لأعمال المدرسة: مجلدات الوكيلة، وملفات المعلمات، وتقارير النشاط الطلابي، وتوثيق الحضور والغياب.')
+    + MUD_G.map(([gt, gl], gi) => `<h3 class="hub-h">${gt}</h3><div class="th-hub w">${gl.map(([g, l, d]) => thBtn(g, l, d, g === 'att' || g === 'abs' ? '' : meta[g], gi)).join('')}</div>`).join('');
   return thHero('مرحبًا بكِ، فوزية الدوسري', `${cnt(T.length, 'معلمة واحدة', 'معلمتان', 'معلمات', 'معلمة')} · متوسط إنجاز المعلمات ${nf(avg)}٪${A.length ? ` · ${nf(done)} من ${nf(A.length)} برامج الفصل الأول أُرفقت شواهدها` : ''}`)
     + HUB_G.map(([gt, gl], gi) => `<h3 class="hub-h">${gt}</h3><div class="th-hub w">${gl.map(([g, l, d]) => thBtn(g, l, d, meta[g], gi)).join('')}</div>`).join('');
 }
@@ -1689,7 +1702,10 @@ function loadPlansApp() {
     .catch(e => { plansApp = null; throw e; });
 }
 function mountPlansHere(host) {
-  loadPlansApp().then(() => { if (host.isConnected) { host.textContent = ''; window.mountPlans(host, { embed: true, base: 'plans/', code: sessionCode, only: host.dataset.only,
+  const pk = D.keys && D.keys.plans, pc = window.__plansCache;
+  const pre = pk && (!pc || !pc.CK) ? crypto.subtle.importKey('raw', Uint8Array.from(pk.match(/../g), h => parseInt(h, 16)), 'AES-GCM', false, ['decrypt'])
+    .then(CK => { window.__plansCache = { pages: {}, code: sessionCode, CK }; }) : Promise.resolve();
+  pre.then(loadPlansApp).then(() => { if (host.isConnected) { host.textContent = ''; window.mountPlans(host, { embed: true, base: 'plans/', code: sessionCode, only: host.dataset.only,
     offset: () => $('header.top').offsetHeight + ($('nav.tabs').offsetHeight || 0) }); } })
     .catch(() => { host.innerHTML = '<div class="empty card">تعذّر تحميل لوحة الخطط، تحققي من الاتصال ثم اضغطي «تحديث».</div>'; });
 }
@@ -2474,8 +2490,8 @@ async function prevBin(url) {
 function loadPrev() {
   if (prevIdx) return Promise.resolve(prevIdx);
   return prevLoading ??= (async () => {
-    const L = await (await fetch('prev/lock.json?t=' + Date.now(), { cache: 'no-store' })).json(), l = L.locks[0];
-    const raw = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(l.iv) }, await aesKey(sessionCode, b64(l.salt), L.iter), b64(l.ct));
+    const hx = D.keys && D.keys.prev, L = !hx && await (await fetch('prev/lock.json?t=' + Date.now(), { cache: 'no-store' })).json(), l = L && L.locks[0];
+    const raw = hx ? Uint8Array.from(hx.match(/../g), h => parseInt(h, 16)) : await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(l.iv) }, await aesKey(sessionCode, b64(l.salt), L.iter), b64(l.ct));
     prevKey = await crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['decrypt']);
     const plain = await prevBin('prev/i.bin?t=' + Date.now());
     return prevIdx = JSON.parse(await new Response(new Blob([plain]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
