@@ -1406,7 +1406,7 @@ const cpList = () => D.ct.items.flatMap((it, j) => it.progs.map((p, k) => ({ it,
 const CP_DAY = g => { const [y, m, d] = g.split('/').map(Number); return Date.UTC(y, m - 1, d); };
 const cpState = p => { if (!p.from || !p.to) return ['بلا تاريخ في السجل', 'na']; const n = new Date(), t = Date.UTC(n.getFullYear(), n.getMonth(), n.getDate());
   return t < CP_DAY(p.from.g) ? ['لم يبدأ', 'na'] : t > CP_DAY(p.to.g) ? ['انتهى', 'ok'] : ['جارٍ الآن', 'part']; };
-const cpD = x => x ? `${esc(x.d)} ${esc(x.h.split('/').reverse().join('/'))}هـ` : '—';
+const cpD = x => x ? `${esc(x.d)} ${hStr(x.h)}` : '—';   // أرقام عربية، اليوم أقصى اليمين
 const cpPer = n => n === 1 ? 'حصة واحدة' : n === 2 ? 'حصتان' : n <= 10 ? nf(n) + ' حصص' : nf(n) + ' حصة';
 const cpEndNote = p => { const s = cpState(p)[1]; return s === 'ok' ? 'انتهى البرنامج: وقت تطبيق الاستبانة على الطالبات.' : s === 'part' ? `تُطبَّق في آخر حصة من البرنامج (${cpD(p.to)}).` : `تُطبَّق بعد انتهاء البرنامج (${cpD(p.to)}).`; };
 // استبانة نهاية البرنامج (نشاط صفي): رمز QR للطالبات + عدد الردود من survey-script (المجاميع فقط). تستعملها صفحة رائدة النشاط أيضًا (leader.js)
