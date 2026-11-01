@@ -594,7 +594,7 @@
         <div>${nP ? (r.sent === nP ? chipOf(1, 'أرسلتِ كل حصصك') : chipOf(0, `باقي ${ad(nP - r.sent)}`)) : ''}</div></div>
       ${dayNav(days, iso)}
       ${pdfCard(A, iso)}
-      <div class="card pad at-act"><div><b>إرفاق ملفات الحضور</b><div class="muted" style="font-size:13px">نزّلي «تقرير الحضور» من Teams لكل حصة، واختاري الملفات كلها مرة واحدة، أو مجلدًا كاملًا بمجلدات أيامه (في الكمبيوتر)؛ تُوزَّع على أيامها وحصصها تلقائيًا.</div></div>
+      <div class="card pad at-act"><div><b>إرفاق ملفات الحضور</b><div class="muted" style="font-size:13px">نزّلي «تقرير الحضور» من Teams لكل حصة (أو «قائمة الحضور» من المشاركين أثناء الاجتماع، وتُنسب لليوم المفتوح هنا)، واختاري الملفات كلها مرة واحدة، أو مجلدًا كاملًا بمجلدات أيامه (في الكمبيوتر)؛ تُوزَّع على أيامها وحصصها تلقائيًا.</div></div>
         <label class="btn">اختيار الملفات<input type="file" multiple accept=".csv,text/csv" data-attf hidden></label>
         ${matchMedia('(pointer:fine)').matches ? '<label class="btn ghost">📁 اختيار مجلد<input type="file" webkitdirectory multiple data-attdir hidden></label>' : ''}</div>
       <div class="card at-wrap"><table class="at-t at-tt"><thead><tr><th>الحصة</th><th>الصف</th><th>المادة / الوقت</th><th>الحاضرات</th><th>الحالة</th></tr></thead><tbody>
@@ -630,7 +630,7 @@
           : `<td><button class="mc ${sel(x).has(n) ? 'm' : 'a'}" data-attman="${esc(x.f.file)}|${esc(n)}" aria-label="${esc(n)}: ${sel(x).has(n) ? 'حضور يدوي' : 'غائبة'}">${sel(x).has(n) ? 'ي' : 'غ'}</button></td>`).join('')}</tr>`).join('')}</table></div>`
         : '<div class="muted" style="font-size:13px">لا توجد غائبات في ملفات هذا الفصل</div>'}</div>`; }).join('');
     return `<div class="card pad"><div class="at-act" style="margin:0 0 6px"><div><b>مراجعة الغائبات</b> <span class="muted" style="font-size:12.5px">(اختياري)</span>
-        <div class="muted" style="font-size:13px">إن حضرت طالبة ولم يحسبها التيمز: المسي «غ» فتصير <span class="chip s-man">ي</span> حضور يدوي، ولمسة ثانية ترجعها. يظهر للإدارة أنه تحضير منكِ.</div></div></div>
+        <div class="muted" style="font-size:13px">إن حضرت طالبة ولم يحسبها التيمز: اضغطي على حرف «غ» فيتحول إلى <span class="chip s-man">ي</span> (حضور يدوي)، وعند الضغط على «حفظ» يتم الحفظ والإرسال.</div></div></div>
       ${blocks}
       <div class="at-act" style="justify-content:flex-end;margin:8px 0 0">${dirty ? '<span class="muted" style="font-size:12.5px">تعديلات لم تُحفظ</span>' : ''}<button class="btn" data-attmansave="${iso}"${dirty ? '' : ' disabled'}>حفظ</button></div></div>`;
   }
@@ -652,14 +652,46 @@
       mset(L); MED.E = {}; route(); if (typeof toast === 'function') toast(A.demo ? 'معاينة: حُفظ هنا فقط ولم يُرسل' : 'حُفظ ✓ ويظهر في التقارير خلال دقائق');
     } catch (e) { btn.disabled = false; btn.textContent = 'حفظ'; if (typeof toast === 'function') toast('تعذّر الحفظ، تحققي من الاتصال وأعيدي المحاولة'); }
   }
+  // «قائمة حضور الاجتماع» (هيفاء 2026-11-01): تُنزَّل من قائمة المشاركين أثناء الاجتماع — أسماء و«تم الانضمام/تمت المغادرة» فقط،
+  // بلا وقت ولا مدة ولا عنوان. تُحوَّل هنا إلى «تقرير حضور» كامل قبل الإرسال (فلا يتغير شيء في tools/): اليوم = اليوم المفتوح،
+  // الفصل من الأسماء، الحصة = أول حصة لهذا الفصل في جدولها ذلك اليوم لم يُرفق لها ملف (أو من اسم الملف «ح٣»)، وكل من دخلت حاضرة الحصة كلها
+  const LTITLE = 'قائمة حضور الاجتماع (بلا أوقات)';
+  function listOf(buf) {
+    const u = new Uint8Array(buf), t = u[0] === 0xFF && u[1] === 0xFE ? new TextDecoder('utf-16le').decode(u.subarray(2)) : new TextDecoder('utf-8').decode(u).replace(/^\uFEFF/, '');
+    const L = t.split(/\r?\n/).map(l => l.split('\t').map(x => x.trim())).filter(r => r[0]);
+    if (!L.length || !/^(الاسم الكامل|Full Name)$/i.test(L[0][0]) || !/إجراء|Action/i.test(L[0][1] || '')) return null;
+    return [...new Set(L.slice(1).map(r => r[0]))];
+  }
+  function fromList(A, names, file, iso, taken) {
+    const T = me(A), first = s => toks(s)[0], who = names.filter(n => first(n) === first(short(T.name)));
+    const kids = names.filter(n => !who.includes(n));
+    let best = null; for (const k of Object.keys(A.roster)) { const m = matcher(A.roster[k]), n = kids.filter(x => m(x)).length; if (!best || n > best.n) best = { k, n }; }
+    if (!best || best.n < Math.min(3, kids.length) || !best.n) throw new Error('لم يُعرف الفصل من أسماء الطالبات');
+    const [g, s] = best.k.split('-').map(Number), exp = T.days[wday(iso)] || [];
+    const ps = exp.map((c, i) => c && c.g === g && c.s === s ? i + 1 : 0).filter(Boolean), h = hintOf(file.name);
+    const p = ps.includes(h) ? h : ps.find(x => !taken.has(g + '-' + s + '-' + x));
+    if (!p) throw new Error(ps.length ? `حصص ${cls(g, s)} اليوم مُرفقة كلها` : `ليس لكِ حصة مع ${cls(g, s)} يوم ${DAYS[wday(iso)]} — افتحي يوم الحصة ثم أرفقي الملف`);
+    const [y, mo, d] = iso.split('-').map(Number), at = hh => { let [H, M] = hh.split(':').map(Number); const ap = H < 12 ? 'AM' : 'PM'; H = H % 12 || 12;
+      return `${mo}/${d}/${String(y).slice(2)}, ${H}:${String(M).padStart(2, '0')}:00 ${ap}`; };
+    const b = at(BELL[p - 1]), e = at(BELL_END[p - 1]);
+    const txt = ['1. الملخص', `عنوان الاجتماع\t${LTITLE}`, `وقت البدء\t${b}`, `وقت الانتهاء\t${e}`, '',
+      '2. المشاركون', 'الاسم\tوقت الانضمام الأول\tوقت المغادرة الأخير\tمدة الاجتماع\tالبريد الإلكتروني\tالدور',
+      ...who.map(n => `${n}\t${b}\t${e}\t40 د\t\tالمنظم`), ...kids.map(n => `${n}\t${b}\t${e}\t40 د\t\tالحضور`)].join('\r\n');
+    const out = new Uint8Array(2 + txt.length * 2); out[0] = 0xFF; out[1] = 0xFE; for (let i = 0; i < txt.length; i++) { const c = txt.charCodeAt(i); out[2 + i * 2] = c & 255; out[3 + i * 2] = c >> 8; }
+    return { buf: out.buffer, file: new File([out], file.name.replace(/(\.csv)?$/i, '.csv'), { type: 'text/csv' }) };
+  }
   // dir = اختيار مجلد كامل (مجلدات الأيام): ما ليس تقرير حضور أو أُرسل من قبل يُتخطّى بصمت (المستخدمة 2026-10-29)
   async function readFiles(files, dir) {
     const A = D.att, sk = { dup: 0, bad: 0 }; let add = 0;
     if (dir) files = files.filter(f => !/^(desktop\.ini|thumbs\.db)$/i.test(f.name) && !f.name.startsWith('~$') && (/\.csv$/i.test(f.name) || !/\.[a-z0-9]{2,5}$/i.test(f.name)));
-    for (const file of files) {
+    for (let file of files) {
       try {
         if (file.size > 2 * 1024 * 1024) throw new Error('الملف أكبر من المسموح');
-        const r = TEAMS.parse(await file.arrayBuffer()); if (!r.start || !r.students.length) throw Object.assign(new Error('الملف ليس «تقرير حضور» من Teams'), { k: 'bad' });
+        let buf = await file.arrayBuffer(), r = TEAMS.parse(buf), LS;
+        if (!r.start && (LS = listOf(buf))) { const day = (location.hash.match(/^#att\/d\/(\d{4}-\d\d-\d\d)/) || [])[1] || today();
+          const taken = new Set([...PEND.filter(x => x.f && x.iso === day).map(x => x.f), ...(A.days?.[day]?.[me(A).name] || [])].map(f => f.g + '-' + f.s + '-' + f.p));
+          ({ buf, file } = fromList(A, LS, file, day, taken)); r = TEAMS.parse(buf); }
+        if (!r.start || !r.students.length) throw Object.assign(new Error('الملف ليس «تقرير حضور» من Teams'), { k: 'bad' });
         const iso = isoOf(r.start), nm = me(A).name;
         // مكرر = الاسم نفسه أو الاجتماع نفسه (وقت البداية نفسه) ولو بُدّل اسم الملف، مثل «… (2).csv» (المستخدمة 2026-10-27)
         const f = lessonOf(A, r, file.name), old = [...PEND.filter(x => x.f && x.iso === iso).map(x => x.f), ...(A.days?.[iso]?.[nm] || [])];
