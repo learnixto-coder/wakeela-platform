@@ -82,7 +82,7 @@ window.CN = (() => {
   }
   const back = () => `<div class="homebar"><button class="btn sm ghost" data-go="cn">→ كل الأسابيع</button></div>`;
   const chip = it => !S.mine ? '<span class="chip s-na">…</span>' : it && it.st && it.st !== 'مسودة'
-    ? `<span class="chip s-ok">✓ صدر التقرير${it.ver > 1 ? ' · محدّث' : ''}</span>` : '<span class="chip s-none">لم يصدر التقرير</span>';
+    ? `<span class="chip s-ok">✓ صدر التقرير${it.ver > 1 ? ' · محدّث' : ''}${it.by ? ' · أصدرته ' + esc(it.by) : ''}</span>` : '<span class="chip s-none">لم يصدر التقرير</span>';
   const span = days => days.length ? (days.length === 1 ? HD(days[0]) : `${HD(days[0])} – ${HD(days[days.length - 1])}`) : '';
 
   function landing() {
@@ -113,7 +113,9 @@ window.CN = (() => {
       <h2 style="margin:2px 0 0">${esc(s.title)}</h2>${(() => { const it = mineOf(s.sid), dd = it && it.days && it.days.length ? it.days : s.days || []; return dd.length ? `<p style="margin:4px 0 0;font-weight:600">${span(dd)}</p>` : ''; })()}${s.type === 'w' ? `<p style="margin:4px 0 0"><b>عنوان الاصطفاف الصباحي:</b> ${esc(s.radio || '—')}<br><b>عنوان الصلاة:</b> ${esc(s.prayer || '—')}</p>` : ''}<p class="muted" style="margin:2px 0 0">${esc(D.cn.cls)} · ${esc(D.cn.name || '')}</p></div>`;
     if (!L) { load(s); return head + '<div class="card pad" style="margin-top:12px"><p class="muted" style="margin:0">جارٍ فتح الأسبوع وجلب الشواهد…</p></div>'; }
     if (L.err) return head + `<div class="card pad nc-err" style="margin-top:12px">تعذّر الفتح: ${esc(L.err)} <button class="btn sm ghost" data-nc="reload">إعادة المحاولة</button></div>`;
-    return head + (L.rec && !(S.ui[s.sid] || {}).edit ? preview(s, L) : form(s, L));
+    // تقرير الفصل واحد للمعلمتين (2026-11-01): إن أصدرته الزميلة فهو لها أيضًا، ولا يلزمها إصدار آخر
+    const by = L.by ? `<div class="card pad nc-note" style="margin-top:12px">أصدرت زميلتك <b>${esc(L.by)}</b> تقرير هذا الأسبوع، وهو تقرير الفصل ويُحسب لكما معًا — لا يلزمك إصدار تقرير آخر. ويمكنك إضافة شواهد أو تحديثه.</div>` : '';
+    return head + by + (L.rec && !(S.ui[s.sid] || {}).edit ? preview(s, L) : form(s, L));
   }
   async function load(s) {
     if (S.slot[s.sid] && !S.slot[s.sid].err) return;
@@ -179,7 +181,8 @@ window.CN = (() => {
       <div id="ncLink" ${(S.ui[s.sid] || {}).link ? '' : 'hidden'} class="nc-link"><label class="nc-l">رابط مجلد الشواهد في Google Drive<input type="url" dir="ltr" id="ncLinkU" placeholder="https://drive.google.com/drive/folders/…" value="${esc(lsGet('nc-link') || '')}"></label>
         <p class="muted nc-hint">يجلب النظام نسخة من الصور والملفات التي في المجلد دفعة واحدة، ولا يحذف شيئًا من مجلدك. يجب أن تكون مشاركة المجلد «أي شخص لديه الرابط».</p>
         <button class="btn sm" data-nc="link">جلب الشواهد من المجلد</button></div>
-      <div class="muted nc-msg" id="ncEvMsg">${esc((S.ui[s.sid] || {}).evMsg || '')}</div>
+      ${pendBox(s)}
+      <div class="muted nc-msg${/^✓/.test((S.ui[s.sid] || {}).evMsg || '') ? ' ok' : ''}" id="ncEvMsg">${esc((S.ui[s.sid] || {}).evMsg || '')}</div>
       ${L.files.length ? `<div class="nc-tiles">${L.files.map(tile).join('')}</div>` : '<p class="muted nc-hint">لم تُرفق شواهد بعد.</p>'}
       <p class="muted nc-hint">الشواهد المعتمدة: ${pics(X.ev.length)}${autoN ? ` · استُبعدت ${AR(autoN)} مكررة تلقائيًا` : ''}${F.ex.size ? ` · ${AR([...F.ex].filter(id => L.files.some(f => f.id === id)).length)} استبعدتِها` : ''}${X.other.length ? ` · ${AR(X.other.length)} ملف آخر (PDF/فيديو) في المجلد يظهر عبر رمز QR` : ''}${hashing ? ' · جارٍ فحص التشابه…' : ''}</p>
       ${X.pairs.length ? `<div class="nc-rev"><b>صور متشابهة للمراجعة (${AR(X.pairs.length)})</b><p class="muted nc-hint">قد تكون لقطتين مختلفتين للتنفيذ، فلا تُستبعد إلا باختيارك.</p>
@@ -204,6 +207,15 @@ window.CN = (() => {
     </div>
     <div class="card pad nc-act"><button class="btn" data-nc="save"${S.busy ? ' disabled' : ''}>${L.rec ? 'حفظ وتحديث التقرير' : 'حفظ وإصدار التقرير'}</button>
       <span class="nc-msg" id="ncSaveMsg">${esc(S.busy || (S.ui[s.sid] || {}).saveMsg || '')}</span></div>`;
+  }
+
+  // الصور المختارة تنتظر «حفظ» قبل الرفع (طلب المستخدمة 2026-11-01): معاينة صغيرة + حذف ما لا تريده
+  const pendOf = s => ((S.pend ||= {})[s.sid] ||= []);
+  function pendBox(s) {
+    const P = pendOf(s);
+    if (!P.length) return `<div class="toolbar" style="margin:8px 0 0"><button class="btn" disabled>حفظ</button><span class="muted" style="align-self:center;font-size:13px">اختاري الصور أولًا، ثم اضغطي «حفظ»</span></div>`;
+    return `<div class="nc-pend"><b>اخترتِ ${AR(P.length)} — اضغطي «حفظ» لرفعها</b><div class="nc-tiles">${P.map((x, i) => `<div class="nc-tile" title="${esc(x.f.name)}">${x.u ? `<img alt="" src="${x.u}">` : `<span class="nc-ft">${/pdf/.test(x.f.type) ? 'PDF' : /video/.test(x.f.type) ? 'فيديو' : 'ملف'}</span>`}<button class="nc-px" data-nc="px" data-i="${i}" title="إزالة">✕</button></div>`).join('')}</div>
+      <div class="toolbar" style="margin:8px 0 0"><button class="btn" data-nc="psave">حفظ (${AR(P.length)})</button><button class="btn ghost" data-nc="pcancel">إلغاء</button></div></div>`;
   }
 
   // ───────────── المعاينة بعد الإصدار ─────────────
@@ -285,7 +297,7 @@ window.CN = (() => {
 
   // ───────────── الرفع والجلب ─────────────
   const b64Of = blob => new Promise((o, x) => { const fr = new FileReader(); fr.onload = () => o(String(fr.result).split(',')[1]); fr.onerror = x; fr.readAsDataURL(blob); });
-  function evMsg(s, t, err) { (S.ui[s.sid] ||= {}).evMsg = t; const m = document.getElementById('ncEvMsg'); if (m) { m.textContent = t; m.style.color = err ? 'var(--none)' : ''; } }
+  function evMsg(s, t, err) { (S.ui[s.sid] ||= {}).evMsg = t; const m = document.getElementById('ncEvMsg'); if (m) { m.textContent = t; m.style.color = err ? 'var(--none)' : ''; m.classList.toggle('ok', !err && /^✓/.test(t)); } }
   async function upload(s, files) {
     const L = S.slot[s.sid]; let ok = 0, dup = 0, near = 0; const errs = [];
     for (const [k, f0] of files.entries()) {
@@ -305,7 +317,7 @@ window.CN = (() => {
         const nf_ = { ...j.file, tb }; L.files.push(nf_); if (ph) S.ph[nf_.id] = ph; ok++; if (m && m.near) near++;
       } catch (e) { errs.push(`«${f0.name}»: ${e.message}`); }
     }
-    evMsg(s, [ok ? `أُضيف ${AR(ok)}` : '', dup ? `استُبعد ${AR(dup)} مكرر ولم يُرفع (الملف نفسه أو نسخة منه)` : '', near ? `${AR(near)} متشابهة تظهر للمراجعة` : '', errs.length ? 'تعذّر: ' + errs.join('، ') : ''].filter(Boolean).join(' · ') || 'لم يُضف شيء', !!errs.length);
+    evMsg(s, [ok ? `✓ تم الحفظ: ${AR(ok)} وصلت إلى مجلد الشواهد` : '', dup ? `استُبعد ${AR(dup)} مكرر ولم يُرفع (الملف نفسه أو نسخة منه)` : '', near ? `${AR(near)} متشابهة تظهر للمراجعة` : '', errs.length ? 'تعذّر: ' + errs.join('، ') : ''].filter(Boolean).join(' · ') || 'لم يُضف شيء', !!errs.length);
     paint();
   }
   async function linkFolder(s, url) {
@@ -484,6 +496,9 @@ window.CN = (() => {
     if (a === 'edit' || a === 'addev') { S.ui[s.sid] = { edit: true }; initF(s, L); paint(); if (a === 'addev') document.getElementById('ncUpI')?.closest('.nc-evb')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
     if (a === 'cancel') { S.ui[s.sid] = {}; initF(s, L); return paint(); }
     if (a === 'save') return save(s);
+    if (a === 'px') { const P = pendOf(s), x = P.splice(+b.dataset.i, 1)[0]; if (x && x.u) URL.revokeObjectURL(x.u); return paint(); }
+    if (a === 'pcancel') { pendOf(s).splice(0).forEach(x => x.u && URL.revokeObjectURL(x.u)); return paint(); }
+    if (a === 'psave') { const P = pendOf(s).splice(0); if (!P.length) return; P.forEach(x => x.u && URL.revokeObjectURL(x.u)); return upload(s, P.map(x => x.f)); }
     if (a === 'linkT') { (S.ui[s.sid] ||= {}).link = !(S.ui[s.sid].link); return paint(); }
     if (a === 'link') { const u = (document.getElementById('ncLinkU').value || '').trim(); if (!u) return evMsg(s, 'ضعي رابط المجلد أولًا', true);
       b.disabled = true; try { await linkFolder(s, u); } catch (e) { evMsg(s, e.message, true); } b.disabled = false; return; }
@@ -502,7 +517,7 @@ window.CN = (() => {
     if (!document.getElementById('ncRoot')) return;
     const s = cur(), F = s && S.F[s.sid]; if (!F) return;
     const t = ev.target;
-    if (t.id === 'ncUpI' && t.files.length) { const files = [...t.files]; t.value = ''; return upload(s, files); }
+    if (t.id === 'ncUpI' && t.files.length) { const files = [...t.files]; t.value = ''; pendOf(s).push(...files.map(f => ({ f, u: /^image\//.test(f.type) ? URL.createObjectURL(f) : '' }))); return paint(); }
     if (t.dataset.day != null) { const v = t.value; if (F.days.includes(v) && F.days.indexOf(v) !== +t.dataset.day) { alert('هذا اليوم مضاف مسبقًا'); return paint(); } F.days[+t.dataset.day] = v; return paint(); }
     if (t.dataset.f === 'took') { F.took = t.checked; return; }
   });
@@ -531,7 +546,9 @@ window.CN = (() => {
 .nc-hint{font-size:12.5px;margin:4px 0 0}.nc-days{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}.nc-day{display:flex;gap:6px;align-items:center}.nc-day select{margin:0;flex:1;min-width:0}
 .nc-evb{display:flex;gap:8px;flex-wrap:wrap}.nc-evb label.btn{cursor:pointer}.nc-link{margin-top:8px;padding:10px;border:1px dashed var(--line);border-radius:10px}
 .nc-msg{font-size:13px;margin-top:6px;display:block}
-.nc-tiles{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.nc-tile{position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--soft);display:grid;place-items:center}
+.nc-tiles{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.nc-tile{position:relative;width:48px;height:48px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--soft);display:grid;place-items:center}
+.nc-msg.ok{margin-top:8px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok);font-weight:700}
+.nc-pend{margin-top:10px;padding:10px;border:1px dashed var(--line);border-radius:10px}.nc-px{position:absolute;top:1px;left:1px;width:18px;height:18px;border:0;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:10px;line-height:18px;padding:0;cursor:pointer}
 .nc-tile img{width:100%;height:100%;object-fit:cover;cursor:zoom-in}.nc-tile.off img,.nc-tile.dup img{opacity:.35}.nc-ft{font-size:11px;color:var(--muted)}
 .nc-badge{position:absolute;bottom:0;right:0;left:0;background:#000a;color:#fff;font-size:10px;text-align:center}
 .nc-tb{position:absolute;top:2px;left:2px;display:flex;gap:2px}.nc-tb button{width:20px;height:20px;border-radius:6px;border:0;background:#000b;color:#fff;font-size:11px;line-height:20px;padding:0;cursor:pointer}

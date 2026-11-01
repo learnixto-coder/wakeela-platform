@@ -94,6 +94,9 @@
       r.P.push(p); p.rec = r; });
     D.recs = Object.values(RM).sort((a, b) => a.cls.localeCompare(b.cls, 'ar') || a.n.localeCompare(b.n, 'ar'));
     D.recs.forEach((r, i) => { r.i = i; r.T = r.P.map(p => p.t); });
+    // أعمال المعلمتين في البرنامج المشترك موحدة (طلب المستخدمة 2026-11-01): شواهد إحداهما وتقريرها يُحسبان للأخرى
+    D.recs.forEach(r => { if (r.P.length < 2) return; const u = k => { const seen = new Set(); return r.P.flatMap(p => p[k] || []).filter(f => !seen.has(f.id) && seen.add(f.id)); };
+      const ev = u('ev'), rp = u('rep'); r.P.forEach(p => { p.ev = ev; p.rep = rp; }); });
     loadEvals(D);
     D.teachers.forEach(t => { t.mates = D.teachers.filter(x => x.cls === t.cls && x !== t); });
     D.doms = Object.keys(DOM).filter(d => D.all.some(p => p.dom === d)).concat([...new Set(D.all.map(p => p.dom))].filter(d => !DOM[d]));
@@ -432,7 +435,7 @@
   }
   const same = (a, b) => a.p.map(p => p.n).sort().join('|') === b.p.map(p => p.n).sort().join('|');
   function classCards(D) {
-    return `<div class="ld-cg">${D.cls.map((c, k) => { const L = c.T.flatMap(t => t.p), run = L.filter(p => p.s === 'run').length, ev = L.reduce((a, p) => a + p.ev.length, 0);
+    return `<div class="ld-cg">${D.cls.map((c, k) => { const L = c.T.flatMap(t => t.p), run = L.filter(p => p.s === 'run').length, ev = new Set(L.flatMap(p => p.ev.map(f => f.id))).size;
       const diff = c.T.length > 1 && !same(c.T[0], c.T[1]);
       return `<div class="card ld-cc"><h4>${esc(c.c)} <button class="btn sm ghost" data-go="lc/${k}">برامج الفصل</button></h4>
         <div class="ld-pair">${c.T.map(t => `<button data-go="lt/${t.i}"><b>${esc(t.name)}</b><small>${esc(t.subj)} · ${ar(t.p.length)} برامج</small></button>`).join('')}</div>
@@ -468,7 +471,7 @@
   function metrics(D) {
     D.all.forEach(p => { p.sc = score(p); });
     const st = D.all.filter(p => p.sc), ov = avg(st.map(p => p.sc.v));
-    const ev = D.all.reduce((a, p) => a + p.ev.length, 0), cur = weekOf(new Date(today).toISOString());
+    const ev = new Set(D.all.flatMap(p => p.ev.map(f => f.id))).size, cur = weekOf(new Date(today).toISOString());
     const wk = Array.from({ length: 19 }, (_, i) => i + 1).map(w => [w, D.all.reduce((a, p) => a + p.ev.filter(x => weekOf(x.t) === w).length, 0)]);
     const mx = Math.max(1, ...wk.map(x => x[1]));
     const need = st.filter(p => p.sc.v < 50).sort((a, b) => a.sc.v - b.sc.v);
@@ -568,8 +571,8 @@
       c.runs.forEach(r => {
         const fd = W.find(x => x.n === 'الأسبوع ' + String(r.w).padStart(2, '0') + ' — ' + r.topic) || {};
         const state = today > gDay(r.g1) ? 'past' : today >= gDay(r.g0) ? 'now' : 'later';
-        c.teachers.forEach(t => rows.push({ c, r, t, state, url: fd.url || '', rec: R.find(x => x.cls === c.cls && x.sid === r.sid && x.teacher === t && x.st !== 'مسودة') || null,
-          ev: (fd.ev || []).filter(f => f.by === t) }));
+        c.teachers.forEach(t => rows.push({ c, r, t, state, url: fd.url || '', rec: R.find(x => x.cls === c.cls && x.sid === r.sid && x.teacher === t && x.st !== 'مسودة') || R.find(x => x.cls === c.cls && x.sid === r.sid && x.st !== 'مسودة') || null,
+          ev: fd.ev || [] }));   // 2026-11-01: تقرير الفصل وشواهده يُحسبان للمعلمتين
       });
       R.filter(x => x.cls === c.cls && x.sid.startsWith('m|') && x.st !== 'مسودة').forEach(rec => {
         const fd = W.find(x => x.n.startsWith('نشاط يدوي — ' + rec.mname.slice(0, 40))) || {};
@@ -591,7 +594,7 @@
     ? (NR.th[f.id] ? `<img alt="" src="data:image/jpeg;base64,${NR.th[f.id]}">` : `<span data-nrth="${esc(f.id)}">…</span>`) : `<span>${/pdf/.test(f.m) ? 'PDF' : /video/.test(f.m) ? 'فيديو' : 'ملف'}</span>`}</a>`;
   function nrRow(x) {
     const rec = x.rec, p = rec && rec.partner, days = rec ? rec.days : x.r.days;
-    return `<div class="nr-r"><div class="nr-who"><b>${esc(x.t)}</b><span class="chip s-${NS[x.s][1]}">${NS[x.s][0]}</span>
+    return `<div class="nr-r"><div class="nr-who"><b>${esc(x.t)}</b><span class="chip s-${NS[x.s][1]}">${NS[x.s][0]}</span>${rec && rec.teacher !== x.t ? `<small>أصدرته زميلتها ${esc(rec.teacher)} — يُحسب لهما</small>` : ''}
         <small>${nrSpan(days)}${rec ? ` · ${ar(rec.dur || 15)} دقيقة · ${rec.students == null ? '—' : ar(rec.students) + ' طالبة'}${rec.dis ? ` · ${ar(rec.dis)} من ذوات الإعاقة` : ''}` : ''}</small>
         ${p && p.n ? `<small>المعلمة المشاركة: ${esc(p.n)} — ${p.took ? '<b class="nr-y">شاركت</b>' : '<b class="nr-n">لم تشارك</b>'}</small>` : ''}
         ${rec && rec.pcount ? `<small>الشراكات (${ar(rec.pcount)}): ${esc(rec.pnames)}</small>` : ''}</div>

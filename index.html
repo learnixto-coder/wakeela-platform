@@ -355,7 +355,10 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 .qr{width:132px;height:132px;flex:0 0 auto;background:#fff;border-radius:10px;padding:4px;display:grid;place-items:center;border:1px solid var(--line)}
 .qr svg{width:100%;height:100%}
 /* الأنشطة الصفية: معاينات الشواهد والتقرير */
-.cp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.cp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:6px}.cp-it{position:relative;cursor:zoom-in;min-width:0}.cp-it .cp-rn{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cp-it .cp-bt{display:none}
+.cp-it.big{grid-column:1/-1;cursor:zoom-out;max-width:480px}.cp-it.big .cp-th.sm{aspect-ratio:auto}.cp-it.big .cp-th img{object-fit:contain;height:auto}.cp-it.big .cp-bt{display:flex;gap:6px;margin-top:4px}.cp-it.big .cp-rn{font-size:12.5px}
+.cp-tabs{margin-top:12px;display:flex}.cp-tabs button{flex:1}.save-ok{margin-top:10px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok);font-weight:700}.save-ok.bad{background:color-mix(in srgb,var(--none) 12%,transparent);color:var(--none)}
+.cp-pend{margin-top:10px;padding:10px;border:1px dashed var(--line);border-radius:10px}.cp-px{position:absolute;top:2px;left:2px;width:18px;height:18px;border:0;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:10px;line-height:18px;padding:0;cursor:pointer}
 .cp-it,.cp-rf{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px;display:grid;gap:6px;align-content:start}
 .cp-th{aspect-ratio:3/4;background:var(--soft);border-radius:8px;display:grid;place-items:center;overflow:hidden;font-size:12.5px}.cp-th.sm{aspect-ratio:1}
 .cp-th img{width:100%;height:100%;object-fit:cover;display:block}
@@ -1341,7 +1344,7 @@ function nvPage(a) {
 let tdLoad = null;
 function tdPage() {
   if (window.TD) return TD.render();
-  tdLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'td.js?v=20261029'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  tdLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'td.js?v=20261101'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { tdLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
@@ -1356,7 +1359,7 @@ function attPage(a) {
 let cnLoad = null;
 function cnPage(a) {
   if (window.CN) return CN.render(a);
-  cnLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'cn.js?v=20261029d'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  cnLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'cn.js?v=20261101e'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { cnLoad = null; window.CN = { render: () => teacherCn() }; route(); });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
@@ -1423,27 +1426,34 @@ function teacherCp(a) {
   const L = cpList(), one = L.find(x => x.id === a);
   if (!one) return `<div class="card pad"><h2 style="margin:0 0 4px">برامج الأنشطة الصفية</h2><p class="muted" style="margin:0">برامجك في خطة النشاط الطلابي للفصل الدراسي الأول ١٤٤٨هـ. اضغطي البرنامج لرفع شواهده ومشاهدتها وفتح تقريره.</p></div>
     <div class="list" style="margin-top:12px">${L.map(({ it, p, id }) => { const st = cpState(p); return `<button class="row" data-go="cp/${id}"><span class="grow"><b>${esc(p.n)}</b><span class="muted" style="display:block;font-size:13px">${esc(p.dom)} · ${esc(it.cls)}${D.ct.items.length > 1 ? ' · ' + esc(it.name) : ''} · ${cpPer(p.need)} · من ${cpD(p.from)} إلى ${cpD(p.to)}</span></span>
-      <span class="chip s-${st[1]}">${st[0]}</span><span class="chip ${p.files.length ? 's-ok' : 's-none'}">${p.files.length ? nf(p.files.length) + ' شاهد' : 'لا شواهد'}</span>${p.note ? '<span class="chip s-part">ملاحظة من رائدة النشاط</span>' : ''}</button>`; }).join('')}</div>`;
+      <span class="chip s-${st[1]}">${st[0]}</span>${(n => `<span class="chip ${n ? 's-ok' : 's-none'}">${n ? nf(n) + ' شاهد' : 'لا شواهد'}</span>`)(cpAll(p).length)}${p.note ? '<span class="chip s-part">ملاحظة من رائدة النشاط</span>' : ''}</button>`; }).join('')}</div>`;
   const { it, p } = one, st = cpState(p);
   const day = f => hIso(f.t);
   const fBtns = f => f.id ? `<button class="btn sm ghost" data-ctf="open" data-id="${esc(f.id)}" data-k="${esc(one.id)}">فتح</button><button class="btn sm ghost" data-ctf="dl" data-id="${esc(f.id)}" data-k="${esc(one.id)}">تحميل</button>` : '';
-  // شبكة معاينات: شواهدها (فتح + حذف) وشواهد زميلتها (فتح فقط)
-  const fList = (F, own) => `<div class="cp-grid">${F.slice().reverse().map(f => `<div class="cp-it">${f.id ? `<div class="cp-th sm" data-ctth="${esc(f.id)}" data-sz="300" data-k="${esc(one.id)}"><span class="muted">${/^video\//.test(f.m || '') ? 'فيديو' : '…'}</span></div>` : ''}
-    <div class="cp-rn" title="${esc(f.n)}">${day(f)}</div>${f.id ? `<div class="cp-bt"><button class="btn sm ghost" data-ctf="open" data-id="${esc(f.id)}" data-k="${esc(one.id)}">فتح</button>${own ? `<button class="btn sm ghost cp-del" data-ctf="del" data-id="${esc(f.id)}" data-k="${esc(one.id)}">حذف</button>` : ''}</div>` : ''}</div>`).join('')}</div>`;
+  // شبكة معاينات صغيرة جدًا للتأكد من وجود الصور، والضغط يكبّرها (2026-11-01). شواهد الفصل موحدة لها ولزميلتها، وتحذف ما رفعته هي فقط
+  const fList = F => `<div class="cp-grid">${F.slice().sort((a, b) => String(b.t).localeCompare(String(a.t))).map(f => { const own = !f.by; return `<div class="cp-it" data-cpbig>${f.id ? `<div class="cp-th sm" data-ctth="${esc(f.id)}" data-sz="300" data-k="${esc(one.id)}"><span class="muted">${/^video\//.test(f.m || '') ? 'فيديو' : '…'}</span></div>` : ''}
+    <div class="cp-rn" title="${esc(f.n)}">${day(f)}${f.by ? ' · ' + esc(f.by) : ''}</div>${f.id ? `<div class="cp-bt"><button class="btn sm ghost" data-ctf="open" data-id="${esc(f.id)}" data-k="${esc(one.id)}">فتح</button>${own ? `<button class="btn sm ghost cp-del" data-ctf="del" data-id="${esc(f.id)}" data-k="${esc(one.id)}">حذف</button>` : ''}</div>` : ''}</div>`; }).join('')}</div>`;
   setTimeout(ctThumbs, 0);
+  const tab = ['up', 'srv', 'rep'].includes(state.cpTab) ? state.cpTab : 'up', all = cpAll(p), P = cpPend[one.id] || [];
   return `<div class="homebar"><button class="btn sm ghost" data-go="cp">→ كل برامجي</button></div>
   <div class="card pad"><h2 style="margin:0 0 4px">${esc(p.n)}</h2><p class="muted" style="margin:0">${esc(p.dom)} · ${esc(p.cls || it.cls)} · ${cpPer(p.need)}</p>
     <p style="margin:8px 0 0">من ${cpD(p.from)} إلى ${cpD(p.to)} <span class="chip s-${st[1]}">${st[0]}</span></p></div>
   ${p.note ? `<div class="card pad cp-note" style="margin-top:12px"><b>ملاحظات رائدة النشاط</b><p style="margin:6px 0 0;white-space:pre-line">${esc(p.note.t)}</p>${p.note.at ? `<span class="muted" style="font-size:12.5px">آخر تحديث: ${esc(p.note.at)}</span>` : ''}</div>` : ''}
+  <div class="seg cp-tabs">${[['up', 'رفع الصور'], ['srv', 'الاستبانة'], ['rep', 'التقرير']].map(([k, l]) => `<button data-cpt="${k}" class="${tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+  <div ${tab === 'up' ? '' : 'hidden'}>
   <div class="card pad up" style="margin-top:12px" id="cpUp" data-cp="${esc(one.id)}"><div class="up-h"><b>رفع الشواهد</b><span class="muted">تصل إلى مجلد «الشواهد» لهذا البرنامج في أرشيف رائدة النشاط مباشرة. الصور تُصغَّر قبل الرفع.</span></div>
     <label class="up-drop"><input type="file" id="cpI" accept="image/*,video/*,application/pdf" multiple hidden><span><b>اختاري الصور أو الفيديو أو ملف PDF</b><br><span class="muted">الصور والفيديو وملفات PDF حتى ٥٠٠ م.ب للملف · دون حد لعدد الملفات</span></span></label>
     <p style="margin:8px 0 0;font-size:13.5px;color:var(--ok);font-weight:600">يمكنك رفع الصور حتى بعد انتهاء تاريخ البرنامج.</p>
+    ${P.length ? `<div class="cp-pend"><b>اخترتِ ${nf(P.length)} — اضغطي «حفظ» لرفعها</b><div class="cp-grid">${P.map((x, i) => `<div class="cp-it"><div class="cp-th sm">${x.u ? `<img alt="" src="${x.u}">` : `<span class="muted">${/video/.test(x.f.type) ? 'فيديو' : 'PDF'}</span>`}</div><button class="cp-px" data-cpx="${i}" title="إزالة">✕</button></div>`).join('')}</div>
+      </div>` : ''}
+    <div class="toolbar" style="margin:10px 0 0"><button class="btn" id="cpSave"${P.length ? '' : ' disabled'}>حفظ${P.length ? ' (' + nf(P.length) + ')' : ''}</button>${P.length ? '<button class="btn ghost" id="cpCancel">إلغاء</button>' : '<span class="muted" style="align-self:center;font-size:13px">اختاري الصور أولًا، ثم اضغطي «حفظ»</span>'}</div>
     <div id="cpMsg" class="muted" style="margin-top:8px"></div></div>
-  <h3 style="margin:16px 0 8px">ما رفعتِه (${nf(p.files.length)})</h3>
-  ${p.files.length ? fList(p.files, 1) : '<p class="muted">لم تُرفع شواهد بعد.</p>'}
-  ${(p.mates || []).map(m => `<h3 style="margin:16px 0 8px">ما رفعته زميلتك ${esc(m.name)} (${nf(m.files.length)})</h3>${m.files.length ? fList(m.files) : '<p class="muted">لم ترفع شواهد بعد.</p>'}`).join('')}
-  <p class="muted" style="font-size:12.5px;margin-top:14px">ما تحذفينه ينتقل إلى سلة المحذوفات، وتستطيع رائدة النشاط استعادته خلال ٣٠ يومًا.</p>
-  ${p.srv ? ctSrvCard(p.srv, p.n, p.cls || it.cls, p.students || it.students, cpEndNote(p)) : ''}
+  <h3 style="margin:16px 0 8px">شواهد البرنامج (${nf(all.length)})${(p.mates || []).length ? ' <span class="muted" style="font-size:13px;font-weight:400">— موحدة لكِ ولزميلتك ' + esc(p.mates.map(m => m.name).join('، ')) + '، وتُحسب لكما معًا</span>' : ''}</h3>
+  ${all.length ? fList(all) : '<p class="muted">لم تُرفع شواهد بعد.</p>'}
+  <p class="muted" style="font-size:12.5px;margin-top:14px">اضغطي الصورة لتكبيرها. تحذفين ما رفعتِه أنتِ فقط، وينتقل إلى سلة المحذوفات وتستطيع رائدة النشاط استعادته خلال ٣٠ يومًا.</p></div>
+  <div ${tab === 'srv' ? '' : 'hidden'}>${p.srv ? ctSrvCard(p.srv, p.n, p.cls || it.cls, p.students || it.students, cpEndNote(p)) : '<div class="card pad" style="margin-top:12px"><p class="muted" style="margin:0">لا توجد استبانة لهذا البرنامج بعد، وتظهر هنا عند تفعيلها.</p></div>'}</div>
+  <div ${tab === 'rep' ? '' : 'hidden'}>
+  ${(p.rep || []).length && (p.mates || []).length ? '<div class="card pad cp-note" style="margin-top:12px">صدر تقرير البرنامج، وهو تقرير الفصل ويُحسب لكِ ولزميلتك — لا يلزم إصدار تقرير آخر.</div>' : ''}
   <div class="card pad" style="margin-top:12px"><b>التقرير وقياس الأثر</b>
     ${(p.rep || []).length ? `<div class="cp-rep">${p.rep.map(f => `<div class="cp-rf"><div class="cp-th" data-ctth="${esc(f.id)}" data-k="${esc(one.id)}"><span class="muted">جارٍ تحميل المعاينة…</span></div>
       <div class="cp-rn">${esc(f.n.replace(/\.[^.]*$/, ''))}</div><div class="toolbar" style="margin:6px 0 0">${fBtns(f).replace('btn sm ghost', 'btn sm')}</div></div>`).join('')}</div>`
@@ -1458,8 +1468,21 @@ function teacherCp(a) {
       <label>عدد الطالبات من ذوي الإعاقة<input type="number" min="0" max="999" inputmode="numeric" id="ciD" value="${v(f.dis)}" placeholder="0"></label>
       <label class="cp-wide">أسماء الشراكات المجتمعية (إن وُجدت)<input type="text" maxlength="300" id="ciN" value="${esc(f.pnames || '')}" placeholder="مثال: جمعية البر بخميس مشيط"></label>
     </div>
-    <div class="toolbar" style="margin:10px 0 0"><button class="btn" id="ciSave">حفظ وإصدار البطاقة</button><span class="muted" id="ciMsg" style="align-self:center"></span></div></div>`; })()}`;
+    <div class="toolbar" style="margin:10px 0 0"><button class="btn" id="ciSave">${(p.rep || []).length ? 'حفظ وتحديث البطاقة' : 'حفظ وإصدار البطاقة'}</button><span class="muted" id="ciMsg" style="align-self:center"></span></div></div>`; })()}</div>`;
 }
+// شواهد البرنامج موحدة للمعلمتين (2026-11-01): ما رفعته هي + ما رفعته زميلتها (by = اسمها)، بلا تكرار
+const cpAll = p => { const seen = new Set(); return [...(p.files || []), ...(p.mates || []).flatMap(m => (m.files || []).map(f => ({ ...f, by: m.name })))].filter(f => !f.id || (!seen.has(f.id) && seen.add(f.id))); };
+// الملفات المختارة تنتظر «حفظ» قبل الرفع
+const cpPend = {};
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('[data-cpt],[data-cpx],#cpSave,#cpCancel,[data-cpbig]'); if (!t || !D || !D.ct) return;
+  if (t.dataset.cpt) { state.cpTab = t.dataset.cpt; const y = window.scrollY; route(); window.scrollTo(0, y); return; }
+  const box = document.getElementById('cpUp'), k = box && box.dataset.cp;
+  if (t.dataset.cpx != null) { const x = (cpPend[k] || []).splice(+t.dataset.cpx, 1)[0]; if (x && x.u) URL.revokeObjectURL(x.u); route(); return; }
+  if (t.id === 'cpCancel') { (cpPend[k] || []).splice(0).forEach(x => x.u && URL.revokeObjectURL(x.u)); route(); return; }
+  if (t.id === 'cpSave') { const P = (cpPend[k] || []).splice(0); P.forEach(x => x.u && URL.revokeObjectURL(x.u)); if (P.length) cpUpload(P.map(x => x.f)); return; }
+  if (t.hasAttribute('data-cpbig') && !ev.target.closest('button')) t.classList.toggle('big');
+});
 // فتح/تحميل ملف من مجلدات البرنامج ومعاينة التقرير: عبر النظام برمز المعلمة (لا صلاحية لها على مجلدات Drive)
 const ctGet = async (one, a, id, x = {}) => { let last = 'تعذر الاتصال';
   for (let i = 0; i < 3; i++) { try { const r = await fetch(D.ct.api + '?' + new URLSearchParams({ op: 'ct', a, tok: one.it.tok, key: one.p.key, id, ...x }), { signal: AbortSignal.timeout ? AbortSignal.timeout(90000) : undefined });
@@ -1518,10 +1541,13 @@ document.addEventListener('click', async ev => {
   } catch (e) { if (w) w.close(); alert('تعذّر فتح الملف: ' + e.message); }
   b.disabled = false; b.textContent = t0;
 });
-document.addEventListener('change', async ev => {
+document.addEventListener('change', ev => {
   if (ev.target.id !== 'cpI' || !ev.target.files.length || !D || !D.ct) return;
-  const box = document.getElementById('cpUp'), one = cpList().find(x => x.id === box.dataset.cp), msg = document.getElementById('cpMsg');
-  const files = [...ev.target.files]; let ok = 0, err = '';
+  const k = document.getElementById('cpUp').dataset.cp, files = [...ev.target.files]; ev.target.value = '';
+  (cpPend[k] ||= []).push(...files.map(f => ({ f, u: /^image\//.test(f.type) ? URL.createObjectURL(f) : '' }))); route();
+});
+async function cpUpload(files) {
+  const box = document.getElementById('cpUp'), one = cpList().find(x => x.id === box.dataset.cp), msg = document.getElementById('cpMsg'); let ok = 0, err = '';
   for (const [k, f0] of files.entries()) {
     msg.textContent = `جارٍ رفع ${nf(k + 1)} من ${nf(files.length)}…`;
     try {
@@ -1541,8 +1567,8 @@ document.addEventListener('change', async ev => {
     } catch (e) { err = `تعذر رفع «${f0.name}»: ${e.message}`; }
   }
   route();
-  const m = document.getElementById('cpMsg'); if (m) { m.textContent = (ok ? `رُفعت ${nf(ok)} من ${nf(files.length)} — وصلت إلى مجلد الشواهد` : '') + (err ? ' · ' + err : ''); m.style.color = err ? 'var(--none)' : 'var(--ok)'; }
-});
+  const m = document.getElementById('cpMsg'); if (m) { m.textContent = (ok ? `✓ تم الحفظ: ${nf(ok)} من ${nf(files.length)} وصلت إلى مجلد الشواهد، وتظهر في «شواهد البرنامج» أدناه` : '') + (err ? ' · ' + err : ''); m.className = 'save-ok' + (err ? ' bad' : ''); }
+}
 // ملف كبير (أكثر من ٢٠ م.ب حتى ٥٠٠ م.ب): رفع على أجزاء ٨ م.ب عبر النظام (tustart ثم tuchunk)، مع إعادة المحاولة لكل جزء
 async function cpBig(one, f, prog) {
   const post = async body => { let last = 'تعذر الاتصال';
