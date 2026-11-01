@@ -71,6 +71,9 @@
     let p = 1; MID.forEach((m, i) => { if (Math.abs(t - m) < Math.abs(t - MID[p - 1])) p = i + 1; }); return p; };
   const wa = (phone, text) => `https://wa.me/966${String(phone).replace(/\D/g, '').replace(/^0/, '')}?text=${encodeURIComponent(text)}`;
   const chipOf = (ok, txt) => `<span class="chip s-${ok ? 'ok' : 'none'}">${txt}</span>`;
+  // بعد الإرسال (المستخدمة 2026-11-01، فكرة «أ»): لا زر باهت؛ شريط أخضر «تم الإرسال»، ويرجع الزر واضحًا مع أي إضافة أو تغيير
+  const done = (txt, part) => `<div class="at-done${part ? ' p' : ''}" role="status">${part ? '' : '✓ '}${txt}</div>`,
+    atT = L => { const a = L.map(x => x.at).filter(Boolean).sort().pop(); return a ? ' الساعة ' + ad(hm(new Date(a))) : ''; };
   const short = n => String(n).replace(/^أ\.\s*/, '');
 
   // --- مطابقة الأسماء: اسم Teams ← اسم في قائمة الفصل
@@ -330,7 +333,8 @@
     const E = EVP.filter(x => x.iso === iso), C = evCount(A, iso);
     return `<div class="card pad"><div class="at-act" style="margin:0"><div><b>شواهد توثيق الحصص</b><div class="muted" style="font-size:13px">صور من حصص هذا اليوم (لقطات من Teams وغيرها) — صور فقط</div></div>
         <label class="btn ghost">اختيار الصور<input type="file" multiple accept="image/*" data-atti="${iso}" hidden></label></div>
-      <div style="margin-top:8px">${C.n ? chipOf(1, `✓ أُرسلت ${pics(C.n)}${C.wait ? ' · قيد النقل' : ''}`) : chipOf(0, 'لم تُرسل صور بعد')}</div>
+      ${!E.length && C.n ? done(`تم إرسال ${pics(C.n)}${atT(eget().filter(x => x.to === me(A).name && x.iso === iso))}${C.wait ? ' · قيد النقل' : ''}`)
+        : `<div style="margin-top:8px">${C.n ? chipOf(1, `✓ أُرسلت ${pics(C.n)}`) : chipOf(0, 'لم تُرسل صور بعد')}</div>`}
       ${E.length ? `<div class="at-evs">${E.map(x => `<span class="at-ev"><img alt="" src="${x.url}"><button class="btn sm ghost" data-attevdrop="${EVP.indexOf(x)}" aria-label="إزالة">×</button></span>`).join('')}</div>
       <div class="at-act" style="justify-content:flex-end;margin-bottom:0"><button class="btn" data-attevsend="${iso}">إرسال الصور (${ad(E.length)})</button></div>` : ''}</div>`;
   }
@@ -605,9 +609,10 @@
         <td><span class="chip s-part">خارج جدولك</span>${drop(q)}</td></tr>`).join('')}
       ${!rows.length && !extraP.length && !r.extra.length ? '<tr><td colspan="5" class="muted">لا توجد حصص</td></tr>' : ''}
       </tbody></table></div>
-      ${revCard(A, iso, r)}
       ${errs.length ? `<div class="card pad" style="color:#b91c1c">${errs.map(x => `«${esc(x.name)}»: ${esc(x.err)}${drop(x)}`).join('<br>')}</div>` : ''}
-      <div class="at-act" style="justify-content:flex-end"><button class="btn" data-attsend="${iso}" ${P.length ? '' : 'disabled'}>إرسال${P.length ? ` (${ad(P.length)})` : ''}</button></div>
+      ${P.length ? `<div class="at-act" style="justify-content:flex-end"><button class="btn" data-attsend="${iso}">${r.sent ? 'إرسال الجديد' : 'إرسال'} (${ad(P.length)})</button></div>`
+        : r.sent ? done(`تم الإرسال${atT(sget().filter(x => x.to === me(A).name && x.iso === iso))} · ${ad(r.sent)} من ${ad(nP)} ${word(nP)}${r.sent < nP ? ` · باقي ${ad(nP - r.sent)}` : ''}`, r.sent < nP) : ''}
+      ${revCard(A, iso, r)}
       ${evCard(A, iso)}
       <p class="muted" style="font-size:12.5px;margin:8px 4px">يُحفظ كل ملف في مجلدك داخل «رصد الغياب منصة التيمز» على ون درايف ويصل لمسؤولة الغياب خلال دقائق.</p>`;
   }
@@ -619,7 +624,7 @@
     const F = [...r.cells.map(c => c.f && { f: c.f, g: c.g, s: c.s, p: c.p }), ...r.extra.map(f => f.g && { f, g: f.g, s: f.s, p: f.p })].filter(Boolean);
     if (!F.length) return '';
     if (MED.iso !== iso) MED = { iso, E: {} };
-    const sel = x => MED.E[x.f.file] || new Set(x.f.m || []), dirty = Object.keys(MED.E).length;
+    const sel = x => MED.E[x.f.file] || new Set(x.f.m || []), dirty = Object.keys(MED.E).length, mn = F.reduce((n, x) => n + (x.f.m || []).length, 0);
     const by = {}; F.forEach(x => (by[ck(x.g, x.s)] ||= []).push(x));
     const blocks = Object.entries(by).map(([k, L]) => { L.sort((a, b) => (a.p || 9) - (b.p || 9));
       const ab = L.map(x => new Set(lesson(A, { ...x.f, g: x.g, s: x.s, m: [] }).absent.map(o => o.n)));
@@ -632,7 +637,8 @@
     return `<div class="card pad"><div class="at-act" style="margin:0 0 6px"><div><b>مراجعة الغائبات</b> <span class="muted" style="font-size:12.5px">(اختياري)</span>
         <div class="muted" style="font-size:13px">إن حضرت طالبة ولم يحسبها التيمز: اضغطي على حرف «غ» فيتحول إلى <span class="chip s-man">ي</span> (حضور يدوي)، وعند الضغط على «حفظ» يتم الحفظ والإرسال.</div></div></div>
       ${blocks}
-      <div class="at-act" style="justify-content:flex-end;margin:8px 0 0">${dirty ? '<span class="muted" style="font-size:12.5px">تعديلات لم تُحفظ</span>' : ''}<button class="btn" data-attmansave="${iso}"${dirty ? '' : ' disabled'}>حفظ</button></div></div>`;
+      ${dirty ? `<div class="at-act" style="justify-content:flex-end;margin:8px 0 0"><span class="muted" style="font-size:12.5px">تعديلات لم تُحفظ</span><button class="btn" data-attmansave="${iso}">حفظ وإرسال</button></div>`
+        : mn ? done(`تم الحفظ والإرسال${atT(mget().filter(x => x.to === me(A).name && x.iso === iso))} · حضور يدوي ${ad(mn)}`) : ''}</div>`;
   }
   function manToggle(v) {
     const A = D.att, [file, ...n] = v.split('|'), name = n.join('|'), f = ((((A.days || {})[MED.iso] || {})[me(A).name]) || []).find(x => x.file === file); if (!f) return;
@@ -650,7 +656,7 @@
       const L = mget().filter(x => !(x.to === nm && x.iso === iso && files[x.file]));
       for (const [file, m] of Object.entries(files)) { const f = A.days[iso][nm].find(x => x.file === file); if (f) f.m = m; L.push({ to: nm, iso, file, m, at: Date.now() }); }
       mset(L); MED.E = {}; route(); if (typeof toast === 'function') toast(A.demo ? 'معاينة: حُفظ هنا فقط ولم يُرسل' : 'حُفظ ✓ ويظهر في التقارير خلال دقائق');
-    } catch (e) { btn.disabled = false; btn.textContent = 'حفظ'; if (typeof toast === 'function') toast('تعذّر الحفظ، تحققي من الاتصال وأعيدي المحاولة'); }
+    } catch (e) { btn.disabled = false; btn.textContent = 'حفظ وإرسال'; if (typeof toast === 'function') toast('تعذّر الحفظ، تحققي من الاتصال وأعيدي المحاولة'); }
   }
   // «قائمة حضور الاجتماع» (هيفاء 2026-11-01): تُنزَّل من قائمة المشاركين أثناء الاجتماع — أسماء و«تم الانضمام/تمت المغادرة» فقط،
   // بلا وقت ولا مدة ولا عنوان. تُحوَّل هنا إلى «تقرير حضور» كامل قبل الإرسال (فلا يتغير شيء في tools/): اليوم = اليوم المفتوح،
@@ -752,6 +758,7 @@
   }
 
   const CSS = `.chip.s-man{background:#efe3fb;color:#7a3db8;font-weight:700}
+    .at-done{margin:8px 0 0;padding:10px 14px;border-radius:12px;background:var(--ok-bg,#e3f6ea);color:var(--ok,#1e8449);font-weight:600;font-size:14px}.at-done.p{background:var(--part-bg,#fdf3d6);color:var(--part,#a87a00)}
     .at-rv{margin:8px 0}.at-rv>b{display:block;margin-bottom:4px}.at-mg{border-collapse:separate;border-spacing:3px;font-size:13.5px}.at-mg th{font-weight:500;color:var(--muted,#6b7280);font-size:12px}
     .at-mg td.nm{text-align:right;white-space:nowrap;padding-inline-end:8px}.mc{display:flex;align-items:center;justify-content:center;width:40px;height:36px;border-radius:8px;border:0;font:inherit;font-weight:700;margin:auto}
     .mc.a{background:#fde7e4;color:#b42318;cursor:pointer}.mc.m{background:#efe3fb;color:#7a3db8;box-shadow:inset 0 0 0 2px #7a3db8;cursor:pointer}.mc.h{background:#e1f3e8;color:#1d7a46}
