@@ -718,15 +718,19 @@
     const thr = Math.max(10, W * 0.012), band = [];
     for (let y = 0; y < H; y++) { let r = 0, g = 0;
       for (let x = 0, i = y * W * 4; x < W; x++, i += 4) { const R = px[i], G = px[i + 1], B = px[i + 2];
-        if (R > 180 && G < 90 && B < 90) r++; else if (G > 100 && G < 175 && R < 80 && B > 50 && B < 135 && G - R > 55) g++; }
+        // زر مملوء (صفحة «الحضور والتحفيز») أو شارة فاتحة (تقرير «الحضور والغياب» PDF، شهد 2026-11-02: وردي ٢٥٥،٢٢٦،٢٢٤ وأخضر ٢٢١،٢٥٣،٢٣٠)
+        if ((R > 180 && G < 90 && B < 90) || (R > 240 && G < 240 && R - G >= 20 && R - B >= 20)) r++;
+        else if ((G > 100 && G < 175 && R < 80 && B > 50 && B < 135 && G - R > 55) || (G > 240 && G - R >= 25 && G - B >= 15)) g++; }
       band.push(r >= thr ? 'a' : g >= thr ? 'h' : ''); }
-    const R0 = []; for (let y = 0; y < H;) { const k = band[y]; if (!k) { y++; continue; } let e = y; while (e + 1 < H && band[e + 1] === k) e++;
-      if (e - y + 1 >= Math.max(12, H * 0.012)) R0.push({ y: (y + e) / 2, h: e - y + 1, a: k === 'a' }); y = e + 1; }
+    const R0 = []; for (let y = 0; y < H;) { const t = band[y]; if (!t) { y++; continue; } let e = y; while (e + 1 < H && band[e + 1] === t) e++;
+      if (e - y + 1 >= Math.max(8, 6 * k)) R0.push({ y: (y + e) / 2, h: e - y + 1, a: t === 'a' }); y = e + 1; }
     const w = await (await ocr()).recognize(cv), lines = w.data.lines.map(l => ({ y: (l.bbox.y0 + l.bbox.y1) / 2, t: l.text.trim() })).filter(l => l.t);
     // اسم الطالبة في سطر الزر نفسه (الكمبيوتر) أو فوقه (الجوال)
     const rows = R0.map((r, i) => ({ y: r.y, a: r.a, txt: lines.filter(l => Math.abs(l.y - r.y) < r.h * 0.9 || (l.y < r.y && l.y > (i ? R0[i - 1].y + R0[i - 1].h / 2 : r.y - 3 * r.h))).map(l => l.t) }));
     const hl = lines.find(l => /حص/.test(l.t) && (!R0.length || l.y < R0[0].y)), hw = hl && norm(hl.t).split(' ').find(x => !/حص/.test(x) && x.length > 3);
     let ph = 0; if (hw) { const sc = ORD.map(o => dice(o, hw)), b = Math.max(...sc); if (b >= 0.5) ph = sc.indexOf(b) + 1; }
+    // «الحصة ٠٣» بالأرقام (تقرير «الحضور والغياب»)
+    const hn = lines.filter(l => !R0.length || l.y < R0[0].y).map(l => (norm(l.t).match(/حص\S*\s*0?([1-7])(?![0-9])/) || [])[1]).find(Boolean); if (hn) ph = +hn;
     return { rows, ph };
   }
   // أسطر مجموعة صور ← أسماء: كل سطر لأقرب اسم (مرة واحدة لكل اسم)، والفصل = فصل أغلب الأسماء
@@ -762,8 +766,10 @@
     try { for (const [j, x] of G.imgs.entries()) { G.msg = `جارٍ قراءة الصورة ${ad(j + 1)} من ${ad(G.imgs.length)}…`; route(); out.push({ x, ...(await scanImg(x.file)) }); } }
     catch (e) { Object.assign(G, { err: e.message || 'تعذّرت قراءة الصورة', busy: 0 }); route(); return; }
     const Gs = [];
-    for (const o of out) { if (!Gs.length || (o.ph && Gs[Gs.length - 1].ph)) Gs.push({ iso, imgs: [], rows: [], ph: 0 });
-      const c = Gs[Gs.length - 1]; c.rows.push(...o.rows.map(r => ({ ...r, im: c.imgs.length }))); c.imgs.push(o.x); c.ph ||= o.ph; }
+    // فصل كل صورة من أسمائها: صورة فصل آخر = حصة أخرى ولو لم يُقرأ رأسها (شهد 2026-11-02: صورتان لفصلين)
+    out.forEach(o => { const t = { rows: o.rows.map(r => ({ ...r, im: 0 })) }; try { matchRows(A, t); o.k = ck(t.g, t.s); } catch (e) { o.k = ''; } });
+    for (const o of out) { const l = Gs[Gs.length - 1]; if (!l || (o.ph && l.ph) || (o.k && l.k && o.k !== l.k)) Gs.push({ iso, imgs: [], rows: [], ph: 0, k: o.k });
+      const c = Gs[Gs.length - 1]; c.k ||= o.k; c.rows.push(...o.rows.map(r => ({ ...r, im: c.imgs.length }))); c.imgs.push(o.x); c.ph ||= o.ph; }
     for (const g of Gs) try { if (!g.rows.length) throw new Error('لم أجد في الصورة أزرار «حاضر/غائب» — أرسلي لقطة من صفحة «الحضور والتحفيز» في منصة مدرستي'); matchRows(A, g); iPick(A, g); }
       catch (e) { g.err = e.message; }
     IMG.splice(IMG.indexOf(G), 1, ...Gs); route();
