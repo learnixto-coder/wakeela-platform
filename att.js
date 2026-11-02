@@ -598,9 +598,11 @@
         <div>${nP ? (r.sent === nP ? chipOf(1, 'أرسلتِ كل حصصك') : chipOf(0, `باقي ${ad(nP - r.sent)}`)) : ''}</div></div>
       ${dayNav(days, iso)}
       ${pdfCard(A, iso)}
-      <div class="card pad at-act"><div><b>إرفاق ملفات الحضور</b><div class="muted" style="font-size:13px">نزّلي «تقرير الحضور» من Teams لكل حصة (أو «قائمة الحضور» من المشاركين أثناء الاجتماع، وتُنسب لليوم المفتوح هنا)، واختاري الملفات كلها مرة واحدة، أو مجلدًا كاملًا بمجلدات أيامه (في الكمبيوتر)؛ تُوزَّع على أيامها وحصصها تلقائيًا.</div></div>
-        <label class="btn">اختيار الملفات<input type="file" multiple accept=".csv,text/csv" data-attf hidden></label>
+      <div class="card pad at-act"><div><b>إرفاق ملفات الحضور</b><div class="muted" style="font-size:13px">نزّلي «تقرير الحضور» من Teams لكل حصة (أو «قائمة الحضور» من المشاركين أثناء الاجتماع، وتُنسب لليوم المفتوح هنا)، واختاري الملفات كلها مرة واحدة، أو مجلدًا كاملًا بمجلدات أيامه (في الكمبيوتر)؛ تُوزَّع على أيامها وحصصها تلقائيًا.
+          أو لقطات شاشة صفحة «الحضور والتحفيز» من منصة مدرستي (صور الحصة الواحدة معًا).</div></div>
+        <label class="btn">اختيار الملفات<input type="file" multiple accept=".csv,text/csv,image/*" data-attf hidden></label>
         ${matchMedia('(pointer:fine)').matches ? '<label class="btn ghost">📁 اختيار مجلد<input type="file" webkitdirectory multiple data-attdir hidden></label>' : ''}</div>
+      ${imgCard(A, iso)}
       <div class="card at-wrap"><table class="at-t at-tt"><thead><tr><th>الحصة</th><th>الصف</th><th>المادة / الوقت</th><th>الحاضرات</th><th>الحالة</th></tr></thead><tbody>
       ${rows.map(({ c, q }) => `<tr class="${c.f ? 'ok' : q ? 'rd' : ''}"><td>ح${ad(c.p)}</td><td>${cls(c.g, c.s)}</td><td>${info(c.f || q?.f)}</td><td>${cnt(c.f || q?.f, c)}</td>
         <td>${c.f ? chipOf(1, c.f.wait ? '✓ أُرسل · قيد النقل' : '✓ أُرسل') + del(c.f) : q ? `<span class="chip s-part">جاهز للإرسال</span>${drop(q)}` : chipOf(0, 'لم يُرفق')}</td></tr>`).join('')}
@@ -677,18 +679,123 @@
     const ps = exp.map((c, i) => c && c.g === g && c.s === s ? i + 1 : 0).filter(Boolean), h = hintOf(file.name);
     const p = ps.includes(h) ? h : ps.find(x => !taken.has(g + '-' + s + '-' + x));
     if (!p) throw new Error(ps.length ? `حصص ${cls(g, s)} اليوم مُرفقة كلها` : `ليس لكِ حصة مع ${cls(g, s)} يوم ${DAYS[wday(iso)]} — افتحي يوم الحصة ثم أرفقي الملف`);
+    return synth(iso, p, LTITLE, who, kids, file.name);
+  }
+  // «تقرير حضور» Teams مصنوع: كل من في kids حاضرة الحصة p كلها (وقت الجرس)، و who المنظمة
+  function synth(iso, p, title, who, kids, fname) {
     const [y, mo, d] = iso.split('-').map(Number), at = hh => { let [H, M] = hh.split(':').map(Number); const ap = H < 12 ? 'AM' : 'PM'; H = H % 12 || 12;
       return `${mo}/${d}/${String(y).slice(2)}, ${H}:${String(M).padStart(2, '0')}:00 ${ap}`; };
     const b = at(BELL[p - 1]), e = at(BELL_END[p - 1]);
-    const txt = ['1. الملخص', `عنوان الاجتماع\t${LTITLE}`, `وقت البدء\t${b}`, `وقت الانتهاء\t${e}`, '',
+    const txt = ['1. الملخص', `عنوان الاجتماع\t${title}`, `وقت البدء\t${b}`, `وقت الانتهاء\t${e}`, '',
       '2. المشاركون', 'الاسم\tوقت الانضمام الأول\tوقت المغادرة الأخير\tمدة الاجتماع\tالبريد الإلكتروني\tالدور',
       ...who.map(n => `${n}\t${b}\t${e}\t40 د\t\tالمنظم`), ...kids.map(n => `${n}\t${b}\t${e}\t40 د\t\tالحضور`)].join('\r\n');
     const out = new Uint8Array(2 + txt.length * 2); out[0] = 0xFF; out[1] = 0xFE; for (let i = 0; i < txt.length; i++) { const c = txt.charCodeAt(i); out[2 + i * 2] = c & 255; out[3 + i * 2] = c >> 8; }
-    return { buf: out.buffer, file: new File([out], file.name.replace(/(\.csv)?$/i, '.csv'), { type: 'text/csv' }) };
+    return { buf: out.buffer, file: new File([out], fname.replace(/(\.csv)?$/i, '.csv'), { type: 'text/csv' }) };
+  }
+  // «صور الحضور من منصة مدرستي» (المستخدمة 2026-11-02): لقطة شاشة صفحة «الحضور والتحفيز» — زر «غائب» الأحمر أو «حاضر» الأخضر في كل سطر.
+  // الصفوف من لون الأزرار، والأسماء بقراءة النص (Tesseract.js العربي، يُحمَّل عند أول صورة) ثم مطابقتها بقائمة الفصل؛
+  // تراجعها المعلمة وتعتمدها، فتُحوَّل إلى «تقرير حضور» مثل قائمة الاجتماع أعلاه (لا يتغير شيء في tools/)
+  const ITITLE = 'حضور منصة مدرستي (صور)', ORD = ['الاولي', 'الثانيه', 'الثالثه', 'الرابعه', 'الخامسه', 'السادسه', 'السابعه'];
+  let IMG = [], OCR = null;   // IMG: [{iso, imgs:[{file,url}], g, s, p, ph, rows, st:{اسم:'h'|'a'}, seen:Set, unk, busy, err}]
+  const isImg = f => /^image\//.test(f.type) || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name);
+  const ocr = () => OCR ||= new Promise((ok, no) => { if (window.Tesseract) return ok();
+    const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+    .then(() => Tesseract.createWorker('ara')).catch(e => { OCR = null; throw new Error('تعذّر تحميل قارئ الصور، تحققي من الاتصال'); });
+  // تشابه حرفي (ثنائيات) — يتسامح مع أخطاء القراءة مثل «القحطاي» و«عامرحوفان»
+  const bi = s => { const t = ' ' + s + ' ', o = []; for (let i = 0; i < t.length - 1; i++) o.push(t.slice(i, i + 2)); return o; };
+  const dice = (a, b) => { if (!a || !b) return 0; const A = bi(a), B = bi(b), m = new Map(); B.forEach(x => m.set(x, (m.get(x) || 0) + 1)); let n = 0;
+    A.forEach(x => { if (m.get(x)) { n++; m.set(x, m.get(x) - 1); } }); return 2 * n / (A.length + B.length); };
+  const sim = (name, line) => { const T = toks(name), L = toks(line); if (!T.length || !L.length) return 0;
+    const t = T.reduce((s, w) => s + Math.max(...L.map(x => dice(w, x))), 0) / T.length;
+    return Math.max(t, dice(norm(name).replace(/ /g, ''), norm(line).replace(/ /g, ''))); };
+  // صورة ← {rows: [{y, a: غائبة؟, txt: نصوص قريبة}], ph: رقم الحصة من «الحصة الثانية» أو 0}
+  async function scanImg(file) {
+    const bm = await createImageBitmap(file).catch(() => { throw new Error('صيغة الصورة غير مدعومة — أرسليها PNG أو JPG'); });
+    // لقطة صغيرة (الصفحة كاملة في صورة واحدة، المستخدمة 2026-11-02: عرض ٥٩٥) تُكبَّر حتى يقرأ Tesseract الخط الصغير
+    const k = Math.min(4, Math.max(1, 1800 / bm.width)), W = Math.round(bm.width * k), H = Math.round(bm.height * k), cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const cx = cv.getContext('2d', { willReadFrequently: true }); cx.imageSmoothingQuality = 'high'; cx.drawImage(bm, 0, 0, W, H); const px = cx.getImageData(0, 0, W, H).data;
+    // أسطر الصورة التي فيها زر أحمر (غائب) أو أخضر (حاضر) مملوء ← شرائط متصلة = سطر طالبة
+    const thr = Math.max(10, W * 0.012), band = [];
+    for (let y = 0; y < H; y++) { let r = 0, g = 0;
+      for (let x = 0, i = y * W * 4; x < W; x++, i += 4) { const R = px[i], G = px[i + 1], B = px[i + 2];
+        if (R > 180 && G < 90 && B < 90) r++; else if (G > 100 && G < 175 && R < 80 && B > 50 && B < 135 && G - R > 55) g++; }
+      band.push(r >= thr ? 'a' : g >= thr ? 'h' : ''); }
+    const R0 = []; for (let y = 0; y < H;) { const k = band[y]; if (!k) { y++; continue; } let e = y; while (e + 1 < H && band[e + 1] === k) e++;
+      if (e - y + 1 >= Math.max(12, H * 0.012)) R0.push({ y: (y + e) / 2, h: e - y + 1, a: k === 'a' }); y = e + 1; }
+    const w = await (await ocr()).recognize(cv), lines = w.data.lines.map(l => ({ y: (l.bbox.y0 + l.bbox.y1) / 2, t: l.text.trim() })).filter(l => l.t);
+    // اسم الطالبة في سطر الزر نفسه (الكمبيوتر) أو فوقه (الجوال)
+    const rows = R0.map((r, i) => ({ y: r.y, a: r.a, txt: lines.filter(l => Math.abs(l.y - r.y) < r.h * 0.9 || (l.y < r.y && l.y > (i ? R0[i - 1].y + R0[i - 1].h / 2 : r.y - 3 * r.h))).map(l => l.t) }));
+    const hl = lines.find(l => /حص/.test(l.t) && (!R0.length || l.y < R0[0].y)), hw = hl && norm(hl.t).split(' ').find(x => !/حص/.test(x) && x.length > 3);
+    let ph = 0; if (hw) { const sc = ORD.map(o => dice(o, hw)), b = Math.max(...sc); if (b >= 0.5) ph = sc.indexOf(b) + 1; }
+    return { rows, ph };
+  }
+  // أسطر مجموعة صور ← أسماء: كل سطر لأقرب اسم (مرة واحدة لكل اسم)، والفصل = فصل أغلب الأسماء
+  function matchRows(A, G) {
+    const all = Object.entries(A.roster).flatMap(([k, L]) => L.map(n => ({ n, k }))), best = (rows, C, min = 0.45, skip) => {
+      const S = []; rows.forEach((r, i) => !skip?.has(i) && C.forEach(c => { const v = Math.max(0, ...r.txt.map(t => sim(c.n, t))); if (v >= min) S.push({ i, c, v }); }));
+      // الاسم مرة واحدة في كل صورة (الصورة التالية قد تكرر أسطرًا من التي قبلها)
+      S.sort((a, b) => b.v - a.v); const ri = new Map(), used = new Set(); S.forEach(x => { const u = x.c.n + '|' + rows[x.i].im; if (!ri.has(x.i) && !used.has(u)) { ri.set(x.i, x.c); used.add(u); } }); return ri; };
+    if (!G.g) { const cnt = {}; best(G.rows, all).forEach(c => cnt[c.k] = (cnt[c.k] || 0) + 1); const k = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0];
+      if (!k) throw new Error('لم يُعرف الفصل من أسماء الطالبات في الصور'); [G.g, G.s] = k.split('-').map(Number); }
+    const L = A.roster[ck(G.g, G.s)] || [], ri = best(G.rows, L.map(n => ({ n }))), st = {}, seen = new Set(); let unk = 0;
+    // جولة ثانية أرخى: الأسطر التي لم تُقرأ ← الأسماء التي لم تُطابق بعد (المستخدمة 2026-11-02: «دانة» في صورة صغيرة)
+    const got = new Set([...ri.values()].map(c => c.n)), rest = L.filter(n => !got.has(n)).map(n => ({ n }));
+    best(G.rows, rest, 0.25, new Set(ri.keys())).forEach((c, i) => ri.set(i, c));
+    // سطر واحد باقٍ واسم واحد باقٍ = هي
+    const lr = G.rows.map((r, i) => i).filter(i => !ri.has(i) && G.rows[i].txt.some(t => toks(t).length >= 2)), ln = L.filter(n => ![...ri.values()].some(c => c.n === n));
+    if (lr.length === 1 && ln.length === 1) ri.set(lr[0], { n: ln[0] });
+    // الصورة التالية قد تكرر أسطرًا من التي قبلها: الاسم الواحد مرة واحدة، والغياب يغلب
+    let gr = 0; G.rows.forEach((r, i) => { const c = ri.get(i); if (!c) { if (r.a) unk++; else gr++; return; } seen.add(c.n); if (r.a) st[c.n] = 'a'; });
+    L.forEach(n => st[n] ||= 'h');
+    // اسم لم يُقرأ وسطره أخضر (جوانا في صورة المستخدمة): إن كانت الأسطر الخضراء غير المقروءة تكفي الأسماء الناقصة فهي حاضرات بلا تنبيه
+    if (!unk && L.filter(n => !seen.has(n)).length <= gr) L.forEach(n => seen.add(n));
+    Object.assign(G, { st, seen, unk });
+  }
+  const iPeriods = (A, G) => { const exp = me(A).days[wday(G.iso)] || []; return exp.map((c, i) => c && c.g === G.g && c.s === G.s ? i + 1 : 0).filter(Boolean); };
+  const iTaken = (A, iso) => new Set([...PEND.filter(x => x.f && x.iso === iso).map(x => x.f), ...(A.days?.[iso]?.[me(A).name] || [])].map(f => f.g + '-' + f.s + '-' + f.p));
+  function iPick(A, G) { const ps = iPeriods(A, G), tk = iTaken(A, G.iso); G.p = ps.includes(G.ph) ? G.ph : ps.find(x => !tk.has(G.g + '-' + G.s + '-' + x)) || ps[0] || 0; }
+  async function readImgs(files) {
+    const A = D.att, iso = (location.hash.match(/^#att\/d\/(\d{4}-\d\d-\d\d)/) || [])[1] || today();
+    // ترتيب اللقطات كما صُوّرت؛ صورة فيها رأس «الحصة …» تبدأ حصة جديدة، والتي بلا رأس تكملة للتي قبلها
+    files = files.slice().sort((a, b) => a.lastModified - b.lastModified || a.name.localeCompare(b.name, 'ar', { numeric: true }));
+    const G = { iso, imgs: files.map(file => ({ file, url: URL.createObjectURL(file) })), rows: [], busy: 1 }, out = []; IMG.push(G); route();
+    try { for (const [j, x] of G.imgs.entries()) { G.msg = `جارٍ قراءة الصورة ${ad(j + 1)} من ${ad(G.imgs.length)}…`; route(); out.push({ x, ...(await scanImg(x.file)) }); } }
+    catch (e) { Object.assign(G, { err: e.message || 'تعذّرت قراءة الصورة', busy: 0 }); route(); return; }
+    const Gs = [];
+    for (const o of out) { if (!Gs.length || (o.ph && Gs[Gs.length - 1].ph)) Gs.push({ iso, imgs: [], rows: [], ph: 0 });
+      const c = Gs[Gs.length - 1]; c.rows.push(...o.rows.map(r => ({ ...r, im: c.imgs.length }))); c.imgs.push(o.x); c.ph ||= o.ph; }
+    for (const g of Gs) try { if (!g.rows.length) throw new Error('لم أجد في الصورة أزرار «حاضر/غائب» — أرسلي لقطة من صفحة «الحضور والتحفيز» في منصة مدرستي'); matchRows(A, g); iPick(A, g); }
+      catch (e) { g.err = e.message; }
+    IMG.splice(IMG.indexOf(G), 1, ...Gs); route();
+  }
+  function imgCard(A, iso) {
+    const L = IMG.filter(G => G.iso === iso); if (!L.length) return '';
+    const opt = (v, cur, t) => `<option value="${v}"${v === cur ? ' selected' : ''}>${t}</option>`;
+    return `<div class="card pad"><b>صور الحضور من منصة مدرستي</b>
+      <div class="muted" style="font-size:13px">قرأتُ الأسماء من الصور؛ تأكدي منها قبل الاعتماد: اضغطي اسم الطالبة لتبديلها بين حاضرة وغائبة. الاسم الأصفر لم يظهر في الصور.</div>
+      ${L.map(G => { const i = IMG.indexOf(G), th = `<div class="at-evs">${G.imgs.map(x => `<div class="at-ev"><img src="${x.url}" alt="صورة الحضور"></div>`).join('')}</div>`;
+        if (G.busy) return `<div class="at-im">${th}<p class="muted">${G.msg || 'جارٍ قراءة الصور…'} (أول مرة قد تأخذ دقيقة)</p></div>`;
+        if (G.err) return `<div class="at-im">${th}<p style="color:#b91c1c">${esc(G.err)}</p><button class="btn sm ghost" data-attimx="${i}">إزالة</button></div>`;
+        const ps = iPeriods(A, G), N = A.roster[ck(G.g, G.s)] || [], ab = N.filter(n => G.st[n] === 'a'), un = N.filter(n => !G.seen.has(n));
+        return `<div class="at-im">${th}
+          <div class="at-sj"><label>الفصل <select data-attimg="${i}">${Object.keys(A.roster).sort().map(k => { const [g, s] = k.split('-').map(Number); return opt(k, ck(G.g, G.s), cls(g, s)); }).join('')}</select></label>
+          <label>الحصة <select data-attimp="${i}">${ps.length ? ps.map(p => opt(String(p), String(G.p), 'ح' + ad(p) + ' · ' + slot(p))).join('') : '<option value="">لا حصة لكِ مع هذا الفصل اليوم</option>'}</select></label></div>
+          <p>${cls(G.g, G.s)}: حاضرات ${ad(N.length - ab.length)} · غائبات ${ad(ab.length)}${un.length ? ` · <b style="color:#a87a00">لم تظهر في الصور ${ad(un.length)}</b>` : ''}${G.unk ? ` · <b style="color:#b91c1c">${ad(G.unk)} غائبة لم أقرأ اسمها — اضغطي اسمها</b>` : ''}</p>
+          <div class="at-sts">${N.map(n => `<button class="at-st ${G.st[n] === 'a' ? 'a' : 'h'}${G.seen.has(n) ? '' : ' u'}" data-attims="${i}|${esc(n)}">${esc(n)} <b>${G.st[n] === 'a' ? 'غائبة' : 'حاضرة'}</b></button>`).join('')}</div>
+          ${ps.length ? '' : `<p style="color:#b91c1c">ليس لكِ حصة مع ${cls(G.g, G.s)} يوم ${DAYS[wday(iso)]} — افتحي يوم الحصة ثم أرفقي الصور</p>`}
+          <div class="at-act" style="justify-content:flex-end"><button class="btn sm ghost" data-attimx="${i}">إلغاء</button><button class="btn" data-attimok="${i}"${ps.length ? '' : ' disabled'}>اعتماد الحصة</button></div></div>`; }).join('')}</div>`;
+  }
+  function imgOk(i) {
+    const A = D.att, G = IMG[i]; if (!G || !G.p) return;
+    const N = A.roster[ck(G.g, G.s)] || [], name = `حضور مدرستي ح${G.p} ${cls(G.g, G.s)}.csv`;
+    if (iTaken(A, G.iso).has(G.g + '-' + G.s + '-' + G.p) && !confirm(`ح${ad(G.p)} مُرفقة من قبل. أُضيفها مرة ثانية؟`)) return;
+    const { buf, file } = synth(G.iso, G.p, ITITLE, [me(A).name], N.filter(n => G.st[n] !== 'a'), name), r = TEAMS.parse(buf);
+    PEND.push({ iso: G.iso, file, f: lessonOf(A, r, file.name) }); IMG.splice(i, 1); G.imgs.forEach(x => URL.revokeObjectURL(x.url)); route();
   }
   // dir = اختيار مجلد كامل (مجلدات الأيام): ما ليس تقرير حضور أو أُرسل من قبل يُتخطّى بصمت (المستخدمة 2026-10-29)
   async function readFiles(files, dir) {
     const A = D.att, sk = { dup: 0, bad: 0 }; let add = 0;
+    if (!dir) { const I = files.filter(isImg); files = files.filter(f => !isImg(f)); if (I.length) { readImgs(I); if (!files.length) return; } }
     if (dir) files = files.filter(f => !/^(desktop\.ini|thumbs\.db)$/i.test(f.name) && !f.name.startsWith('~$') && (/\.csv$/i.test(f.name) || !/\.[a-z0-9]{2,5}$/i.test(f.name)));
     for (let file of files) {
       try {
@@ -739,11 +846,16 @@
     document.addEventListener('change', e => { const t = e.target;
       if (t.matches && t.matches('[data-attf]') && t.files.length) readFiles([...t.files]);
       if (t.matches && t.matches('[data-attdir]') && t.files.length) readFiles([...t.files], 1);
+      if (t.matches && t.matches('[data-attimg]')) { const G = IMG[+t.dataset.attimg]; if (G) { [G.g, G.s] = t.value.split('-').map(Number); matchRows(D.att, G); iPick(D.att, G); route(); } }
+      if (t.matches && t.matches('[data-attimp]')) { const G = IMG[+t.dataset.attimp]; if (G) G.p = +t.value; }
       if (t.matches && t.matches('[data-attday]')) location.hash = (t.dataset.attday || 'att/d/') + t.value;
       if (t.matches && t.matches('[data-atti]') && t.files.length) { const iso = t.dataset.atti, bad = [];
         [...t.files].forEach(file => /^image\//.test(file.type) || /\.(jpe?g|png|heic|heif|webp)$/i.test(file.name) ? EVP.push({ iso, file, url: URL.createObjectURL(file) }) : bad.push(file.name));
         if (bad.length && typeof toast === 'function') toast('تُقبل الصور فقط'); route(); } });
     document.addEventListener('click', e => { const t = e.target.closest ? e.target : null; if (!t) return;
+      const is = t.closest('[data-attims]'); if (is) { const [i, ...n] = is.dataset.attims.split('|'), G = IMG[+i], k = n.join('|'); if (G) { G.st[k] = G.st[k] === 'a' ? 'h' : 'a'; route(); } return; }
+      const io = t.closest('[data-attimok]'); if (io) { imgOk(+io.dataset.attimok); return; }
+      const ix = t.closest('[data-attimx]'); if (ix) { const G = IMG.splice(+ix.dataset.attimx, 1)[0]; G && G.imgs.forEach(x => URL.revokeObjectURL(x.url)); route(); return; }
       const dr = t.closest('[data-attdrop]'); if (dr) { PEND.splice(+dr.dataset.attdrop, 1); route(); return; }
       const ed = t.closest('[data-attevdrop]'); if (ed) { const x = EVP.splice(+ed.dataset.attevdrop, 1)[0]; x && URL.revokeObjectURL(x.url); route(); return; }
       const vs = t.closest('[data-attsel]'); if (vs) { VSEL = vs.dataset.attsel; route();
@@ -794,7 +906,10 @@
     .at-t td.nm{text-align:right;white-space:nowrap;font-weight:600}.at-t td.ok{background:#e7f6ec;color:#166534}.at-t td.miss{background:#fdecec;color:#b91c1c}
     .at-t td i{display:block;font-style:normal;font-size:12px}.at-t td.no{background:transparent}.at-tt tr.ok td{background:#e7f6ec}.at-tt tr.rd td{background:#fff7e6}
     .at-nav{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;margin:10px 0}.at-nav select{font:inherit;padding:6px 10px;border-radius:10px;border:1px solid var(--line,#ccc);background:var(--card,#fff);min-width:200px}
-    .at-act{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0}.at-of{overflow-x:auto}.at-sj{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;font-size:14px}.at-sj input{font:inherit;padding:6px 10px;border-radius:10px;border:1px solid var(--line,#ccc);min-width:200px;margin-right:6px}.at-evs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.at-ev{position:relative}.at-ev img{width:92px;height:92px;object-fit:cover;border-radius:10px;border:1px solid var(--line,#e5e7eb);display:block}.at-ev button{position:absolute;top:4px;left:4px;padding:0 8px;background:#fff}.at-of .of{min-width:760px}`;
+    .at-act{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0}.at-of{overflow-x:auto}.at-sj{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;font-size:14px}.at-sj input{font:inherit;padding:6px 10px;border-radius:10px;border:1px solid var(--line,#ccc);min-width:200px;margin-right:6px}.at-evs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.at-ev{position:relative}.at-ev img{width:92px;height:92px;object-fit:cover;border-radius:10px;border:1px solid var(--line,#e5e7eb);display:block}.at-ev button{position:absolute;top:4px;left:4px;padding:0 8px;background:#fff}.at-of .of{min-width:760px}
+    .at-im{border-top:1px solid var(--line,#e5e7eb);margin-top:12px;padding-top:10px}.at-im .at-ev img{width:120px;height:auto;max-height:160px;object-fit:contain}.at-sj select{font:inherit;padding:6px 10px;border-radius:10px;border:1px solid var(--line,#ccc);margin-right:6px}
+    .at-sts{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px;margin:8px 0}.at-st{font:inherit;font-size:13px;text-align:right;display:flex;justify-content:space-between;gap:8px;padding:7px 10px;border-radius:10px;cursor:pointer;border:1px solid var(--line,#e5e7eb);background:var(--ok-bg,#e3f6ea);color:inherit}
+    .at-st b{flex:none;color:var(--ok,#1e8449)}.at-st.a{background:#fde4e1}.at-st.a b{color:#c0392b}.at-st.u{outline:2px solid #e2b007;outline-offset:-2px}`;
   const OCSS = `.of{color:#111;font-size:12.5px}.of-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.of-h img{height:62px}
     .of-r,.of-l{font-weight:700;font-size:11.5px;line-height:1.7}.of-l span{display:inline-block;min-width:78px}.of-t{text-align:center;margin:4px 0 8px;font-size:15px}
     .of-g{width:100%;border-collapse:collapse;table-layout:fixed}.of-g th,.of-g td{border:1px solid #333;padding:3px 4px;text-align:center;height:22px}
