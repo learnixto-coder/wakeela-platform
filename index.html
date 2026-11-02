@@ -676,6 +676,7 @@ function route() {
     $('#view').innerHTML = v === 'start' || rev ? tHub()
       : v === 'td' && D.td ? tTabs('td') + tdPage()
       : v === 'cp' && D.ct ? tTabs('cp') + teacherCp(a)
+      : v === 'ach' && achOn() ? tTabs('ach') + achPage()
       : v === 'att' && D.att ? tTabs('att') + attPage(location.hash.slice(5))
       : v === 'attr' && D.att ? tTabs('attr') + attPage('all')
       : v === 'abs' && D.att && D.att.mode === 'view' ? tTabs('abs') + attPage('a/' + location.hash.slice(5))
@@ -1328,7 +1329,7 @@ function rvCard(p) {
 // the teacher's «الرئيسية»: the same 4 buttons for every teacher (plan-only accounts have no «ملفاتي»)
 // «جودة شواهد البرامج» (rev) disabled 2026-10-17 at the user's request: no button, #rev → الرئيسية; teacherReview() kept unused
 const tList = () => [D.att && (D.att.mode === 'teacher' ? ['att', 'توثيق حصص التيمز', 'ارفعي ملفات حضور حصصك من Teams'] : D.att.mode === 'view' ? ['att', 'توثيق الحضور في تيمز', 'تقارير حصص المعلمات اليومية: تصفّح وتنزيل'] : ['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات وطباعة تقارير الغياب']), D.att && D.att.mode === 'view' && ['abs', 'حصر الطالبات الغائبات', 'تقرير الغياب على مستوى حصة، والغياب الكامل والجزئي، والحصر التراكمي، وسجل كل طالبة'], D.td && ['td', 'لوحتي', 'مستواكِ مقارنة بالجميع وخطتك الزمنية وما يحتاج منكِ'], ['qa', 'تدقيق الجودة', 'نتيجة تدقيق برامجك وردّك وخطة التحسين'],
-  ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها'], D.ct && ['cp', 'الأنشطة الصفية', 'برامجك في خطة النشاط ورفع صورها'], D.cn && ['cn', 'الأنشطة اللاصفية', 'أسابيع فصلك: بطاقة التنفيذ والشواهد والتقرير'], D.nv && ['lnr', 'تقارير المعلمات في الأنشطة اللاصفية', 'تقارير الأسابيع ومؤشراتها (اطلاع)'], D.ct && ['sig', 'تسجيل توقيعي', 'ارسمي توقيعك مرة واحدة ليظهر في تقارير برامجك'], !D.planOnly && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
+  ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها'], D.ct && ['cp', 'الأنشطة الصفية', 'برامجك في خطة النشاط ورفع صورها'], achOn() && ['ach', 'سجل إنجازي في النشاط', 'برامجك وصورك وأوسمتك وشهاداتك'], D.cn && ['cn', 'الأنشطة اللاصفية', 'أسابيع فصلك: بطاقة التنفيذ والشواهد والتقرير'], D.nv && ['lnr', 'تقارير المعلمات في الأنشطة اللاصفية', 'تقارير الأسابيع ومؤشراتها (اطلاع)'], D.ct && ['sig', 'تسجيل توقيعي', 'ارسمي توقيعك مرة واحدة ليظهر في تقارير برامجك'], !D.planOnly && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
 // «الأنشطة اللاصفية» (2026-10-19): الأسابيع وبطاقة التنفيذ والتقرير المحفوظ في cn.js (يُحمَّل عند أول فتح)؛ teacherCn() القديمة احتياط إن تعذّر تحميله
 // «تقارير المعلمات في الأنشطة اللاصفية» لمعلمة مطّلعة (2026-10-19: سلمى القرني): صفحة رائدة النشاط نفسها (leader.js → LEADER.nr) بطلبات برمز المعلمة
 let nvLoad = null;
@@ -1338,6 +1339,15 @@ function nvPage(a) {
       const j = JSON.parse(await r.text()); if (j.ok) return j; last = j.error; if (/غير مصرح/.test(last)) break; } catch (e) { last = e.message; } await new Promise(o => setTimeout(o, 800)); }
     throw new Error(last); });
   nvLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'leader.js?v=' + Date.now(); s.onload = ok; s.onerror = no; document.head.appendChild(s); }).then(() => route(), () => { nvLoad = null; });
+  return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
+}
+// «سجل إنجازي في النشاط» (2026-11-02): site/ach.js يُحمَّل عند أول فتح؛ لابتسام الشهري فقط حتى الآن
+const achOn = () => !!D?.ct?.items?.some(it => /ابتسام الشهري/.test(it.name));
+let achLoad = null;
+function achPage() {
+  if (window.ACH) return ACH.render();
+  achLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'ach.js?v=20261102'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+    .then(() => route(), () => { achLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
 // «لوحتي» (2026-10-19): td.js يُحمَّل عند أول فتح؛ البيانات D.td من tools/td.js
