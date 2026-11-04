@@ -26,7 +26,8 @@
         const name = get(o, 'الاسم', 'Name'), role = get(o, 'الدور', 'Role'), mail = get(o, 'البريد الإلكتروني', 'Email').toLowerCase();
         if (sec === 2) people.set(mail || name, { name, mail, role, first: when(get(o, 'وقت الانضمام الأول', 'First Join')), last: when(get(o, 'وقت المغادرة الأخير', 'Last Leave')),
           dur: secs(get(o, 'مدة الاجتماع', 'In-Meeting Duration')), parts: 0 });
-        else { const p = people.get(mail || name); if (p) { if (!p.parts) p.dur = 0; p.parts++; p.dur += secs(get(o, 'المدة', 'Duration')); } }
+        else { const p = people.get(mail || name); if (p) { if (!p.parts) p.dur = 0; p.parts++; p.dur += secs(get(o, 'المدة', 'Duration'));
+          const a = when(get(o, 'وقت الانضمام', 'Join Time')), b = when(get(o, 'وقت المغادرة', 'Leave Time')); if (a && b) (p.iv ||= []).push([+a, +b]); } }
       }
     }
     const start = when(sum['وقت البدء'] || sum['Start time']), end = when(sum['وقت الانتهاء'] || sum['End time']);
@@ -38,7 +39,10 @@
   // التصنيف: حاضرة / متأخرة (دخلت بعد البداية بأكثر من LATE دقائق) / دخول لحظات (أقل من MIN دقائق كلها) — قيم قابلة للتعديل
   function classify(R, opt = {}) { const LATE = (opt.late ?? 10) * 60, MIN = (opt.min ?? 5) * 60;
     return R.students.map(p => ({ ...p, kind: p.dur < MIN ? 'flash' : p.first && R.start && (p.first - R.start) / 1000 > LATE ? 'late' : 'present' })); }
-  root.TEAMS = { parse, classify };
+  // اجتماع يغطي حصتين (2026-11-04): ربع الطالبات على الأقل حضرن ٦٥ دقيقة فأكثر. لا تُؤخذ مدة الاجتماع: الحصة العادية قد تطول إلى ٩٠ دقيقة
+  // بانتظار الطالبات قبل المعلمة أو بقاء طالبة بعدها، ووأغلب الحضور فيها ٤٠–٥٠ دقيقة
+  function long(R) { const d = R.students.filter(p => p.dur >= 300).map(p => p.dur).sort((a, b) => a - b); return d.length > 0 && d[Math.floor(d.length * .75)] >= 65 * 60; }
+  root.TEAMS = { parse, classify, long };
 })(typeof window !== 'undefined' ? window : globalThis);
 /* «حضور حصص التيمز» (2026-10-26): المعلمة ترفع ملفات «تقرير الحضور» من Teams، ومسؤولة الغياب (أ. سالمة العماري) والوكيلة
    تتابعان الاكتمال وتطبعان «تقرير الغياب على مستوى حصة» لكل فصل (نموذج الوزارة). تُحمَّل عند أول فتح مثل cn.js.
@@ -117,8 +121,16 @@
       .map(f => { const d = new Date(f.tm); return d.getHours() * 60 + d.getMinutes() - MID[f.p - 1]; }).sort((a, b) => a - b);
     const lag = dl.length ? dl[dl.length >> 1] : 0;
     if (lag >= 10 && lag <= 90) pass(exp, L, lag);
+    // حصتان متتاليتان لفصل واحد وملف واحد يغطيهما بالوقت (المستخدمة 2026-11-04): p2 = الحصة الثانية. ملف ثانٍ للفصل يلغيه تلقائيًا
+    L.forEach(f => { f.p2 = 0; });
+    exp.forEach((c, i) => { const n = exp[i + 1]; if (!c || !n || ck(c.g, c.s) !== ck(n.g, n.s)) return;
+      const on = L.filter(f => ck(f.g, f.s) === ck(c.g, c.s) && (f.p === i + 1 || f.p === i + 2));
+      if (on.length === 1 && on[0].h && !on[0].p2) { on[0].p = i + 1; on[0].p2 = i + 2; } });
     return L;
   }
+  // ملف يغطي حصتين ← حصتان، لكل منهما حضورها؛ وغيره كما هو
+  const expand = f => f.p2 && f.h ? f.h.map((x, i) => ({ ...f, ...x, p: i ? f.p2 : f.p, part: i + 1, p2: 0, h: 0 })) : [f];
+  const partOf = (f, p) => expand(f).find(x => x.p === p) || f;
   function pass(exp, L, lag) {
     const by = {};
     L.forEach(f => { f.q = lag && f.tm ? periodAt(new Date(f.tm - lag * 60000)) || f.p0 : f.p0; f.p = f.ph || f.q; (by[ck(f.g, f.s)] ||= []).push(f); });
@@ -137,6 +149,20 @@
       }
     }
   }
+  // حضور كل حصة من ملف يغطي حصتين: الفاصل منتصف المدة بين وسيط دخول الطالبات ووسيط خروجهن؛ الطالبة حاضرة في الحصة إن قضت فيها ٥ دقائق فأكثر،
+  // ومتأخرة في الثانية إن دخلتها بعد بدايتها بأكثر من ١٠ دقائق
+  function halves(R, C) {
+    if (!TEAMS.long(R)) return null;
+    const M = C.filter(p => p.dur >= 300 && p.iv), med = v => v.sort((a, b) => a - b)[v.length >> 1]; if (!M.length) return null;
+    const cut = (med(M.map(p => Math.min(...p.iv.map(x => x[0])))) + med(M.map(p => Math.max(...p.iv.map(x => x[1]))))) / 2;
+    return [[-Infinity, cut], [cut, Infinity]].map(([a, b], i) => { const P = { present: [], late: [], flash: [] };
+      C.filter(p => p.iv).forEach(p => { const I = p.iv.map(([x, y]) => [Math.max(x, a), Math.min(y, b)]).filter(([x, y]) => y > x), sec = I.reduce((s, [x, y]) => s + (y - x) / 1000, 0); if (!sec) return;
+        const in0 = Math.min(...I.map(x => x[0]));
+        if (sec < 300) P.flash.push({ n: p.name, d: Math.round(sec) + 'ث' });
+        else if (i ? in0 - cut > 600000 : p.kind === 'late') P.late.push({ n: p.name, t: hm(new Date(in0)) });
+        else P.present.push(p.name); });
+      return P; });
+  }
   function lessonOf(A, r, file) {
     const R = { ...r, start: r.start && new Date(r.start), end: r.end && new Date(r.end), students: (r.students || []).map(x => ({ ...x, first: x.first && new Date(x.first) })) };
     const C = TEAMS.classify(R), iso = R.start ? isoOf(R.start) : '';
@@ -145,7 +171,7 @@
     const tm = R.start ? (R.end && R.end > R.start ? (+R.start + +R.end) / 2 : +R.start + 20 * 60000) : 0, p = tm ? periodAt(new Date(tm)) : 0;
     return { iso, p, p0: p, t0: R.start ? R.start.getTime() : 0, tm, g, s, subj: R.title || '', file, start: hm(R.start), end: hm(R.end),
       present: C.filter(x => x.kind === 'present').map(x => x.name), late: C.filter(x => x.kind === 'late').map(x => ({ n: x.name, t: hm(x.first) })),
-      flash: C.filter(x => x.kind === 'flash').map(x => ({ n: x.name, d: Math.round(x.dur) + 'ث' })) };
+      flash: C.filter(x => x.kind === 'flash').map(x => ({ n: x.name, d: Math.round(x.dur) + 'ث' })), h: halves(R, C) };
   }
   // مرة واحدة لكل تحميل: كل ملف مقروء ← حصة
   function ready(A) {
@@ -165,7 +191,7 @@
   // عدد الحضور اليدوي للمعلمة في اليوم، وتنبيه إن زاد في حصة عن ربع غائباتها في التيمز
   function manStat(A, iso, nm) {
     let n = 0, flag = false;
-    ((((A.days || {})[iso] || {})[nm]) || []).forEach(f => { if (!f.m || !f.m.length || !f.g) return;
+    ((((A.days || {})[iso] || {})[nm]) || []).flatMap(expand).forEach(f => { if (!f.m || !f.m.length || !f.g) return;
       const L = lesson(A, f), k = L.man.length; n += k; if (k && k > (L.absent.length + k) / 4) flag = true; });
     return { n, flag };
   }
@@ -185,7 +211,7 @@
   function dayModel(A, iso) {
     const w = wday(iso), up = (A.days || {})[iso] || {};
     const T = A.tt.teachers.filter(t => t.name).map(t => {
-      const exp = (t.days[w] || []).map((c, i) => c && { p: i + 1, ...c }).filter(Boolean), got = up[t.name] || [], used = new Set();
+      const exp = (t.days[w] || []).map((c, i) => c && { p: i + 1, ...c }).filter(Boolean), got = (up[t.name] || []).flatMap(expand), used = new Set();
       const pick = e => { const x = got.find(x => !used.has(x) && x.p === e.p && x.g === e.g && x.s === e.s) || got.find(x => !used.has(x) && x.p === e.p)
         || got.find(x => !used.has(x) && x.g === e.g && x.s === e.s && !exp.some(o => o.p === x.p)); if (x) used.add(x); return x; };
       const cells = exp.map(e => ({ ...e, f: pick(e) })), extra = got.filter(x => !used.has(x));
@@ -584,10 +610,10 @@
     const iso = sel && /^\d{4}-\d\d-\d\d$/.test(sel) ? sel : days[0] || today();
     const P = PEND.filter(x => x.iso === iso), used = new Set(); assign(me(A), iso, [...((A.days || {})[iso] || {})[me(A).name] || [], ...P.map(x => x.f)]);
     const M = dayModel(A, iso), r = M.T[0] || { cells: [], exp: [], extra: [], sent: 0 };
-    const pend = c => { const q = P.find(x => !used.has(x) && x.f.p === c.p) || P.find(x => !used.has(x) && x.f.g === c.g && x.f.s === c.s && !r.cells.some(o => o.p === x.f.p)); if (q) used.add(q); return q; };
-    const rows = r.cells.map(c => ({ c, q: c.f ? null : pend(c) })), extraP = P.filter(x => !used.has(x)), errs = PEND.filter(x => x.err);
+    const pend = c => { const q = P.find(x => x.f.p2 === c.p) || P.find(x => !used.has(x) && x.f.p === c.p) || P.find(x => !used.has(x) && x.f.g === c.g && x.f.s === c.s && !r.cells.some(o => o.p === x.f.p)); if (q) used.add(q); return q; };
+    const rows = r.cells.map(c => { const q = c.f ? null : pend(c); return { c, q, qf: q && partOf(q.f, c.p) }; }), extraP = P.filter(x => !used.has(x)), errs = PEND.filter(x => x.err);
     // يُعرض وقت الحصة الرسمي (المستخدمة 2026-10-26: وقت الاجتماع تقريبي)؛ وقت الاجتماع فقط لملف لم تُعرف حصته
-    const info = f => f ? `${esc(f.subj || '')}<br><span class="muted">${f.p ? slot(f.p) : esc(f.start || '') + (f.end ? ' – ' + esc(f.end) : '')}</span>` : '<span class="muted">—</span>';
+    const info = f => f ? `${esc(f.subj || '')}<br><span class="muted">${f.p ? slot(f.p) : esc(f.start || '') + (f.end ? ' – ' + esc(f.end) : '')}${f.part ? '<br>ملف واحد للحصتين' : ''}</span>` : '<span class="muted">—</span>';
     const cnt = (f, c) => { if (!f || !c.g) return '<span class="muted">—</span>'; const L = lesson(A, { ...f, g: c.g, s: c.s }); return `${ad(L.here.length)} من ${ad(L.names.length)}${L.man.length ? ` <span class="chip s-man">منها ي ${ad(L.man.length)}</span>` : ''}`; };
     const drop = q => ` <button class="btn sm ghost" data-attdrop="${PEND.indexOf(q)}">إزالة</button>`;
     const del = f => ` <button class="btn sm ghost" data-attdel="${esc(iso)}|${esc(f.file)}" title="حذف الملف المرسل بالخطأ">حذف</button>`;
@@ -599,12 +625,12 @@
       ${dayNav(days, iso)}
       ${pdfCard(A, iso)}
       <div class="card pad at-act"><div><b>إرفاق ملفات الحضور</b><div class="muted" style="font-size:13px">نزّلي «تقرير الحضور» من Teams لكل حصة (أو «قائمة الحضور» من المشاركين أثناء الاجتماع، وتُنسب لليوم المفتوح هنا)، واختاري الملفات كلها مرة واحدة، أو مجلدًا كاملًا بمجلدات أيامه (في الكمبيوتر)؛ تُوزَّع على أيامها وحصصها تلقائيًا.
-          أو لقطات شاشة صفحة «الحضور والتحفيز» من منصة مدرستي (صور الحصة الواحدة معًا).</div></div>
+          أو لقطات شاشة صفحة «الحضور والتحفيز» من منصة مدرستي (صور الحصة الواحدة معًا). حصتان متتاليتان للفصل نفسه في اجتماع واحد: يكفي ملف واحد، ويُحسب حضور كل حصة من وقتها.</div></div>
         <label class="btn">اختيار الملفات<input type="file" multiple accept=".csv,text/csv,image/*" data-attf hidden></label>
         ${matchMedia('(pointer:fine)').matches ? '<label class="btn ghost">📁 اختيار مجلد<input type="file" webkitdirectory multiple data-attdir hidden></label>' : ''}</div>
       ${imgCard(A, iso)}
       <div class="card at-wrap"><table class="at-t at-tt"><thead><tr><th>الحصة</th><th>الصف</th><th>المادة / الوقت</th><th>الحاضرات</th><th>الحالة</th></tr></thead><tbody>
-      ${rows.map(({ c, q }) => `<tr class="${c.f ? 'ok' : q ? 'rd' : ''}"><td>ح${ad(c.p)}</td><td>${cls(c.g, c.s)}</td><td>${info(c.f || q?.f)}</td><td>${cnt(c.f || q?.f, c)}</td>
+      ${rows.map(({ c, q, qf }) => `<tr class="${c.f ? 'ok' : q ? 'rd' : ''}"><td>ح${ad(c.p)}</td><td>${cls(c.g, c.s)}</td><td>${info(c.f || qf)}</td><td>${cnt(c.f || qf, c)}</td>
         <td>${c.f ? chipOf(1, c.f.wait ? '✓ أُرسل · قيد النقل' : '✓ أُرسل') + del(c.f) : q ? `<span class="chip s-part">جاهز للإرسال</span>${drop(q)}` : chipOf(0, 'لم يُرفق')}</td></tr>`).join('')}
       ${r.extra.map(f => `<tr class="ok"><td>${f.p ? 'ح' + ad(f.p) : '—'}</td><td>${f.g ? cls(f.g, f.s) : '؟'}</td><td>${info(f)}</td><td>${cnt(f, f)}</td><td>${chipOf(1, f.wait ? '✓ أُرسل · قيد النقل' : '✓ أُرسل')} <span class="chip s-part">${dup(f) ? 'ملف مكرر' : 'خارج جدولك'}</span>${del(f)}</td></tr>`).join('')}
       ${extraP.map(q => `<tr class="rd"><td>${q.f.p ? 'ح' + ad(q.f.p) : '—'}</td><td>${q.f.g ? cls(q.f.g, q.f.s) : 'لم يُعرف الفصل'}</td><td>${info(q.f)}</td><td>${cnt(q.f, q.f)}</td>
@@ -756,7 +782,7 @@
     Object.assign(G, { st, seen, unk });
   }
   const iPeriods = (A, G) => { const exp = me(A).days[wday(G.iso)] || []; return exp.map((c, i) => c && c.g === G.g && c.s === G.s ? i + 1 : 0).filter(Boolean); };
-  const iTaken = (A, iso) => new Set([...PEND.filter(x => x.f && x.iso === iso).map(x => x.f), ...(A.days?.[iso]?.[me(A).name] || [])].map(f => f.g + '-' + f.s + '-' + f.p));
+  const iTaken = (A, iso) => new Set([...PEND.filter(x => x.f && x.iso === iso).map(x => x.f), ...(A.days?.[iso]?.[me(A).name] || [])].flatMap(expand).map(f => f.g + '-' + f.s + '-' + f.p));
   function iPick(A, G) { const ps = iPeriods(A, G), tk = iTaken(A, G.iso); G.p = ps.includes(G.ph) ? G.ph : ps.find(x => !tk.has(G.g + '-' + G.s + '-' + x)) || ps[0] || 0; }
   async function readImgs(files) {
     const A = D.att, iso = (location.hash.match(/^#att\/d\/(\d{4}-\d\d-\d\d)/) || [])[1] || today();
@@ -808,7 +834,7 @@
         if (file.size > 2 * 1024 * 1024) throw new Error('الملف أكبر من المسموح');
         let buf = await file.arrayBuffer(), r = TEAMS.parse(buf), LS;
         if (!r.start && (LS = listOf(buf))) { const day = (location.hash.match(/^#att\/d\/(\d{4}-\d\d-\d\d)/) || [])[1] || today();
-          const taken = new Set([...PEND.filter(x => x.f && x.iso === day).map(x => x.f), ...(A.days?.[day]?.[me(A).name] || [])].map(f => f.g + '-' + f.s + '-' + f.p));
+          const taken = new Set([...PEND.filter(x => x.f && x.iso === day).map(x => x.f), ...(A.days?.[day]?.[me(A).name] || [])].flatMap(expand).map(f => f.g + '-' + f.s + '-' + f.p));
           ({ buf, file } = fromList(A, LS, file, day, taken)); r = TEAMS.parse(buf); }
         if (!r.start || !r.students.length) throw Object.assign(new Error('الملف ليس «تقرير حضور» من Teams'), { k: 'bad' });
         const iso = isoOf(r.start), nm = me(A).name;
@@ -836,7 +862,7 @@
   }
   async function remove(iso, file, btn) {
     const A = D.att, nm = me(A).name, b = ((A.days || {})[iso] || {})[nm] || [], f = b.find(x => x.file === file); if (!f) return;
-    if (!confirm(`حذف ملف «${f.subj || file}»${f.p ? ' (ح' + ad(f.p) + ')' : ''}؟
+    if (!confirm(`حذف ملف «${f.subj || file}»${f.p ? ' (ح' + ad(f.p) + (f.p2 ? ' وح' + ad(f.p2) : '') + ')' : ''}؟
 يُنقل من مجلدك إلى «محذوف» ولا يدخل في تقارير الغياب، ويمكنك إرفاق الملف الصحيح بعده.`)) return;
     btn.disabled = true;
     try {
@@ -980,7 +1006,7 @@
   // كل الملف: صفحات الحصص بترتيبها ثم الشواهد. imgs = روابط الصور (file:// على الجهاز)
   function dayDoc(A, nm, iso, { logo = '', imgs = [], subj = '' } = {}) {
     ready(A);
-    const L = (((A.days || {})[iso] || {})[nm] || []).filter(f => f.g).slice().sort((a, b) => (a.p || 9) - (b.p || 9) || (a.t0 || 0) - (b.t0 || 0));
+    const L = (((A.days || {})[iso] || {})[nm] || []).filter(f => f.g).flatMap(expand).sort((a, b) => (a.p || 9) - (b.p || 9) || (a.t0 || 0) - (b.t0 || 0));
     const ev = imgs.length ? `<section class="tp"><div class="tp-h"><div class="tp-r">المملكة العربية السعودية<br>وزارة التعليم<br>إدارة التعليم بمنطقة عسير<br>المتوسطة الحادية والعشرون</div>${logo ? `<img src="${logo}" alt="">` : ''}</div>
       <h1>شواهد توثيق الحصص — ${DAYS[wday(iso)]} ${hij(iso)}</h1><div class="tp-bar">المعلمة: ${H(short(nm))}</div>
       <div class="tp-ims">${imgs.map(u => `<img src="${H(u)}" alt="">`).join('')}</div></section>` : '';
