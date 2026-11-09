@@ -665,7 +665,7 @@ function route() {
   if (D.kind === 'plans') { const el = $('#view'); el.innerHTML = plansW(); bind(el); return; }
   if (D.kind === 'leader') {   // بوابة رائدة النشاط (leader.js): الرئيسية · المعلمة · الفصل · المجال · كل البرامج · لوحة المؤشرات
     const [lv, la] = (location.hash.slice(1) || 'start').split('/'), el = $('#view');
-    el.innerHTML = LEADER.render(D, lv, la); bind(el); window.scrollTo(0, 0); return; }
+    el.innerHTML = lv === 'share' && D.shareK ? homeBar('مشاركات الطالبات وأولياء الأمور') + sharePage(la) : LEADER.render(D, lv, la); bind(el); window.scrollTo(0, 0); return; }
   const [v, a] = (location.hash.slice(1) || 'start').split('/');
   if (D.kind === 'teacher') {   // a teacher sees only her own page(s)
     const one = D.teachers.length === 1, i = one ? 0 : v === 't' && D.teachers[+a] ? +a : -1;
@@ -677,6 +677,7 @@ function route() {
       : v === 'td' && D.td ? tTabs('td') + tdPage()
       : v === 'cp' && D.ct ? tTabs('cp') + teacherCp(a)
       : v === 'ach' && achOn() ? tTabs('ach') + achPage()
+      : v === 'share' && D.shareK ? tTabs('share') + sharePage(a)
       : v === 'att' && D.att ? tTabs('att') + attPage(location.hash.slice(5))
       : v === 'attr' && D.att ? tTabs('attr') + attPage('all')
       : v === 'abs' && D.att && D.att.mode === 'view' ? tTabs('abs') + attPage('a/' + location.hash.slice(5))
@@ -694,13 +695,15 @@ function route() {
   const top = TAB_OF[v] || v;
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === top));
   const el = $('#view');
-  el.innerHTML = ({ me, dash, w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folders(+a),
+  el.innerHTML = ({ me, dash, share: () => D.shareK ? sharePage(a) : '<div class="empty card">لا توجد بيانات بعد</div>', w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folders(+a),
     plan: planW, ctw: wHub, arc: () => actRepW('c', a), arn: () => actRepW('n', a),plans: plansW, timeline: () => plansW('timeline'), att: () => D.att ? attPage(location.hash.slice(5)) : '<div class="empty card">لا توجد بيانات بعد</div>', abs: () => D.att ? attPage('a/' + location.hash.slice(5)) : '<div class="empty card">لا توجد بيانات بعد</div>', attr: () => D.att ? attPage('all') : '<div class="empty card">لا توجد بيانات بعد</div>', qa: () => qaW(a), quality: qualityW, start: wHub }[v] || me)();
   if (v !== 'start') { const h = (D.ro ? MUD_G.flatMap(g => g[1]) : HUB).find(x => x[0] === (SUB_OF[v] || (v === 'w' ? 'me' : v))); el.insertAdjacentHTML('afterbegin', homeBar(h ? h[1] : '')); }
   bind(el); window.scrollTo(0, 0);
 }
 // «الرئيسية»: big buttons instead of a tab bar (the user's choice, to keep the وكيلة and the teacher focused); every page gets a «الرئيسية» button
-const HUB_G = [['الخطط والبرامج', [['plans', 'الخطة التشغيلية وخطة التحسين', 'الخطتان وبطاقات البرامج ومؤشراتها'], ['timeline', 'الخطة الزمنية', 'مواعيد تنفيذ البرامج'],
+// «مشاركات الطالبات وأولياء الأمور» (2026-11-09): أول زر في الرئيسية (share.js)
+const HUB_G = [['المشاركة المجتمعية', [['share', 'مشاركات الطالبات وأولياء الأمور', 'اليوم الوطني · يوم المعلم · درع الوطن']]],
+  ['الخطط والبرامج', [['plans', 'الخطة التشغيلية وخطة التحسين', 'الخطتان وبطاقات البرامج ومؤشراتها'], ['timeline', 'الخطة الزمنية', 'مواعيد تنفيذ البرامج'],
     ['plan', 'برامج الخطة 1448هـ', 'شواهد البرامج ومجلداتها'], ['qa', 'تدقيق الجودة', 'تدقيق البرامج ونتائجها'], ['quality', 'لوحة مؤشرات الجودة', 'جودة صور الشواهد ومحتواها لكل برنامج ومعلمة']]],   // «برامج النشاط الطلابي الصفية» (ctw) أُزيل: كل ما يخص النشاط لرائد النشاط وحده (طلب المستخدمة 2026-10-18)
   ['ملفات الوكيلة', [['me', 'مجلدات وكيلة المدرسة', 'أقسام ملفاتك وما فيها']]],
   // النشاط الطلابي لرائد النشاط وحده؛ الوكيلة تطّلع على التقارير فقط (طلب المستخدمة 2026-10-18)
@@ -713,14 +716,16 @@ const HUB_G = [['الخطط والبرامج', [['plans', 'الخطة التشغ
   ['الإداريات', [['admins', 'الإداريات', 'مبادرات الإداريات']]]];
 const HUB = HUB_G.flatMap(g => g[1]);
 // «حساب مديرة المدرسة» (2026-10-29): اطلاع فقط — بلا تدقيق الجودة ولا التنبيهات ولا الإداريات؛ الحضور والغياب كالموجهة الطلابية
-const MUD_G = [['الخطط والبرامج', [['plans', 'الخطة التشغيلية وخطة التحسين', 'الخطتان وبطاقات البرامج ومؤشراتها'], ['timeline', 'الخطة الزمنية', 'مواعيد تنفيذ البرامج'],
+const MUD_G = [['المشاركة المجتمعية', [['share', 'مشاركات الطالبات وأولياء الأمور', 'اليوم الوطني · يوم المعلم · درع الوطن']]],
+  ['الخطط والبرامج', [['plans', 'الخطة التشغيلية وخطة التحسين', 'الخطتان وبطاقات البرامج ومؤشراتها'], ['timeline', 'الخطة الزمنية', 'مواعيد تنفيذ البرامج'],
     ['plan', 'برامج الخطة 1448هـ', 'شواهد البرامج ومجلداتها']]],
   ['ملفات الوكيلة', [['me', 'مجلدات وكيلة المدرسة', 'أقسام ملفات الوكيلة وما فيها']]],
   ['المعلمات', [['home', 'متابعة المعلمات', 'لوحة التتبع والإنجاز حسب المجلد'], ['teachers', 'قائمة المعلمات', 'صفحة كل معلمة'], ['folders', 'المجلدات', 'محتوى ملفات المعلمات'],
     ['dash', 'لوحة المؤشرات', 'مؤشرات إنجاز المعلمات']]],
   ['النشاط الطلابي (اطلاع)', [['arc', 'تقارير الأنشطة الصفية', 'ملف PDF واحد يجمع كل التقارير'], ['arn', 'تقارير الأنشطة اللاصفية', 'تقارير الفترات حسب الأسبوع']]],
   ['الحضور والغياب', [['att', 'توثيق الحضور في تيمز', 'تقارير حصص المعلمات اليومية: تصفّح وتنزيل'], ['abs', 'حصر الطالبات الغائبات', 'تقرير الغياب على مستوى حصة، والغياب الكامل والجزئي، والحصر التراكمي، وسجل كل طالبة']]]];
-const MUD_OK = new Set(['plans', 'timeline', 'plan', 'me', 'w', 'home', 'board', 'teachers', 't', 'folders', 'f', 'dash', 'arc', 'arn', 'att', 'abs']);
+const MUD_OK = new Set(['plans', 'timeline', 'plan', 'me', 'w', 'home', 'board', 'teachers', 't', 'folders', 'f', 'dash', 'arc', 'arn', 'att', 'abs', 'share']);
+const shG = G => G.filter(([, gl]) => gl[0][0] !== 'share' || D.shareK);   // لمن عنده المفتاح فقط
 const hubBtns = L => `${L.map(([g, l, d]) => `<button class="hub-b" data-go="${g}"><span class="sec-ic">${['me', 'mine', 'home', 'admins'].includes(g) ? secIcon('') : planIcon}</span><span><span class="hub-t">${l}</span><span class="hub-s">${d}</span></span></button>`).join('')}`;
 const hub = (t, L, G) => `<h2 style="margin:4px 0 14px">${t}</h2>${G ? G.map(([gt, gl]) => `<h3 class="hub-h">${gt}</h3><div class="hub">${hubBtns(gl)}</div>`).join('') : `<div class="hub">${hubBtns(L)}</div>`}`;
 const homeBar = t => `<div class="homebar"><button class="btn sm" data-go="start">→ الرئيسية</button>${t ? `<b>${t}</b>` : ''}</div>`;
@@ -1331,7 +1336,7 @@ function rvCard(p) {
 }
 // the teacher's «الرئيسية»: the same 4 buttons for every teacher (plan-only accounts have no «ملفاتي»)
 // «جودة شواهد البرامج» (rev) disabled 2026-10-17 at the user's request: no button, #rev → الرئيسية; teacherReview() kept unused
-const tList = () => [D.att && (D.att.mode === 'teacher' ? ['att', 'توثيق حصص التيمز', 'ارفعي ملفات حضور حصصك من Teams'] : D.att.mode === 'view' ? ['att', 'توثيق الحضور في تيمز', 'تقارير حصص المعلمات اليومية: تصفّح وتنزيل'] : ['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات وطباعة تقارير الغياب']), D.att && D.att.mode === 'view' && ['abs', 'حصر الطالبات الغائبات', 'تقرير الغياب على مستوى حصة، والغياب الكامل والجزئي، والحصر التراكمي، وسجل كل طالبة'], D.td && ['td', 'لوحتي', 'مستواكِ مقارنة بالجميع وخطتك الزمنية وما يحتاج منكِ'], ['qa', 'تدقيق الجودة', 'نتيجة تدقيق برامجك وردّك وخطة التحسين'],
+const tList = () => [D.shareK && ['share', 'مشاركات الطالبات وأولياء الأمور', 'اليوم الوطني · يوم المعلم · درع الوطن'], D.att && (D.att.mode === 'teacher' ? ['att', 'توثيق حصص التيمز', 'ارفعي ملفات حضور حصصك من Teams'] : D.att.mode === 'view' ? ['att', 'توثيق الحضور في تيمز', 'تقارير حصص المعلمات اليومية: تصفّح وتنزيل'] : ['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات وطباعة تقارير الغياب']), D.att && D.att.mode === 'view' && ['abs', 'حصر الطالبات الغائبات', 'تقرير الغياب على مستوى حصة، والغياب الكامل والجزئي، والحصر التراكمي، وسجل كل طالبة'], D.td && ['td', 'لوحتي', 'مستواكِ مقارنة بالجميع وخطتك الزمنية وما يحتاج منكِ'], ['qa', 'تدقيق الجودة', 'نتيجة تدقيق برامجك وردّك وخطة التحسين'],
   ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها'], D.ct && ['cp', 'الأنشطة الصفية', 'برامجك في خطة النشاط ورفع صورها'], achOn() && ['ach', 'سجل إنجازي في النشاط', 'برامجك وصورك وأوسمتك وشهاداتك'], D.cn && ['cn', 'الأنشطة اللاصفية', 'أسابيع فصلك: بطاقة التنفيذ والشواهد والتقرير'], D.nv && ['lnr', 'تقارير المعلمات في الأنشطة اللاصفية', 'تقارير الأسابيع ومؤشراتها (اطلاع)'], D.ct && ['sig', 'تسجيل توقيعي', 'ارسمي توقيعك مرة واحدة ليظهر في تقارير برامجك'], !D.planOnly && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
 // «الأنشطة اللاصفية» (2026-10-19): الأسابيع وبطاقة التنفيذ والتقرير المحفوظ في cn.js (يُحمَّل عند أول فتح)؛ teacherCn() القديمة احتياط إن تعذّر تحميله
 // «تقارير المعلمات في الأنشطة اللاصفية» لمعلمة مطّلعة (2026-10-19: سلمى القرني): صفحة رائدة النشاط نفسها (leader.js → LEADER.nr) بطلبات برمز المعلمة
@@ -1353,6 +1358,14 @@ function achPage() {
   if (window.ACH) return ACH.render();
   achLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'ach.js?v=20261102'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { achLoad = null; });
+  return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
+}
+// «مشاركات الطالبات وأولياء الأمور» (2026-11-09): site/share.js يُحمَّل عند أول فتح؛ رسائل المناسبات مشفرة في data/oc.bin بالمفتاح D.shareK
+let shareLoad = null;
+function sharePage(a) {
+  if (window.SHARE) return SHARE.render(D, a);
+  shareLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'share.js?v=20261109'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+    .then(() => route(), () => { shareLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
 // «لوحتي» (2026-10-19): td.js يُحمَّل عند أول فتح؛ البيانات D.td من tools/td.js
@@ -1734,9 +1747,9 @@ function wHub() {
     admins: D.admins?.length ? cnt(D.admins.length, 'إدارية واحدة', 'إداريتان', 'إداريات', 'إدارية') : '',
     arc: D.actRep?.cls ? `${arN(D.actRep.cls.items.length)}` : '', arn: D.actRep ? arN(D.actRep.non.reduce((s, w) => s + w.files.length, 0)) : '' };
   if (D.ro) return thHero('أهلًا وسهلًا بكِ، الأستاذة ' + esc(short(D.me || 'أمينة آل مشيط')), 'مديرة المدرسة. بين يديكِ صورة شاملة ومتجددة لأعمال المدرسة: مجلدات الوكيلة، وملفات المعلمات، وتقارير النشاط الطلابي، وتوثيق الحضور والغياب.')
-    + MUD_G.map(([gt, gl], gi) => `<h3 class="hub-h">${gt}</h3><div class="th-hub w">${gl.map(([g, l, d]) => thBtn(g, l, d, g === 'att' || g === 'abs' ? '' : meta[g], gi)).join('')}</div>`).join('');
+    + shG(MUD_G).map(([gt, gl], gi) => `<h3 class="hub-h">${gt}</h3><div class="th-hub w">${gl.map(([g, l, d]) => thBtn(g, l, d, g === 'att' || g === 'abs' ? '' : meta[g], gi)).join('')}</div>`).join('');
   return thHero('مرحبًا بكِ، فوزية الدوسري', `${cnt(T.length, 'معلمة واحدة', 'معلمتان', 'معلمات', 'معلمة')} · متوسط إنجاز المعلمات ${nf(avg)}٪${A.length ? ` · ${nf(done)} من ${nf(A.length)} برامج الفصل الأول أُرفقت شواهدها` : ''}`)
-    + HUB_G.map(([gt, gl], gi) => `<h3 class="hub-h">${gt}</h3><div class="th-hub w">${gl.map(([g, l, d]) => thBtn(g, l, d, meta[g], gi)).join('')}</div>`).join('');
+    + shG(HUB_G).map(([gt, gl], gi) => `<h3 class="hub-h">${gt}</h3><div class="th-hub w">${gl.map(([g, l, d]) => thBtn(g, l, d, meta[g], gi)).join('')}</div>`).join('');
 }
 // her programs as buttons; each opens the program's own page (#plan/<k>)
 function teacherPlan() {
