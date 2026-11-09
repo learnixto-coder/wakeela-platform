@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#6b5d82">
+<title>استمارة قياس الأثر</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fefaef;--card:#fff;--ink:#2a2c33;--muted:#5c6168;--line:#dde3e2;--soft:#eef4f4;--brand:#6b5d82;--brand-2:#56706c;--on:#fff;--ok:#1e7f4f;--err:#b3261e;--star:#c58f1a;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1c22;--card:#24252d;--ink:#eceef2;--muted:#b0b4bc;--line:#363844;--soft:#2c2e37;--brand:#a599b5;--brand-2:#acbdba;--on:#1b1c22;--ok:#5fd39a;--err:#ff8a80;--star:#e5b866;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "IBM Plex Sans Arabic",system-ui,"Segoe UI",Tahoma,sans-serif}
+header{background:var(--brand);color:var(--on);padding:calc(env(safe-area-inset-top,0px) + 18px) 16px 18px;text-align:center}
+header small{display:block;opacity:.9;font-size:13px}
+header h1{margin:4px 0 2px;font-size:19px}
+header .hp{display:inline-block;margin-top:10px;padding:6px 16px;border-radius:999px;background:rgba(255,255,255,.18);font-weight:700;font-size:15px}
+header .hd{display:block;margin-top:6px;font-size:13px;opacity:.9}
+main{max-width:640px;margin:0 auto;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 40px)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.muted{color:var(--muted);font-size:14px}
+.sec{font-weight:700;color:var(--brand-2);margin:20px 4px 8px;font-size:15px}
+.q{scroll-margin-top:12px}
+.q.miss{border-color:var(--err)}
+.q-t{display:flex;gap:10px;font-weight:600;margin-bottom:10px}
+.q-n{flex:0 0 28px;height:28px;border-radius:8px;background:var(--soft);display:grid;place-items:center;font-size:14px;color:var(--brand-2)}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.opt{font:inherit;color:inherit;cursor:pointer;border:1.5px solid var(--line);background:var(--soft);border-radius:12px;padding:10px 4px;font-size:14px;line-height:1.35}
+.opt.on{border-color:var(--brand);background:var(--brand);color:var(--on)}
+@media (max-width:420px){.opts{grid-template-columns:1fr}.opt{text-align:right;padding:11px 14px}}
+textarea{width:100%;font:inherit;font-size:15px;border:1.5px solid var(--line);background:var(--soft);color:var(--ink);border-radius:12px;padding:10px;min-height:70px;resize:vertical}
+.stars{display:flex;gap:6px;justify-content:center;direction:ltr}
+.stars button{font-size:34px;line-height:1;background:none;border:0;cursor:pointer;color:var(--line);padding:2px}
+.stars button.on{color:var(--star)}
+.btn{display:block;width:100%;font:inherit;font-weight:700;font-size:17px;border:0;border-radius:14px;padding:14px;background:var(--brand);color:var(--on);cursor:pointer;margin-top:8px}
+.btn:disabled{opacity:.55;cursor:wait}
+.err{color:var(--err);font-size:14px;text-align:center;min-height:22px;margin-top:8px}
+.done{text-align:center;padding:36px 16px}
+.done .ic{width:64px;height:64px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;margin:0 auto 12px;font-size:32px}
+.demo{background:#fff4d6;color:#7a5a12;text-align:center;font-size:13px;padding:6px}
+button:focus-visible,textarea:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="demo" id="demo" hidden>معاينة: لا تُحفظ الإجابات</div>
+<header>
+  <small>المتوسطة الحادية والعشرون بالخميس</small>
+  <h1>استمارة قياس الأثر</h1>
+  <div class="hp" id="hprog" hidden></div>
+  <span class="hd" id="hdates" hidden></span>
+</header>
+<main>
+  <div id="load" class="card muted">جارٍ التحميل…</div>
+  <div id="bad" class="card" hidden><b>الرابط غير صحيح أو أن الاستمارة مغلقة.</b><div class="muted">اطلبي الرابط من معلمة البرنامج.</div></div>
+  <form id="f" hidden novalidate>
+    <div class="card muted">عزيزتي الطالبة، رأيك يساعدنا على تحسين البرامج. إجابتك سرّية ولا يُطلب اسمك.</div>
+    <div id="qs"></div>
+    <button class="btn" id="send">إرسال</button>
+    <div class="err" id="err"></div>
+  </form>
+  <div id="ok" class="card done" hidden><div class="ic">✓</div><h2 style="margin:0 0 6px">شكرًا لك</h2><div class="muted" id="okMsg">وصلت إجابتك، ورأيك يساعدنا على تحسين البرامج.</div></div>
+</main>
+<script>
+'use strict';
+const SB = 'https://bynymxmjzaeoyikuuwen.supabase.co', KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5bnlteG1qemFlb3lpa3V1d2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4MzMyNzEsImV4cCI6MjEwNzQwOTI3MX0.lL2cNc0Q_rGOaSy8rtSLPSOU9dZ57Yw1C4MoMmd9jjo';
+// «استمارة قياس الأثر» المعتمدة (11 سؤالاً). k: c = اختيار، x = كتابة (اختياري)، s = نجوم
+const GROUPS = [
+  ['أولًا: تقييم المحتوى والأنشطة', [
+    ['q1', 'هل كان محتوى البرنامج مناسبًا لك؟', 'c', ['نعم', 'إلى حد ما', 'لا']],
+    ['q2', 'ما مدى استفادتك من البرنامج؟', 'c', ['عالية', 'متوسطة', 'ضعيفة']],
+    ['q3', 'هل كانت الأنشطة المصاحبة فعّالة في توصيل المعلومات؟', 'c', ['نعم', 'إلى حد ما', 'لا']],
+    ['q4', 'ما أكثر جزء نال إعجابك في البرنامج؟', 'x'],
+    ['q5', 'هل هناك جزء لم يكن مفيدًا أو يحتاج إلى تحسين؟', 'x']]],
+  ['ثانيًا: قياس الأثر — بعد مشاركتك في البرنامج، ما التغيّر الذي لاحظتِه؟', [
+    ['q6', 'معرفتك ومعلوماتك', 'c', ['تحسّن كبير', 'تحسّن بسيط', 'لم يتغيّر']],
+    ['q7', 'سلوكك وممارساتك', 'c', ['تحسّن كبير', 'تحسّن بسيط', 'لم يتغيّر']],
+    ['q8', 'اتجاهاتك وقناعاتك', 'c', ['أصبحت إيجابية أكثر', 'لم تتغيّر', 'أصبحت سلبية']],
+    ['q9', 'هل ستطبّقين ما تعلّمتِه في حياتك اليومية؟', 'c', ['نعم', 'ربما', 'لا']],
+    ['q10', 'ما اقتراحاتك لتطوير البرامج القادمة؟', 'x']]],
+  ['ختامًا', [['q11', 'التقييم العام للبرنامج', 's']]]];
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ar = n => String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+const hijri = iso => { try { const P = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', { timeZone: 'UTC', day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(new Date(iso + 'T00:00:00Z')), g = t => P.find(x => x.type === t).value; return ar(`${g('day')}/${g('month')}/${g('year')}`) + 'هـ'; } catch { return ''; } };
+const ls = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+const U = new URLSearchParams(location.search), A = U.get('a') || '', E = U.get('e') || '', DEMO = U.has('demo');
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const id = A || E, doneKey = 'imp-done-' + id;
+let dev = ls.get('imp-dev'); if (!dev) { dev = Array.from(crypto.getRandomValues(new Uint8Array(9)), b => b.toString(16).padStart(2, '0')).join(''); ls.set('imp-dev', dev); }
+const ans = {};
+const show = x => ['load', 'bad', 'f', 'ok'].forEach(k => $('#' + k).hidden = k !== x);
+const rpc = (fn, body) => fetch(`${SB}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+
+async function init() {
+  let t = null;
+  if (DEMO) $('#demo').hidden = false;
+  if (DEMO && !UUID.test(id)) t = { kind: 'class', name: 'الذكاء الاصطناعي', class: 'ثالث متوسط 1', from: '2026-10-20', to: '2026-11-17' };
+  else {
+    if (!UUID.test(id)) return show('bad');
+    if (!DEMO && ls.get(doneKey)) { $('#okMsg').textContent = 'سبق أن أرسلتِ إجابتك على هذه الاستمارة من هذا الجهاز. شكرًا لك.'; return show('ok'); }
+    try { const r = await rpc('act_survey_target', A ? { p_assignment: A } : { p_event: E }); t = r.ok ? await r.json() : null; } catch { t = null; }
+    if (!t) return show('bad');
+  }
+  $('#hprog').textContent = (t.kind === 'class' ? 'برنامج ' : '') + t.name + (t.class ? ' · ' + t.class : ''); $('#hprog').hidden = false;
+  if (t.from) { $('#hdates').textContent = t.from === t.to ? hijri(t.from) : 'من ' + hijri(t.from) + ' إلى ' + hijri(t.to); $('#hdates').hidden = false; }
+  let n = 0;
+  $('#qs').innerHTML = GROUPS.map(([g, qs]) => `<div class="sec">${esc(g)}</div>` + qs.map(([k, q, kind, opts]) => {
+    n++;
+    const head = `<div class="q-t"><span class="q-n">${ar(n)}</span><span>${esc(q)}${kind === 'x' ? ' <span class="muted">(اختياري)</span>' : ''}</span></div>`;
+    if (kind === 'c') return `<div class="card q" id="${k}">${head}<div class="opts" role="radiogroup" aria-label="${esc(q)}">${opts.map(o => `<button type="button" class="opt" role="radio" aria-checked="false" data-k="${k}" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div></div>`;
+    if (kind === 'x') return `<div class="card q" id="${k}">${head}<textarea id="t-${k}" maxlength="300" aria-label="${esc(q)}"></textarea></div>`;
+    return `<div class="card q" id="${k}">${head}<div class="stars" role="radiogroup" aria-label="${esc(q)}">${[1, 2, 3, 4, 5].map(v => `<button type="button" role="radio" aria-checked="false" aria-label="${v} من ٥" data-k="${k}" data-s="${v}">★</button>`).join('')}</div></div>`;
+  }).join('')).join('');
+  $('#qs').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return; const k = b.dataset.k;
+    if (b.dataset.v != null) { ans[k] = b.dataset.v; b.parentNode.querySelectorAll('.opt').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-checked', x === b); }); }
+    if (b.dataset.s) { const v = +b.dataset.s; ans[k] = String(v); b.parentNode.querySelectorAll('button').forEach(x => { x.classList.toggle('on', +x.dataset.s <= v); x.setAttribute('aria-checked', +x.dataset.s === v); }); }
+    $('#' + k).classList.remove('miss');
+  });
+  show('f');
+}
+
+$('#f').addEventListener('submit', async e => {
+  e.preventDefault(); $('#err').textContent = '';
+  const need = GROUPS.flatMap(g => g[1]).filter(q => q[2] !== 'x').map(q => q[0]);
+  const miss = need.filter(k => !ans[k]);
+  need.forEach(k => $('#' + k).classList.toggle('miss', !ans[k]));
+  if (miss.length) { $('#err').textContent = 'أجيبي عن جميع الأسئلة المطلوبة'; $('#' + miss[0]).scrollIntoView({ behavior: 'smooth' }); return; }
+  ['q4', 'q5', 'q10'].forEach(k => { const v = $('#t-' + k).value.trim(); if (v) ans[k] = v.slice(0, 300); });
+  if (DEMO) { show('ok'); window.scrollTo(0, 0); return; }
+  const btn = $('#send'); btn.disabled = true; btn.textContent = 'جارٍ الإرسال…';
+  try {
+    const r = await fetch(`${SB}/rest/v1/act_survey_responses`, { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify(Object.assign(A ? { assignment_id: A } : { event_id: E }, { answers: ans })) });
+    if (!r.ok) throw new Error(r.status);
+    ls.set(doneKey, '1'); show('ok'); window.scrollTo(0, 0);
+  } catch { $('#err').textContent = 'تعذّر الإرسال، تحققي من الاتصال وحاولي مرة أخرى'; btn.disabled = false; btn.textContent = 'إرسال'; }
+});
+init();
+</script>
+</body>
+</html>
