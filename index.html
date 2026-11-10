@@ -1987,7 +1987,8 @@ let srvCache = null;
 async function srvResults() {
   if (!D.survey) return null;
   if (srvCache && Date.now() - srvCache.t < 60000) return srvCache.r;
-  const r = await (await fetch(`${D.survey.url}?a=results&key=${encodeURIComponent(D.survey.key)}`)).json();
+  // 2026-11-10: النتائج من Supabase (qa_survey_results بنفس المفتاح وبنفس الشكل) بدل Apps Script على schoolbsom
+  const r = await (await fetch('https://bynymxmjzaeoyikuuwen.supabase.co/rest/v1/rpc/qa_survey_results', { method: 'POST', headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5bnlteG1qemFlb3lpa3V1d2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4MzMyNzEsImV4cCI6MjEwNzQwOTI3MX0.lL2cNc0Q_rGOaSy8rtSLPSOU9dZ57Yw1C4MoMmd9jjo', Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5bnlteG1qemFlb3lpa3V1d2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4MzMyNzEsImV4cCI6MjEwNzQwOTI3MX0.lL2cNc0Q_rGOaSy8rtSLPSOU9dZ57Yw1C4MoMmd9jjo', 'Content-Type': 'application/json' }, body: JSON.stringify({ p_key: D.survey.key }) })).json();
   if (!r.ok) throw new Error(r.error || 'survey');
   srvCache = { t: Date.now(), r }; return r;
 }

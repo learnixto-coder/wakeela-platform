@@ -65,7 +65,9 @@ main{max-width:640px;margin:0 auto;padding:16px 16px calc(env(safe-area-inset-bo
 </main>
 <script>
 'use strict';
-const API = 'https://script.google.com/macros/s/AKfycbzx13vLUF31MrEScmb-JsdrOs78cIpZEf4TucFH5dLTW9SmdrTFVIp9XwBRFfVzjMLQ/exec';
+// 2026-11-10: الاستبانة على Supabase بدل Apps Script على schoolbsom (نفس القواعد: qa_survey_info / qa_survey_submit)
+const SB = 'https://bynymxmjzaeoyikuuwen.supabase.co', SBK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5bnlteG1qemFlb3lpa3V1d2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4MzMyNzEsImV4cCI6MjEwNzQwOTI3MX0.lL2cNc0Q_rGOaSy8rtSLPSOU9dZ57Yw1C4MoMmd9jjo';
+const rpc = (fn, b) => fetch(SB + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: SBK, Authorization: 'Bearer ' + SBK, 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then(r => r.json());
 const ITEMS = ['حقق البرنامج أهدافه المخطط لها.', 'أسهم البرنامج في تنمية معارفي ومهاراتي.', 'كانت أنشطة البرنامج مناسبة ومنظمة.',
   'أظهر البرنامج أثرًا إيجابيًا ملموسًا.', 'أنا راضية عن البرنامج وأوصي باستمراره.'];
 const SCALE = [[5, 'أوافق بشدة'], [4, 'أوافق'], [3, 'محايد'], [2, 'لا أوافق'], [1, 'لا أوافق بشدة']];
@@ -84,7 +86,7 @@ async function init() {
   if (!/^c?\d+$/.test(p)) return show('bad');   // c<n> = استبانة نهاية برنامج نشاط صفي
   if (ls.get('srv-done-' + p)) { $('#okMsg').textContent = 'سبق أن أرسلتِ إجابتك على هذه الاستبانة من هذا الجهاز. شكرًا لك.'; return show('ok'); }
   let info;
-  try { info = await (await fetch(`${API}?a=info&p=${p}`)).json(); } catch { info = null; }
+  try { info = await rpc('qa_survey_info', { p_no: p }); } catch { info = null; }
   if (!info || !info.ok) return show('bad');
   $('#hprog').textContent = info.cls ? 'برنامج ' + info.name + ' · ' + info.cls : info.name; $('#hprog').hidden = false;
   if (info.cls) document.title = $('header h1').textContent = 'استبانة نهاية البرنامج';
@@ -115,8 +117,7 @@ $('#f').addEventListener('submit', async e => {
   const body = JSON.stringify({ p, type, ans, dev });
   try {
     let r;
-    try { r = await (await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body })).json(); }
-    catch { await fetch(API, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body }); r = { ok: true }; }
+    r = await rpc('qa_survey_submit', { p_no: p, p_type: type, p_ans: ans, p_dev: dev });
     if (!r.ok) throw new Error(r.error);
     ls.set('srv-done-' + p, '1'); show('ok'); window.scrollTo(0, 0);
   } catch { $('#err').textContent = 'تعذّر الإرسال، تحققي من الاتصال وحاولي مرة أخرى'; btn.disabled = false; btn.textContent = 'إرسال'; }
