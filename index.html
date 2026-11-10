@@ -1360,7 +1360,7 @@ const recOn = () => !!(D?.ct || D?.cn);
 let recLoad = null;
 function recPage() {
   if (window.REC) return REC.render();
-  recLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'rec.js?v=20261110c'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  recLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'rec.js?v=20261111b'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { recLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }

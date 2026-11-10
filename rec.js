@@ -8,10 +8,12 @@
   const SURVEY = 'https://learnixto-coder.github.io/wakeela-platform/s2/';
   const AR = '٠١٢٣٤٥٦٧٨٩', ar = s => String(s == null ? '' : s).replace(/\d/g, d => AR[d]);
   const e = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const HIJ = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'numeric', year: 'numeric' });
+  const HIJ = new Intl.DateTimeFormat('en-US-u-ca-islamic-umalqura-nu-latn',   // en: أرقام دائمًا (آيفون كان يكتب اسم الشهر مع ar-SA)
+    { day: 'numeric', month: 'numeric', year: 'numeric' });
   const hijri = s => { if (!s) return '—'; const o = {}; HIJ.formatToParts(new Date(s + 'T12:00:00')).forEach(p => o[p.type] = p.value);
     return ar(o.day) + '‏/' + ar(o.month) + '‏/' + ar(String(o.year).replace(/\D/g, '')) + 'هـ'; };   // اليوم أقصى اليمين
-  const TODAY = new Date().toISOString().slice(0, 10);
+  const TODAY = (d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'))(new Date());   // التاريخ المحلي (كان UTC فيتأخر يومًا بعد منتصف الليل)
+  let SC = null;   // جلسة الدخول التي يخص السجلُّ صاحبتَها: عند تغيّر الرقم يُمسح كل شيء (إصلاح 2026-11-11: كان يظهر سجل المعلمة السابقة)
   let R = null, ERR = '', TAB = 'all', OPEN = null, PID = null, poll = null, busy = false, UPMSG = '';
   const UP = {};   // ما رُفع في هذه الجلسة (العدد في قاعدة البيانات يتحدث بعد مزامنة الجسر)
 
@@ -21,8 +23,9 @@
     return t ? JSON.parse(t) : null;
   }
   async function load() {
-    try { PID ||= await teacherId(phoneOf(sessionCode)); R = await rpc('act_record_by_pid', { p_pid: PID }); ERR = R ? '' : 'رقمك غير مربوط بسجل الأنشطة بعد، راجعي الوكيلة'; }
-    catch (x) { ERR = x.message || 'تعذّر الاتصال'; }
+    const sc = sessionCode;
+    try { const pid = await teacherId(phoneOf(sc)); const r = await rpc('act_record_by_pid', { p_pid: pid }); if (sc !== sessionCode) return; PID = pid; R = r; ERR = R ? '' : 'رقمك غير مربوط بسجل الأنشطة بعد، راجعي الوكيلة'; }
+    catch (x) { if (sc !== sessionCode) return; ERR = x.message || 'تعذّر الاتصال'; }
     paint();
     const waiting = (R?.executions || []).some(x => x.status === 'requested');
     clearTimeout(poll); if (waiting && location.hash.startsWith('#rec')) poll = setTimeout(load, 20000);   // متابعة الطلب حتى يصدر
@@ -187,5 +190,6 @@
     if (it) upload(it, files);
   });
 
-  window.REC = { render() { if (!R && !ERR) load(); return CSS + '<div id="rc-root">' + body() + '</div>'; } };
+  window.REC = { render() { if (SC !== sessionCode) { SC = sessionCode; R = null; ERR = ''; PID = null; OPEN = null; TAB = 'all'; UPMSG = ''; Object.keys(UP).forEach(k => delete UP[k]); clearTimeout(poll); }
+     if (!R && !ERR) load(); return CSS + '<div id="rc-root">' + body() + '</div>'; } };
 })();
