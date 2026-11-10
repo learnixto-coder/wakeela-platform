@@ -1372,7 +1372,7 @@ function sharePage(a) {
 let tdLoad = null;
 function tdPage() {
   if (window.TD) return TD.render();
-  tdLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'td.js?v=20261101'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  tdLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'td.js?v=20261110a'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { tdLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
@@ -1387,7 +1387,7 @@ function attPage(a) {
 let cnLoad = null;
 function cnPage(a) {
   if (window.CN) return CN.render(a);
-  cnLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'cn.js?v=20261101e'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  cnLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'cn.js?v=20261110a'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { cnLoad = null; window.CN = { render: () => teacherCn() }; route(); });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
