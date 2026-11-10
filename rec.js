@@ -14,7 +14,7 @@
     return ar(o.day) + '‏/' + ar(o.month) + '‏/' + ar(String(o.year).replace(/\D/g, '')) + 'هـ'; };   // اليوم أقصى اليمين
   const TODAY = (d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'))(new Date());   // التاريخ المحلي (كان UTC فيتأخر يومًا بعد منتصف الليل)
   let SC = null;   // جلسة الدخول التي يخص السجلُّ صاحبتَها: عند تغيّر الرقم يُمسح كل شيء (إصلاح 2026-11-11: كان يظهر سجل المعلمة السابقة)
-  let R = null, ERR = '', TAB = 'all', OPEN = null, PID = null, poll = null, busy = false, UPMSG = '';
+  let R = null, ERR = '', TAB = 'all', CT = 's', OPEN = null, PID = null, poll = null, busy = false, UPMSG = '';
   const UP = {};   // ما رُفع في هذه الجلسة (العدد في قاعدة البيانات يتحدث بعد مزامنة الجسر)
 
   async function rpc(fn, body) {
@@ -61,7 +61,13 @@
   .rc-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:10px 0}.rc-form label{display:grid;gap:4px;font-size:.9em}
   .rc-form input,.rc-form textarea{font:inherit;padding:8px 10px;border:1px solid #d9d4ee;border-radius:10px;background:#fff;color:#222}.rc-chk{display:flex;flex-wrap:wrap;gap:6px 14px;grid-column:1/-1}
   .rc-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.rc-err{color:#a1300b;margin:8px 0}
-  @media (prefers-color-scheme:dark){.rc-meta div{background:#2a2640}.rc-chip{background:#3a3456}.rc-form input,.rc-form textarea{background:#1e1b2e;color:#eee;border-color:#3a3456}}
+  .rc-seg{display:grid;grid-template-columns:repeat(3,1fr);background:#f1eefc;border-radius:14px;padding:5px;gap:5px;margin:14px 0 4px}
+  .rc-seg button{font:inherit;border:0;background:none;color:inherit;border-radius:10px;padding:10px 4px;cursor:pointer;display:grid;justify-items:center;gap:3px;font-weight:600}
+  .rc-seg button span{display:flex;align-items:center;gap:6px}.rc-seg svg{width:20px;height:20px;flex:none}.rc-seg small{font-weight:400;font-size:.74em;opacity:.75}
+  .rc-seg button[aria-pressed=true]{background:#6c5ce7;color:#fff;box-shadow:0 4px 12px #6c5ce755}.rc-seg button[aria-pressed=true] small{opacity:.9}
+  .rc-pane{padding-top:8px}.rc-srv{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:10px 0}
+  @media (max-width:420px){.rc-seg button span{flex-direction:column;gap:2px}}
+  @media (prefers-color-scheme:dark){.rc-seg{background:#2a2640}.rc-meta div{background:#2a2640}.rc-chip{background:#3a3456}.rc-form input,.rc-form textarea{background:#1e1b2e;color:#eee;border-color:#3a3456}}
   </style>`;
 
   const DOMAINS = ['بنك الإثراءات', 'التطوير الذاتي', 'قيمنا الغالية', 'نادي القراءة'];
@@ -78,7 +84,34 @@
     return o;
   }
 
+  const ICO = { s: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>', u: '<rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5-5-8 8"/>', r: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>' };
+  const ico = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[k]}</svg>`;
+  /* النشاط الصفي (2026-11-11، نموذج أ «شريط مقسّم»): ٣ تبويبات أعلى الصفحة — الاستبانة · رفع الصور · التقرير، والبيانات تحتها */
+  function classPage(it) {
+    const x = it.ex, s = x?.status, url = SURVEY + '?a=' + it.id;
+    const rs = s === 'issued' ? (x.mine === false ? 'أصدرته زميلتك' : 'صدر') : s === 'requested' ? 'جارٍ الإصدار…' : s === 'failed' ? 'تعذّر الإصدار' : 'لم يصدر';
+    const T = [['s', 'الاستبانة', ar(it.survey) + ' ردًّا'], ['u', 'رفع الصور', ar(it.ev) + ' شاهدًا'], ['r', 'التقرير', rs]];
+    let h = `<div class="card pad"><button class="btn sm ghost" data-rc="back">→ رجوع</button>
+      <h2 style="margin:10px 0 4px"><span class="rc-kind">نشاط صفي</span>${e(it.title)}</h2>
+      <nav class="rc-seg">${T.map(([k, l, n]) => `<button data-rcp="${k}" aria-pressed="${CT === k}"><span>${ico(k)}${l}</span><small>${n}</small></button>`).join('')}</nav><div class="rc-pane">`;
+    if (CT === 's') h += `<p class="muted" style="margin:0">اعرضي الباركود للطالبات بعد تنفيذ البرنامج، أو انسخي الرابط وأرسليه لهن.</p>
+      <div class="rc-srv"><div class="qr" data-qr="${e(url)}"></div><div><p style="margin:0 0 8px">ردود الطالبات: <b>${ar(it.survey)}</b></p>
+      <div class="rc-btns" style="margin:0"><a class="btn" href="${e(url)}" target="_blank" rel="noopener">فتح الاستبانة</a><button class="btn ghost" data-rc="copy" data-u="${e(url)}">نسخ الرابط</button></div></div></div>`;
+    else if (CT === 'u') h += upBox(it);
+    else if (s === 'issued') h += `<div class="ok" style="margin:10px 0">✓ صدر التقرير${x.issued_at ? ' في ' + hijri(x.issued_at.slice(0, 10)) : ''}${x.mine === false ? ' (أصدرته زميلتك ويُحسب لكما معًا)' : ''}.</div>
+        <div class="rc-btns">${x.pdf_url ? `<a class="btn" href="${e(x.pdf_url)}" target="_blank" rel="noopener">فتح التقرير PDF</a>` : ''}${x.impact_url ? `<a class="btn ghost" href="${e(x.impact_url)}" target="_blank" rel="noopener">فتح قياس الأثر PDF</a>` : ''}</div>
+        <details style="margin-top:12px"><summary>تعديل البيانات وإعادة الإصدار</summary>${form(it)}<div class="rc-btns"><button class="btn ghost" data-rc="issue">إعادة الإصدار</button></div></details>`;
+    else if (s === 'requested') h += `<p class="muted">⏳ طلبك وصل، والتقرير وقياس الأثر يُجهَّزان الآن (عادةً خلال دقائق). تتحدث هذه الصفحة تلقائيًا.</p>`;
+    else { if (s === 'failed') h += `<p class="rc-err">تعذّر الإصدار: ${e(x.error || '')} — صحّحي البيانات واضغطي مرة ثانية.</p>`;
+      h += `<p class="muted" style="margin:0">اسم البرنامج والتواريخ والفصل والتوقيعات تُعبّأ تلقائيًا. أكملي الباقي ثم أصدري.</p>${form(it)}
+        <div class="rc-btns"><button class="btn" data-rc="issue"${busy ? ' disabled' : ''}>إصدار التقرير</button><button class="btn ghost" data-rc="issue"${busy ? ' disabled' : ''}>إصدار قياس الأثر</button></div>
+        <p class="muted" style="font-size:.85em">تقرير واحد لكل برنامج في الفصل؛ إذا أصدرته زميلتك يظهر هنا لكما معًا.</p>`; }
+    return h + `</div><div class="rc-meta"><div><small>الفصل</small>${e(it.sub || '—')}</div><div><small>البداية</small>${hijri(it.from)}</div><div><small>النهاية</small>${hijri(it.to)}</div>
+      <div><small>${it.partners.length > 1 ? 'زميلاتك' : 'زميلتك'}</small>${e(it.partners.join('، ') || '—')}</div></div></div>`;
+  }
+
   function page(it) {
+    if (it.k === 'class') return classPage(it);
     const x = it.ex, s = x?.status;
     let h = `<div class="card pad"><button class="btn sm ghost" data-rc="back">→ رجوع</button>
       <h2 style="margin:10px 0 4px"><span class="rc-kind${it.k === 'class' ? '' : ' n'}">${it.k === 'class' ? 'نشاط صفي' : 'نشاط لاصفي'}</span>${e(it.title)}</h2>
@@ -168,19 +201,21 @@
       <div class="rc-list">${vis.map(i => `<button class="rc-it ${i.st[0]}" data-rco="${i.k}:${e(i.id)}"><div class="rc-h"><b><span class="rc-kind${i.k === 'class' ? '' : ' n'}">${i.k === 'class' ? 'صفية' : 'لاصفية'}</span>${e(i.title)}</b><span class="rc-chip ${i.st[0]}">${i.st[1]}</span></div>
         <div class="rc-d">${hijri(i.from)} إلى ${hijri(i.to)} · ${e(i.sub)} · ${ar(i.ev)} شاهدًا</div></button>`).join('') || '<p class="muted">لا يوجد شيء في هذا القسم.</p>'}</div>`;
   }
-  function paint() { const el = document.getElementById('rc-root'); if (el) el.innerHTML = body(); }
+  function paint() { const el = document.getElementById('rc-root'); if (!el) return; el.innerHTML = body(); if (typeof drawQr === 'function') el.querySelectorAll('[data-qr]').forEach(drawQr); }
 
   document.addEventListener('click', async ev => {
     const root = document.getElementById('rc-root'); if (!root || !root.contains(ev.target)) return;
     const t = ev.target.closest('[data-rct]'); if (t) { TAB = t.dataset.rct; return paint(); }
-    const o = ev.target.closest('[data-rco]'); if (o) { OPEN = o.dataset.rco; paint(); return root.scrollIntoView({ block: 'start' }); }
+    const p = ev.target.closest('[data-rcp]'); if (p) { CT = p.dataset.rcp; return paint(); }
+    const o = ev.target.closest('[data-rco]'); if (o) { OPEN = o.dataset.rco; CT = 's'; paint(); return root.scrollIntoView({ block: 'start' }); }
     const b = ev.target.closest('[data-rc]'); if (!b) return;
     if (b.dataset.rc === 'back') { OPEN = null; return paint(); }
+    if (b.dataset.rc === 'copy') { try { await navigator.clipboard.writeText(b.dataset.u); b.textContent = '✓ نُسخ'; } catch (x) { prompt('انسخي الرابط:', b.dataset.u); } return; }
     if (b.dataset.rc === 'reload') { R = null; paint(); return load(); }
     if (b.dataset.rc === 'issue' && !busy) {
       const [k, id] = OPEN.split(':'); busy = true; b.disabled = true; b.textContent = 'جارٍ الإرسال…';
       try { await rpc('act_request_report_by_pid', { p_pid: PID, p_kind: k, p_target: id, p_form: readForm(b.closest('.card')) }); busy = false; await load(); }
-      catch (x) { busy = false; b.disabled = false; b.textContent = 'إصدار التقرير'; alert('تعذّر إرسال الطلب: ' + x.message); }
+      catch (x) { busy = false; b.disabled = false; paint(); alert('تعذّر إرسال الطلب: ' + x.message); }
     }
   });
 
