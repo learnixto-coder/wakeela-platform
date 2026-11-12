@@ -80,7 +80,25 @@
 .ld-cell{display:flex;flex-direction:column;gap:4px}.ld-cell .ld-del{padding:3px 6px}
 .ld-dup{outline:2px solid var(--none);outline-offset:-1px}
 .ld-al{padding:14px 16px;display:grid;gap:10px;margin-bottom:12px;border-inline-start:4px solid #b4443c}.ld-alh{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}.ld-alh label{display:flex;gap:8px;align-items:center;cursor:pointer;font-size:15.5px}.ld-alh input{width:18px;height:18px;accent-color:var(--brand)}
-.ld-alt{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--soft);font:inherit;font-size:14px;line-height:1.7;resize:vertical}.ld-al .ld-links{margin:0}.ld-empty{color:var(--muted);font-size:13px;padding:6px 0}`;
+.ld-alt{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--soft);font:inherit;font-size:14px;line-height:1.7;resize:vertical}.ld-al .ld-links{margin:0}.ld-empty{color:var(--muted);font-size:13px;padding:6px 0}
+.ld-kb{display:grid;grid-template-columns:repeat(4,minmax(200px,1fr));gap:10px;overflow-x:auto;padding-bottom:6px}.ld-kc{background:var(--soft);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px;border-top:4px solid var(--c);min-width:0}
+.ld-kc h5{margin:0;font-size:14px;display:flex;justify-content:space-between;color:var(--c)}.ld-kc h5 span{background:var(--card);border-radius:99px;padding:0 9px;font-size:12.5px}
+.ld-ki{display:flex;flex-direction:column;gap:2px;text-align:start;background:var(--card);border:1px solid var(--line);border-inline-start:4px solid var(--d);border-radius:10px;padding:8px 10px;font:inherit;color:var(--ink);cursor:pointer}.ld-ki:hover{border-color:var(--brand)}.ld-ki b{font-size:13.5px}.ld-ki small{color:var(--muted);font-size:12px}
+.ld-ring.sm{width:58px;height:58px}.ld-ring.sm>div{width:44px;height:44px;font-size:12.5px}
+.ld-k4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}.ld-k .nr-ks,.ld-k small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+.ld-vb{display:flex;align-items:flex-end;gap:14px;height:180px;padding-top:22px;border-bottom:1px solid var(--line)}.ld-vc{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;min-width:0}.ld-vc i{display:block;width:100%;max-width:64px;border-radius:8px 8px 0 0;min-height:2px}.ld-vc b{font-size:13px}.ld-vx{gap:14px}.ld-vx span{font-size:12px}
+.ld-tpl{display:flex;flex-wrap:wrap;gap:6px}.ld-tpl button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 16px;font:inherit;font-weight:600;cursor:pointer}.ld-tpl button.on{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.ld-rv{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px;margin-bottom:12px}
+.ld-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.ld-cal>div{min-height:84px;border:1px solid var(--line);border-radius:10px;background:var(--card);padding:6px;display:flex;flex-direction:column;gap:3px;min-width:0}.ld-cal .hd{min-height:0;border:0;background:none;text-align:center;color:var(--muted);font-size:12.5px;font-weight:700}
+.ld-cal .off{background:none;border-style:dashed;opacity:.5}.ld-cal .td{border:2px solid var(--brand)}.ld-cal .dn{font-weight:800;font-size:13px}.ld-cal .dn small{font-weight:400;color:var(--muted);font-size:10.5px;margin-inline-start:4px}
+.ld-cal .ev{all:unset;cursor:pointer;display:block;font-size:11.5px;line-height:1.35;border-radius:6px;padding:2px 5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:var(--ok-bg);color:var(--ok)}.ld-cal .ev.k{background:var(--part-bg);color:var(--part)}
+@media (max-width:640px){.ld-cal{gap:3px}.ld-cal>div{min-height:58px;padding:3px}.ld-cal .ev{font-size:10px;padding:1px 3px}.ld-cal .dn small{display:none}}
+.ld-wk{display:grid;grid-template-columns:120px repeat(5,minmax(120px,1fr));gap:6px;min-width:760px}.ld-wk>div{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:8px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.ld-wk .hd{background:var(--soft);font-weight:700;text-align:center;justify-content:center}.ld-wk .rh{background:var(--soft);font-weight:700;justify-content:center}
+.ld-wk .it{border-radius:8px;padding:5px 7px;font-size:12px;line-height:1.45}.ld-wk .it b{display:block;font-size:12.5px}
+.ld-book{display:grid;grid-template-columns:minmax(0,260px) 1fr;gap:16px;align-items:start}@media (max-width:640px){.ld-book{grid-template-columns:1fr}}
+.ld-cover{aspect-ratio:210/297;max-width:100%;border-radius:12px;background:linear-gradient(170deg,var(--soft),var(--card));border:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;text-align:center;padding:18px}.ld-cover b{font-size:20px;color:var(--brand-2)}.ld-cover span{color:var(--muted);font-size:13px}
+.ld-toc{list-style:none;margin:0;padding:0;display:grid;gap:6px}.ld-toc li{display:flex;gap:8px;align-items:baseline}.ld-toc li i{flex:1;border-bottom:1px dotted var(--line)}`;
   function style() { if (document.getElementById('ld-css')) return; const s = document.createElement('style'); s.id = 'ld-css'; s.textContent = CSS; document.head.appendChild(s); }
 
   function prep(D) {
@@ -140,7 +158,15 @@
       ${hubBtn('ld', 'المجالات', `${ar(D.doms.length)} مجالات`, '#b7791f')}
       ${hubBtn('lf', 'المجلدات', `أقسام الأرشيف · ${ar(D.folders.length)} أقسام`, '#6b7280')}
       ${hubBtn('lm', 'لوحة المؤشرات', 'قوة الشواهد وتحقق التنفيذ', '#8a6f52')}
-    </div>`;
+    </div>` + kanban(D);
+  }
+  // «لوحة الحالات» (نموذج ج، 2026-11-12): أربعة أعمدة حسب حالة سجل البرنامج، وكل برنامج بطاقة تفتح صفحته
+  function kanban(D) {
+    const C = [['wait', 'لم يبدأ', 'var(--na)', r => r.s === 'wait' || r.s === 'nodate'], ['run', 'جارٍ الآن', 'var(--part)', r => r.s === 'run'],
+      ['bad', 'انتهى بلا شواهد', 'var(--none)', r => r.s === 'done' && !recFiles(r).length], ['ok', 'انتهى وله شواهد', 'var(--ok)', r => r.s === 'done' && recFiles(r).length > 0]];
+    return `<h3 class="ld-sec">لوحة الحالات (${ar(D.recs.length)} برنامجًا)</h3><div class="ld-kb">${C.map(([k, t, c, f]) => { const R = D.recs.filter(f);
+      return `<div class="ld-kc" style="--c:${c}"><h5>${t} <span>${ar(R.length)}</span></h5>${R.map(r => `<button class="ld-ki" data-go="lb/${r.i}" style="--d:${DOM[r.dom] || 'var(--line)'}"><b>${esc(r.n)}</b><small>${esc(r.cls)} · ${r.T.map(t => esc(t.name)).join(' و ')}</small>
+        <small>${k === 'wait' ? (r.from ? 'يبدأ ' + hd(r.from.h) : 'بلا تاريخ') : k === 'run' ? (r.to ? 'ينتهي ' + hd(r.to.h) : '') + ' · ' + (recFiles(r).length ? ar(recFiles(r).length) + ' ملف' : 'لا ملفات') : k === 'bad' ? 'انتهى ' + hd(r.to.h) : ar(recFiles(r).length) + ' ملف'}</small></button>`).join('') || '<p class="ld-empty">لا يوجد</p>'}</div>`; }).join('')}</div>`;
   }
   function grades(D) {
     return nav(['lg', 'الأنشطة الصفية']) + `<div class="card ld-h"><h2>الأنشطة الصفية</h2><p>اختاري الصف الدراسي</p></div><div class="ld-hub">${D.grades.map((g, i) => {
@@ -207,7 +233,7 @@
     const R = D.reports.slice().sort((a, b) => a.p.localeCompare(b.p, 'ar') || a.n.localeCompare(b.n, 'ar'));
     const groups = [...new Set(R.map(r => r.p))];
     const z = D.zip;
-    return nav(['lr', 'التقارير']) + arAll(D) + `<div class="card ld-h"><h2>التقارير (${ar(R.length)})</h2><p>كل تقارير PDF في الأرشيف: التقارير الصفية واللاصفية، والجاهزة للختم، وتقارير البرامج</p></div>
+    return nav(['lr', 'التقارير']) + bookCard(D) + arAll(D) + `<div class="card ld-h"><h2>التقارير (${ar(R.length)})</h2><p>كل تقارير PDF في الأرشيف: التقارير الصفية واللاصفية، والجاهزة للختم، وتقارير البرامج</p></div>
     <div class="ld-links">${z ? `<a class="btn" href="https://drive.google.com/uc?export=download&id=${esc(z.id)}" target="_blank" rel="noopener">تحميل كل التقارير دفعة واحدة (ZIP)</a> <a class="btn ghost" href="https://drive.google.com/file/d/${esc(z.id)}/view" target="_blank" rel="noopener">عرض الملف المضغوط</a>
       <span class="ld-empty">آخر تجميع: ${new Date(z.t).toLocaleDateString('ar-SA-u-ca-islamic-umalqura-nu-arab', { day: 'numeric', month: 'long' })}</span>` : '<span class="ld-empty">يُجهَّز ملف التحميل الكامل مع التحديث القادم.</span>'}</div>
     ${groups.map(g => `<h3 class="ld-sec">${esc(g)}</h3>${fileList(R.filter(r => r.p === g))}`).join('') || '<p class="ld-empty">لا توجد تقارير بعد.</p>'}`;
@@ -271,6 +297,9 @@
         <select id="ldDP" aria-label="داخل مجلد المعلمة">${r.P.filter(p => p.ids && p.ids.p).map(p => `<option value="${esc(p.ids.p)}">داخل مجلد ${esc(p.t.name)}</option>`).join('')}</select>
         <button class="btn sm" data-act="mkdir">إنشاء المجلد</button></div></div>
     <h3 class="ld-sec">المجلدات والشواهد (${ar(n)} ملف)</h3>
+    ${(dn => `<div class="card ld-rv" data-rec="${i}"><button class="ld-seen${e.seen ? ' on' : ''}" data-act="seen">${e.seen ? '✓ الشواهد معتمدة' : 'اعتماد الشواهد'}</button>
+      ${dn ? `<button class="btn sm" style="background:var(--none);border-color:var(--none);color:#fff" data-act="deldup">حذف المكرر (${ar(dn)})</button>` : '<span class="chip s-ok">لا مكرر</span>'}
+      <button class="btn sm ghost" data-act="note">ملاحظة للمعلمة</button><span class="ld-msg">${e.seen && e.seenAt ? 'اعتُمدت ' + hijri(e.seenAt.replace(' ', 'T') + ':00+03:00') : 'لم تُعتمد بعد'}</span></div>`)(folders.reduce((a, f) => a + dupIds(f.files).size, 0))}
     ${folders.map(f => `<details class="card ld-fold"${f.files.length ? ' open' : ''}><summary><span>${esc(f.n)} <span class="ld-d" style="display:inline">· ${esc(f.who)}</span></span><span class="ld-dots">${upChip(f.files.length)}${dupIds(f.files).size ? `<span class="chip s-none">${ar(dupIds(f.files).size)} مكرر</span>` : ''}${btn(f.url, 'فتح في Drive', 1)}</span></summary>${grid(f.files)}</details>`).join('')}`;
   }
 
@@ -340,7 +369,15 @@
     document.addEventListener('click', async ev => {
       const b = ev.target.closest('[data-act]'); if (!b) return;
       if (b.dataset.act.startsWith('al-')) return alertAct(b);
+      if (b.dataset.act === 'note') { const t = document.getElementById('ldN'); if (t) { t.scrollIntoView({ behavior: 'smooth', block: 'center' }); t.focus(); } return; }
       const box = b.closest('[data-rec]'), D = D_(), r = D.recs[+box.dataset.rec];
+      if (b.dataset.act === 'deldup') {   // حذف كل المكرر في مجلدات البرنامج (إلى سلة Drive، يُسترجع خلال ٣٠ يومًا)
+        const ids = [...new Set(r.P.flatMap(p => [p.ev, p.rep, ...(p.more || []).map(m => m.files)]).flatMap(F => [...dupIds(F)]))];
+        if (!ids.length || !confirm(`حذف ${ids.length} ملفًا مكررًا؟\nتُنقل إلى سلة المحذوفات في Google Drive ويمكن استرجاعها خلال ٣٠ يومًا.`)) return;
+        b.disabled = true; let ok = 0;
+        for (const id of ids) { b.textContent = `جارٍ الحذف ${ar(ok + 1)} من ${ar(ids.length)}…`; try { await api({ a: 'del', id }); purge(D, id); ok++; } catch {} }
+        const y = window.scrollY; route(); window.scrollTo(0, y); return;
+      }
       const say = (t, err) => { const m = box.querySelector('.ld-msg:last-child') || document.getElementById('ldMsg'); if (m) { m.textContent = t; m.className = 'ld-msg' + (err ? ' err' : ''); } };
       b.disabled = true;
       try {
@@ -370,7 +407,11 @@
       .map(([n, l]) => `<div class="card"><b>${ar(n)}</b><span>${l}</span></div>`).join('')}</div>
     <div class="ld-hub">
       ${D.shareK ? hubBtn('share', 'مشاركات الطالبات وأولياء الأمور', 'اليوم الوطني · يوم المعلم · درع الوطن', '#2A7F9E') : ''}   ${/* «مشاركات الطالبات وأولياء الأمور» (2026-11-09) أول زر */ ''}
-      ${hubBtn('lg', 'الأنشطة الصفية', 'المعلمات · المجالات · المجلدات · لوحة المؤشرات', '#0f6b63')}
+      ${hubBtn('lg', 'الأنشطة الصفية', `لوحة الحالات · ${ar(D.recs.filter(r => r.s === 'run').length)} جارٍ · ${ar(D.recs.filter(r => r.s === 'done' && !recFiles(r).length).length)} انتهى بلا شواهد`, '#0f6b63')}
+      ${hubBtn('lts', 'المعلمات', `${ar(D.cls.length)} فصول · نسبة إنجاز كل ثنائي`, '#2f6fb0')}
+      ${hubBtn('lm', 'لوحة المؤشرات', 'الأرقام الرئيسية والإنجاز حسب المجال', '#8a6f52')}
+      ${hubBtn('lr', 'التقارير', `${ar(D.reports.length)} تقريرًا · ملف الإنجاز المجمّع`, '#5b4bd6')}
+      ${hubBtn('lcal', 'تقويم المناسبات والمسابقات', 'الشهر الهجري · المناسبات والمسابقات', '#b7791f')}
       ${D.cards ? hubBtn('lcd', 'بطاقات تنفيذ الأنشطة الصفية', (n => `${ar(n)} من ${ar(D.cards.length)} بطاقة صدرت · المجالات وأولياء الأمور`)(D.cards.filter(c => c.ex && c.ex.status === 'issued').length), '#5b4bd6') : ''}
       ${/* زر «الأنشطة اللاصفية» (#ln) أُزيل 2026-10-27: محتواه مكرر مع «تقارير المعلمات في الأنشطة اللاصفية»؛ الصفحة باقية وتُستدعى بإعادة هذا السطر:
         hubBtn('ln', 'الأنشطة اللاصفية', `الفترات حسب الأسبوع · ${ar(D.weeks.length)} أسبوعًا`, '#7a4fb5') */ ''}
@@ -408,30 +449,42 @@
     box.innerHTML = L.length ? `<div class="card ld-tw"><table class="ld-t"><thead><tr><th>التاريخ</th><th>المعلمة</th><th>البرامج</th><th>الحالة</th></tr></thead><tbody>${L.slice(0, 100).map(x =>
       `<tr><td class="ld-w"><b>${hijri(x.at)}</b></td><td>${esc(x.to)}</td><td>${(x.progs || []).map(esc).join('<br>') || '—'}</td><td>${stOf(x)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="ld-empty">لم يُرسل أي تنبيه بعد.</p>';
   }
+  // قوالب الرسائل (نموذج ب، 2026-11-12): تذكير = البرامج المنتهية بلا شواهد (كما كان) · شكر = كل برامجها المنتهية لها شواهد · طلب تعديل = برامج لها شواهد
+  const AL = { mode: 'rem' };
+  const ALT = {
+    rem: ['تذكير', overdue, alMsg, 1],
+    thx: ['شكر وتميز', D => D.teachers.map(t => ({ t, P: t.p.filter(p => p.s === 'done' && p.ev.length) })).filter(x => x.P.length && !x.t.p.some(p => p.s === 'done' && !p.ev.length)),
+      (t, P) => `السلام عليكم ورحمة الله وبركاته\nأ. ${t.name}\nشكرًا لك على رفع شواهد ${P.length === 1 ? 'البرنامج' : 'البرامج'} في موعدها:\n` + P.map(p => `• ${p.n}`).join('\n') + '\nعطاؤك أثر جميل في طالباتنا، بارك الله فيك.\nرائد النشاط: منى العمري', 1],
+    fix: ['طلب تعديل', D => D.teachers.map(t => ({ t, P: t.p.filter(p => p.ev.length) })).filter(x => x.P.length),
+      (t, P) => `السلام عليكم ورحمة الله وبركاته\nأ. ${t.name}\nنأمل تعديل ما يلي في شواهد ${P.length === 1 ? 'برنامج «' + P[0].n + '»' : 'برامجك'}:\n• (اكتبي المطلوب تعديله هنا)\nشاكرين تعاونك.\nرائد النشاط: منى العمري`, 0] };
   function alerts(D) {
-    const O = overdue(D), can = new Set(D.alert || []);
+    const [mName, listOf, msgOf, pre] = ALT[AL.mode], O = listOf(D), can = new Set(D.alert || []);
     setTimeout(() => loadLog(D, true).then(() => paintLog(D)), 0);
     const card = ({ t, P }) => { const ok = can.has(t.name) && D.inbox;
-      return `<div class="card ld-al" data-al="${t.i}"><div class="ld-alh"><label><input type="checkbox" class="ld-alc"${ok ? ' checked' : ' disabled'}> <b>${esc(t.name)}</b></label>
+      return `<div class="card ld-al" data-al="${t.i}"><div class="ld-alh"><label><input type="checkbox" class="ld-alc"${ok ? (pre ? ' checked' : '') : ' disabled'}> <b>${esc(t.name)}</b></label>
         <span class="ld-d" style="display:inline">${esc(t.cls)}${t.mates.length ? ' · مع ' + t.mates.map(m => esc(m.name)).join(' و ') : ''}</span>
-        <span class="chip s-none">${P.length === 1 ? 'برنامج واحد' : ar(P.length) + ' برامج'} بلا شواهد</span></div>
+        <span class="chip ${AL.mode === 'rem' ? 's-none' : AL.mode === 'thx' ? 's-ok' : 's-part'}">${P.length === 1 ? 'برنامج واحد' : ar(P.length) + ' برامج'}${AL.mode === 'rem' ? ' بلا شواهد' : ' لها شواهد'}</span></div>
         <div class="ld-links">${P.map(p => `<button class="btn sm ghost" data-go="lb/${p.rec.i}">${esc(p.n)} · انتهى ${hd(p.to.h)}</button>`).join('')}</div>
-        ${ok ? `<textarea class="ld-alt" rows="${P.length + 6}" aria-label="نص التنبيه إلى ${esc(t.name)}">${esc(alMsg(t, P))}</textarea>` : '<p class="ld-msg err">لا حساب لها في المنصة، فلا يصلها التنبيه.</p>'}
+        ${ok ? `<textarea class="ld-alt" rows="${P.length + 6}" aria-label="نص التنبيه إلى ${esc(t.name)}">${esc(msgOf(t, P))}</textarea>` : '<p class="ld-msg err">لا حساب لها في المنصة، فلا يصلها التنبيه.</p>'}
         <span class="ld-msg" data-last="${esc(t.name)}">${lastTxt(D, t.name)}</span></div>`; };
-    const n = O.filter(x => can.has(x.t.name)).length;
-    return nav(['la', 'رسائل التنبيه']) + `<div class="card ld-h" style="border-inline-start-color:#b4443c"><h2>رسائل التنبيه</h2><p>البرامج التي انتهى موعدها حسب سجل الخطة ولم تُرفق المعلمة شواهدها. يمكنك تعديل نص كل رسالة قبل الإرسال، وتظهر في الصفحة الرئيسية للمعلمة في المنصة خلال ٥–١٠ دقائق.</p></div>
-    ${O.length ? `<div class="card ld-tools"><div class="row2"><button class="btn" data-act="al-send"${n && D.inbox ? '' : ' disabled'}>إرسال التنبيه إلى المحددات (<span id="laN">${ar(n)}</span>)</button>
+    const n = pre ? O.filter(x => can.has(x.t.name)).length : 0;
+    return nav(['la', 'رسائل التنبيه']) + `<div class="card ld-h" style="border-inline-start-color:#b4443c"><h2>رسائل التنبيه</h2><p>اختاري نوع الرسالة؛ يتعبأ النص تلقائيًا باسم المعلمة وبرامجها، ويمكنك تعديله قبل الإرسال. تظهر الرسالة في الصفحة الرئيسية للمعلمة في المنصة خلال ٥–١٠ دقائق.</p></div>
+    <div class="ld-tpl" style="margin-bottom:12px">${Object.entries(ALT).map(([k, x]) => `<button class="${k === AL.mode ? 'on' : ''}" data-act="al-mode-${k}">${x[0]}</button>`).join('')}</div>
+    <p class="ld-empty" style="margin-top:-6px">${AL.mode === 'rem' ? 'المعلمات اللاتي انتهت برامجهن ولم تُرفق الشواهد.' : AL.mode === 'thx' ? 'المعلمات اللاتي رفعن شواهد كل برامجهن المنتهية.' : 'المعلمات اللاتي لهن شواهد مرفوعة؛ حددي المعلمة واكتبي المطلوب تعديله مكان النص بين القوسين.'}</p>
+    ${O.length ? `<div class="card ld-tools"><div class="row2"><button class="btn" data-act="al-send"${D.inbox ? '' : ' disabled'}>إرسال «${mName}» إلى المحددات (<span id="laN">${ar(n)}</span>)</button>
       <button class="btn sm ghost" data-act="al-all">تحديد الكل</button><button class="btn sm ghost" data-act="al-none">إلغاء التحديد</button><span class="ld-msg" id="laMsg">${D.inbox ? '' : 'الإرسال غير مفعّل بعد في هذه النسخة.'}</span></div></div>
-      ${O.map(card).join('')}` : '<div class="card ld-h"><p>لا توجد برامج انتهت بلا شواهد. 👍</p></div>'}
+      ${O.map(card).join('')}` : `<div class="card ld-h"><p>${AL.mode === 'rem' ? 'لا توجد برامج انتهت بلا شواهد. 👍' : 'لا توجد معلمات في هذه القائمة بعد.'}</p></div>`}
     <h3 class="ld-sec">التنبيهات المرسلة</h3><div id="laLog"><p class="ld-empty">جارٍ التحميل…</p></div>`;
   }
   async function alertAct(b) {
     const D = D_(), all = [...document.querySelectorAll('.ld-al')], cnt = () => { const n = document.getElementById('laN'); if (n) n.textContent = ar(document.querySelectorAll('.ld-alc:checked').length); };
+    if (b.dataset.act.startsWith('al-mode-')) { AL.mode = b.dataset.act.slice(8); return route(); }
     if (b.dataset.act === 'al-all' || b.dataset.act === 'al-none') { all.forEach(c => { const x = c.querySelector('.ld-alc'); if (!x.disabled) x.checked = b.dataset.act === 'al-all'; }); return cnt(); }
     const msg = document.getElementById('laMsg'), say = (t, err) => { msg.textContent = t; msg.className = 'ld-msg' + (err ? ' err' : ''); };
     const at = new Date().toISOString(), items = all.filter(c => c.querySelector('.ld-alc:checked')).map(c => { const t = D.teachers[+c.dataset.al];
-      return { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8), to: t.name, text: c.querySelector('.ld-alt').value.trim(), progs: overdue(D).find(x => x.t === t).P.map(p => p.n) }; });
+      return { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8), to: t.name, text: c.querySelector('.ld-alt').value.trim(), progs: ALT[AL.mode][1](D).find(x => x.t === t).P.map(p => p.n) }; });
     if (!items.length) return say('اختاري معلمة واحدة على الأقل', 1);
+    if (items.some(x => x.text.includes('(اكتبي المطلوب تعديله هنا)'))) return say('اكتبي المطلوب تعديله مكان النص بين القوسين', 1);
     if (items.some(x => !x.text)) return say('نص التنبيه فارغ لإحدى المعلمات', 1);
     b.disabled = true; say('جارٍ الإرسال…');
     try {
@@ -444,7 +497,8 @@
   function classCards(D) {
     return `<div class="ld-cg">${D.cls.map((c, k) => { const L = c.T.flatMap(t => t.p), run = L.filter(p => p.s === 'run').length, ev = new Set(L.flatMap(p => p.ev.map(f => f.id))).size;
       const diff = c.T.length > 1 && !same(c.T[0], c.T[1]);
-      return `<div class="card ld-cc"><h4>${esc(c.c)} <button class="btn sm ghost" data-go="lc/${k}">برامج الفصل</button></h4>
+      const v = avg(L.map(p => (p.sc = score(p)) ? p.sc.v : null));   // نسبة الإنجاز = متوسط مؤشر برامج الفصل التي بدأت (كما في لوحة المؤشرات)
+      return `<div class="card ld-cc"><h4><span style="display:flex;gap:12px;align-items:center"><span class="ld-ring sm" style="--v:${v || 0}" title="نسبة الإنجاز"><div>${pc(v)}</div></span>${esc(c.c)}</span> <button class="btn sm ghost" data-go="lc/${k}">برامج الفصل</button></h4>
         <div class="ld-pair">${c.T.map(t => `<button data-go="lt/${t.i}"><b>${esc(t.name)}</b><small>${esc(t.subj)} · ${ar(t.p.length)} برامج</small></button>`).join('')}</div>
         <span class="ld-dots">${[...new Set(L.map(p => p.n))].map(n => { const p = L.find(x => x.n === n); return `<span class="chip s-${ST[p.s][1]}">${esc(n.replace(/^برنامج /, ''))}</span>`; }).join('')}</span>
         <small style="color:var(--muted)">${c.T.length > 1 ? (diff ? 'برامج المعلمتين مختلفة في جدول الإسناد' : 'المعلمتان تنفذان البرامج نفسها') : 'معلمة واحدة في الفصل'} · ${ar(run)} جارٍ · ${ar(ev)} شاهد · ${ar(c.T[0].students)} طالبة</small></div>`; }).join('')}</div>`;
@@ -486,13 +540,13 @@
     const lv = LV(ov);
     return nav(['lg', 'الأنشطة الصفية'], ['lm', 'لوحة المؤشرات']) + `<div class="card ld-h"><h2>لوحة مؤشرات الشواهد والتنفيذ</h2><p>تقيس قوة الشواهد وتحقق التنفيذ لكل برنامج بدأ أو انتهى، وتُحدَّث تلقائيًا مع كل شاهد يُرفع.</p></div>
     ${ev ? '' : '<div class="ld-m-note">لم تُرفع شواهد بعد؛ تكتمل المؤشرات تلقائيًا عندما تبدأ المعلمات رفع الصور من زر «برامج الأنشطة الصفية» في المنصة.</div>'}
-    <div class="card ld-hero"><div class="ld-ring" style="--v:${ov || 0}"><div>${pc(ov)}</div></div>
-      <div><p>المؤشر العام لـ ${ar(st.length)} برنامجًا بدأت أو انتهت من ${ar(D.all.length)} برنامجًا</p></div></div>
-    <div class="ld-k">${[[ar(ev), 'شاهدًا مرفوعًا'], [ar(st.filter(p => p.sc.n > 0).length) + ' من ' + ar(st.length), 'برامج بدأت ولها شواهد'], [ar(st.filter(p => !p.sc.n).length), 'بدأت بلا شواهد'], [ar(noRep), 'انتهت بلا تقرير أو قياس أثر']]
-      .map(([n, l]) => `<div class="card"><b>${n}</b><span>${l}</span></div>`).join('')}</div>
+    <div class="ld-k ld-k4">${[[ar(D.recs.length), 'برنامجًا', `${ar(st.length)} منها بدأت أو انتهت`], [pc(ov), 'نسبة الإنجاز', 'المؤشر العام · ' + lv[0]], [ar(ev), 'شاهدًا مرفوعًا', `${ar(st.filter(p => !p.sc.n).length)} برامج بدأت بلا شواهد`], [ar(D.reports.length), 'تقريرًا', `${ar(noRep)} انتهت بلا تقرير أو قياس أثر`]]
+      .map(([n, l, s]) => `<div class="card"><b>${n}</b><span>${l}</span><small class="nr-ks">${s}</small></div>`).join('')}</div>
+    <div class="card" style="padding:14px 16px;margin-bottom:12px"><h4 style="margin:0 0 6px;font-size:15px">نسبة الإنجاز حسب المجال</h4>
+      ${(dv => { return `<div class="ld-vb">${dv.map(([d, v]) => `<div class="ld-vc" title="${esc(d)}: ${v === null ? 'لا بيانات' : pc(v)}"><b>${pc(v)}</b><i style="height:${v || 0}%;background:${DOM[d] || 'var(--brand)'}"></i></div>`).join('')}</div>
+      <div class="ld-xl ld-vx">${dv.map(([d]) => `<span>${esc(d)}</span>`).join('')}</div>`; })(D.doms.map(d => [d, avg(st.filter(p => p.dom === d).map(p => p.sc.v))]))}</div>
     <div class="ld-2">
       <div class="card"><h4>مكونات المؤشر (متوسط البرامج)</h4>${bars(W.map(([nm, w], i) => [nm + ' (' + ar(w) + '٪)', avg(st.map(p => p.sc.c[i] === null ? null : Math.round(p.sc.c[i] * 100)))]))}</div>
-      <div class="card"><h4>حسب المجال</h4>${bars(D.doms.map(d => [d, avg(st.filter(p => p.dom === d).map(p => p.sc.v)), DOM[d]]))}</div>
       <div class="card"><h4>حسب الفصل (المعلمة وزميلتها)</h4>${bars(D.cls.map(c => [c.c, avg(st.filter(p => p.t.cls === c.c).map(p => p.sc.v)), null, c.T.map(t => t.name).join(' و ')]))}</div>
       <div class="card"><h4>المعلمات</h4>${bars(D.teachers.map(t => [t.name, avg(t.p.filter(p => p.sc).map(p => p.sc.v))]).sort((a, b) => (b[1] ?? -1) - (a[1] ?? -1)))}</div>
     </div>
@@ -598,7 +652,7 @@
     14: 'صحتي مسؤوليتي — نحو صحة أفضل', 16: 'رحلة نجاح — وعيك يحميك' };   // 11–16 من أدلة «عين» في ون درايف (2026-11-10)
   const nrRad = r => NR_T[r.w] || r.radio || '';
   const nrSpan = days => !days || !days.length ? '—' : days.length === 1 ? hd(days[0]) : hd(days[0]) + ' – ' + hd(days[days.length - 1]);
-  const nrTabs = tab => `<div class="nr-tabs"><button class="${tab ? '' : 'on'}" data-go="lnr">التقارير</button><button class="${tab ? 'on' : ''}" data-go="lnr/m">المؤشرات</button></div>`;
+  const nrTabs = tab => `<div class="nr-tabs"><button class="${tab ? '' : 'on'}" data-go="lnr">التقارير</button><button class="${tab === 'c' ? 'on' : ''}" data-go="lnr/c">التقويم</button><button class="${tab === 'm' ? 'on' : ''}" data-go="lnr/m">المؤشرات</button></div>`;
   const nrThumb = f => `<a class="nr-ev" href="https://drive.google.com/file/d/${esc(f.id)}/view" target="_blank" rel="noopener" title="${esc(f.n)}">${/^image\//.test(f.m)
     ? (NR.th[f.id] ? `<img alt="" src="data:image/jpeg;base64,${NR.th[f.id]}">` : `<span data-nrth="${esc(f.id)}">…</span>`) : `<span>${/pdf/.test(f.m) ? 'PDF' : /video/.test(f.m) ? 'فيديو' : 'ملف'}</span>`}</a>`;
   function nrRow(x) {
@@ -661,10 +715,46 @@
   }
   function nrPage(D, a) {
     nrCss(); nrLoad(); setTimeout(nrThumbs, 0);
-    const rows = nrRows(D), tab = a === 'm';
+    nrNorm(D); const rows = nrRows(D), tab = a === 'm' ? 'm' : a === 'c' || /^cd/.test(a || '') ? 'c' : '';
     return nav(['lnr', 'تقارير المعلمات في الأنشطة اللاصفية']) + `<div class="card ld-h"><h2>تقارير المعلمات في الأنشطة اللاصفية</h2>
       <p>بطاقات تنفيذ الفترات اللاصفية (الاصطفاف الصباحي والصلاة) لكل معلمة في أسابيع إذاعة فصلها${NR.loading ? ' · جارٍ تحديث التقارير…' : NR.err ? ' · تعذّر تحديث التقارير: ' + esc(NR.err) : ''}</p></div>`
-      + nrTabs(tab) + (tab ? nrMetrics(D, rows) : nrReports(D, rows));
+      + nrTabs(tab) + (tab === 'm' ? nrMetrics(D, rows) : tab === 'c' ? nrCal(D, rows, +(String(a).slice(1)) || 0) : nrReports(D, rows));
+  }
+  // تاريخ هجري «ي/ش/س» ← يوم ميلادي (UTC) من تقويم أم القرى في المتصفح (لعام ١٤٤٨هـ)
+  const H2G = (() => { let M; return h => { if (!M) { M = {}; const f = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', { day: 'numeric', month: 'numeric', year: 'numeric', timeZone: 'UTC' });
+    for (let t = Date.UTC(2026, 5, 1); t < Date.UTC(2027, 7, 1); t += 864e5) { const P = f.formatToParts(new Date(t)), g = k => +P.find(x => x.type === k).value; M[g('year') + '/' + g('month') + '/' + g('day')] = t; } }
+    const [y, m, d] = String(h || '').split('/').map(Number); return M[y + '/' + m + '/' + d]; }; })();
+  const DAYN = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  /* أسابيع الإذاعة: إن وصل الأسبوع ٠ أو بلا تواريخ ميلادية (حدث في بيانات 2026-11-12) يُحسب من التواريخ الهجرية،
+     فتعود معرّفات التقارير «w|NN|الموضوع» ومجلدات الشواهد «الأسبوع NN — الموضوع» إلى التطابق */
+  function nrNorm(D) {
+    (D.nplan || []).forEach(c => c.runs.forEach(r => { if (r._n || r.manual) return; r._n = 1;
+      const t0 = H2G(r.days[0]), t1 = H2G(r.days[r.days.length - 1]); if (!t0) return;
+      const iso = t => new Date(t).toISOString().slice(0, 10);
+      if (!r.g0) { r.g0 = iso(t0); r.g1 = iso(t1 || t0); }
+      if (!r.dn || !r.dn.some(Boolean)) r.dn = r.days.map(h => DAYN[new Date(H2G(h) || t0).getUTCDay()]);
+      if (!r.w) { r.w = weekOf(new Date(t0).toISOString()); r.sid = 'w|' + String(r.w).padStart(2, '0') + '|' + r.topic; }
+    }));
+  }
+  // «التقويم» (نموذج ب): أسبوع واحد — صفان (الاصطفاف الصباحي، الصلاة) × أيام الأسبوع، وفي كل خانة الفصل وموضوعه وحالة معلماته
+  function nrCal(D, rows, w) {
+    const R = (D.nplan || []).flatMap(c => c.runs.filter(r => r.w > 0).map(r => ({ c, r }))), Ws = [...new Set(R.map(x => x.r.w))].sort((a, b) => a - b);
+    if (!Ws.length) return '<p class="ld-empty">لا توجد أسابيع إذاعة في الخطة.</p>';
+    const cur = weekOf(new Date(today).toISOString());
+    if (!Ws.includes(w)) w = Ws.find(x => x >= cur) || Ws[Ws.length - 1];
+    const W = R.filter(x => x.r.w === w), i = Ws.indexOf(w);
+    const stOfRun = (c, r) => { const X = rows.filter(x => x.c === c && x.r === r); return X[0].state === 'later' ? 'na' : X.every(x => x.s === 'rep') ? 'ok' : X.some(x => x.s === 'rep' || x.s === 'ev') || X[0].state === 'now' ? 'part' : 'none'; };
+    const cell = (kind, d) => { const L = W.filter(({ r }) => r.dn.includes(DAYN[d]));
+      return `<div>${L.map(({ c, r }) => { const s = stOfRun(c, r), X = rows.filter(x => x.c === c && x.r === r);
+        return `<div class="it s-${s}" title="${X.map(x => esc(x.t) + ': ' + NS[x.s][0]).join('، ')}"><b>${esc(c.cls.replace(/d+$/, ar))}</b>${esc(kind ? (r.prayer || 'الصلاة') : (nrRad(r) || r.topic))}<br><small>${X.map(x => esc(x.t)).join(' و ')}</small></div>`; }).join('') || '<span class="ld-empty" style="padding:0">—</span>'}</div>`; };
+    const dh = d => { const x = W.find(({ r }) => r.dn.includes(DAYN[d])); const h = x && x.r.days[x.r.dn.indexOf(DAYN[d])]; return DAYN[d] + (h ? '<br><small style="font-weight:400">' + hd(h) + '</small>' : ''); };
+    return `<div class="ld-links" style="align-items:center">${i > 0 ? `<button class="btn sm ghost" data-go="lnr/c${Ws[i - 1]}">→ الأسبوع السابق</button>` : ''}
+      <b style="font-size:16px">الأسبوع ${WK[w] || ar(w)}${w === cur ? ' (الحالي)' : ''}</b>${i < Ws.length - 1 ? `<button class="btn sm ghost" data-go="lnr/c${Ws[i + 1]}">الأسبوع التالي ←</button>` : ''}</div>
+    <div class="nr-leg"><span class="nr-c s-ok">صدرت تقاريره</span><span class="nr-c s-part">جزئي / جارٍ</span><span class="nr-c s-none">انتهى بلا شواهد</span><span class="nr-c s-na">لم يحن</span></div>
+    <div class="ld-tw"><div class="ld-wk"><div class="hd"></div>${[0, 1, 2, 3, 4].map(d => `<div class="hd">${dh(d)}</div>`).join('')}
+      <div class="rh">الاصطفاف الصباحي (الإذاعة)</div>${[0, 1, 2, 3, 4].map(d => cell(0, d)).join('')}
+      <div class="rh">الصلاة</div>${[0, 1, 2, 3, 4].map(d => cell(1, d)).join('')}</div></div>
+    <div class="ld-links" style="margin-top:10px">${Ws.map(x => `<button class="btn sm${x === w ? '' : ' ghost'}" data-go="lnr/c${x}">${ar(x)}</button>`).join('')}</div>`;
   }
   document.addEventListener('change', ev => {
     if (ev.target.id !== 'nrC' && ev.target.id !== 'nrS') return;
@@ -698,7 +788,7 @@
     return ar(g('day')) + RLM + '/' + ar(g('month')) + RLM + '/' + ar(g('year')) + 'هـ'; } catch { return ''; } };
   const ocN = n => n === 1 ? 'رسالة واحدة' : n === 2 ? 'رسالتان' : n >= 3 && n <= 10 ? ar(n) + ' رسائل' : ar(n) + ' رسالة';
   const ocUrl = id => new URL('m/?o=' + id, location.href.split('#')[0]).href;
-  const ocRe = () => { if (/^#lo/.test(location.hash) && typeof route === 'function' && !(document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName))) { const y = window.scrollY; route(); window.scrollTo(0, y); } };
+  const ocRe = () => { if (/^#l(o|cal)/.test(location.hash) && typeof route === 'function' && !(document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName))) { const y = window.scrollY; route(); window.scrollTo(0, y); } };
   function ocLoad(force) {
     if ((OC.occ && !force) || OC.busy.list) return; OC.busy.list = 1;
     api({ a: 'olist' }).then(j => { OC.occ = j.occ; OC.err = ''; }).catch(e => { OC.err = e.message; }).finally(() => { OC.busy.list = 0; ocRe(); });
@@ -944,10 +1034,100 @@
   document.addEventListener('change', ev => { if (ev.target.id === 'cdC') location.hash = 'lcd' + (ev.target.value ? '/' + encodeURIComponent(ev.target.value) : ''); });
   // معلمة مطّلعة (سلمى القرني): D = { nplan, radio, nrecs } من ملفها، call = طلب برمزها (nallv / nthumbv)
   function nrView(D, a, call) { style(); NR.call = call; return nrPage(D, a); }
+  /* «ملف الإنجاز المجمّع» (نموذج ج، 2026-11-12): كتاب PDF واحد = غلاف + فهرس + فاصل لكل قسم + ملفا «تحميل الكل» (D.ar).
+     يُبنى في المتصفح (pdf-lib من cdnjs، يُحمَّل عند الضغط فقط)؛ الغلاف والفهرس يُرسمان على لوحة بخط المنصة فيظهر العربي صحيحًا. */
+  const BK = [['cls', 'الأنشطة الصفية', 'الصف ← الفصل ← المجال ← البرنامج'], ['non', 'الأنشطة اللاصفية', 'الأسبوع ← الفصل']];
+  const bookParts = D => { const A = D.ar || {}; let p = 3; return BK.filter(([k]) => A[k] && A[k].bin).map(([k, t, how]) => { const x = { k, t, how, n: A[k].count, pages: A[k].pages, div: p, from: p + 1 }; p += 1 + (A[k].pages || 0); return x; }); };
+  function bookCard(D) {
+    const P = bookParts(D); if (!P.length) return '';
+    const tot = 2 + P.reduce((a, x) => a + 1 + (x.pages || 0), 0);
+    return `<div class="card" style="padding:16px;margin-bottom:14px"><div class="ld-book"><div class="ld-cover"><img src="moe-logo.png" alt="" style="width:90px;max-width:100%"><b>ملف إنجاز النشاط الطلابي</b><span>الفصل الدراسي الأول ١٤٤٨هـ</span><span>المتوسطة الحادية والعشرون</span></div>
+      <div style="display:grid;gap:10px;min-width:0"><h3 style="margin:0">ملف الإنجاز المجمّع</h3><p class="ld-empty" style="margin:0">كتاب PDF واحد بغلاف وفهرس، يتحدث تلقائيًا مع كل تحديث للتقارير · ${ar(tot)} صفحة تقريبًا.</p>
+        <ol class="ld-toc"><li>الغلاف <i></i> ١</li><li>الفهرس <i></i> ٢</li>${P.map((x, i) => `<li>${ar(i + 1)}. ${x.t} (${ar(x.n)} تقارير) <i></i> ${ar(x.div)}</li>`).join('')}</ol>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn" data-book="1">تنزيل ملف الإنجاز (PDF)</button><span class="ld-msg" id="bkMsg"></span></div>
+        <p class="ld-empty" style="margin:0">تقارير المناسبات والمسابقات لم تُضف للملف بعد، لأنها غير مجمّعة في ملف واحد حتى الآن.</p></div></div></div>`;
+  }
+  async function arBytes(A, k) {
+    const key = await crypto.subtle.importKey('raw', Uint8Array.from(A.key.match(/../g).map(h => parseInt(h, 16))), 'AES-GCM', false, ['decrypt']);
+    const r = await fetch(A[k].bin + '?t=' + Date.now(), { cache: 'no-cache' }); if (!r.ok) throw new Error('net');
+    const u = new Uint8Array(await r.arrayBuffer()); return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.subarray(0, 12) }, key, u.subarray(12)));
+  }
+  const loadJs = src => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+  async function bkPage(draw) {   // صفحة A4 مرسومة ← JPEG
+    const c = document.createElement('canvas'); c.width = 1240; c.height = 1754; const x = c.getContext('2d');
+    x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.direction = 'rtl'; x.textAlign = 'center'; x.fillStyle = '#2a2540';
+    const F = getComputedStyle(document.body).fontFamily || 'Tahoma'; x.font1 = (w, s) => { x.font = w + ' ' + s + 'px ' + F; };
+    await draw(x, c); return new Promise(o => c.toBlob(b => b.arrayBuffer().then(o), 'image/jpeg', 0.92));
+  }
+  document.addEventListener('click', async ev => {
+    const b = ev.target.closest('[data-book]'); if (!b) return;
+    const D = D_(), A = D.ar, P = bookParts(D), msg = document.getElementById('bkMsg'), say = (t, e) => { if (msg) { msg.textContent = t; msg.className = 'ld-msg' + (e ? ' err' : ''); } };
+    b.disabled = true;
+    try {
+      say('جارٍ تجهيز الأداة…'); if (!window.PDFLib) await loadJs('https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js');
+      await document.fonts.ready;
+      const logo = await new Promise(o => { const i = new Image(); i.onload = () => o(i); i.onerror = () => o(null); i.src = 'moe-logo.png'; });
+      const purple = '#6c5ce7', W = 1240;
+      const pages = [await bkPage(x => { x.fillStyle = purple; x.fillRect(0, 0, W, 26); x.fillRect(0, 1728, W, 26);
+        if (logo) { const h = 220, w = logo.width * h / logo.height; x.drawImage(logo, (W - w) / 2, 260, w, h); }
+        x.fillStyle = purple; x.font1(800, 86); x.fillText('ملف إنجاز النشاط الطلابي', W / 2, 700);
+        x.fillStyle = '#2a2540'; x.font1(600, 48); x.fillText('الفصل الدراسي الأول ١٤٤٨هـ', W / 2, 800);
+        x.font1(500, 42); x.fillText('المتوسطة الحادية والعشرون', W / 2, 880);
+        x.font1(500, 38); x.fillText('رائد النشاط: منى العمري', W / 2, 1400);
+        x.fillStyle = '#6f6b88'; x.font1(400, 30); x.fillText('أُعدّ من منصة المدرسة · ' + hijri(new Date().toISOString()), W / 2, 1600); }),
+        await bkPage(x => { x.fillStyle = purple; x.font1(800, 70); x.fillText('الفهرس', W / 2, 240);
+          const L = [['الغلاف', 1], ['الفهرس', 2]].concat(P.map((p, i) => [ar(i + 1) + '. ' + p.t + ' (' + ar(p.n) + ' تقارير)', p.div]));
+          L.forEach(([t, n], i) => { const y = 400 + i * 110; x.fillStyle = '#2a2540'; x.font1(600, 42); x.textAlign = 'right'; x.fillText(t, W - 150, y);
+            x.textAlign = 'left'; x.fillText(ar(n), 150, y); x.strokeStyle = '#d9d5ea'; x.setLineDash([4, 10]); x.lineWidth = 3; x.beginPath(); x.moveTo(230, y - 12); x.lineTo(W - 150 - x.measureText(t).width - 30, y - 12); x.stroke(); });
+          x.textAlign = 'center'; x.fillStyle = '#6f6b88'; x.font1(400, 30);
+          P.forEach((p, i) => x.fillText(p.t + ': مرتبة ' + p.how, W / 2, 400 + (L.length + 1 + i) * 70)); })];
+      const doc = await PDFLib.PDFDocument.create(), A4 = [595.28, 841.89];
+      const addImg = async bytes => { const im = await doc.embedJpg(bytes), pg = doc.addPage(A4); pg.drawImage(im, { x: 0, y: 0, width: A4[0], height: A4[1] }); };
+      for (const p of pages) await addImg(p);
+      for (const [i, p] of P.entries()) {
+        say(`جارٍ تنزيل ${p.t}…`);
+        await addImg(await bkPage(x => { x.fillStyle = purple; x.fillRect(0, 0, W, 1754); x.fillStyle = '#fff'; x.font1(800, 96); x.fillText(ar(i + 1) + '. ' + p.t, W / 2, 820); x.font1(500, 40); x.fillText(ar(p.n) + ' تقارير · مرتبة ' + p.how, W / 2, 920); }));
+        const src = await PDFLib.PDFDocument.load(await arBytes(A, p.k), { ignoreEncryption: true });
+        (await doc.copyPages(src, src.getPageIndices())).forEach(pg => doc.addPage(pg));
+      }
+      say('جارٍ حفظ الملف…');
+      const url = URL.createObjectURL(new Blob([await doc.save()], { type: 'application/pdf' })), a = document.createElement('a');
+      a.href = url; a.download = 'ملف إنجاز النشاط الطلابي - الفصل الأول 1448هـ.pdf'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 120000);
+      say(`تم التنزيل · ${ar(doc.getPageCount())} صفحة`);
+    } catch (e) { console.error(e); say('تعذّر تجهيز الملف، حاولي مرة أخرى', 1); } finally { b.disabled = false; }
+  });
+  /* «تقويم المناسبات والمسابقات» (نموذج أ، 2026-11-12): شهر هجري؛ المناسبة في يوم بداية تنفيذها من بطاقتها (الأسبوع + اليوم)،
+     وإن لم تُعبأ البطاقة ففي يوم إضافتها. المسابقات بلا تواريخ في النظام فتظهر تحت التقويم. */
+  const wkStart = w => { let t = T0 + (w - 1) * 7 * 864e5; if (t >= BRK) t += 7 * 864e5; return t; };
+  const ocWhen = o => { const f = o.form || {}; if (f.sw && f.sd && DAYN.indexOf(f.sd) >= 0) return { t: wkStart(+f.sw) + DAYN.indexOf(f.sd) * 864e5, sure: 1 };
+    const t = Date.parse(String(o.at || '').replace(' ', 'T') + ':00+03:00'); if (isNaN(t)) return null; const d = new Date(t + 3 * 3600e3); return { t: Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()), sure: 0 }; };
+  const HF = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', { day: 'numeric', month: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  const g2h = t => { const P = HF.formatToParts(new Date(t)), g = k => +P.find(x => x.type === k).value; return [g('year'), g('month'), g('day')]; };
+  function calPage(D, a) {
+    ocLoad();
+    const [cy, cm] = g2h(today), [y, m] = /^\d+-\d+$/.test(a || '') ? a.split('-').map(Number) : [cy, cm];
+    const days = []; for (let t = Date.UTC(2026, 5, 1); t < Date.UTC(2027, 7, 1); t += 864e5) { const h = g2h(t); if (h[0] === y && h[1] === m) days.push([t, h[2]]); }
+    const prev = m === 1 ? [y - 1, 12] : [y, m - 1], next = m === 12 ? [y + 1, 1] : [y, m + 1];
+    const O = (OC.occ || []).map(o => ({ o, w: ocWhen(o) })).filter(x => x.w);
+    const lead = days.length ? new Date(days[0][0]).getUTCDay() : 0;
+    const cells = Array.from({ length: lead }, () => '<div class="off"></div>').concat(days.map(([t, d]) => { const E = O.filter(x => x.w.t === t), wd = new Date(t).getUTCDay();
+      return `<div class="${t === today ? 'td' : ''}${wd > 4 ? ' off' : ''}"><span class="dn">${ar(d)} <small>· ${new Date(t).toLocaleDateString('ar-SA-u-ca-gregory', { day: 'numeric', month: 'short', timeZone: 'UTC' })}</small></span>
+        ${E.map(x => `<button class="ev" data-go="lo/${esc(x.o.id)}" title="${esc(x.o.name)}${x.w.sure ? '' : ' (يوم الإضافة؛ لم تُعبأ بطاقة التنفيذ)'}">${esc(x.o.name)}${x.w.sure ? '' : ' *'}</button>`).join('')}</div>`; }));
+    const C = comps(D);
+    return nav(['lcal', 'تقويم المناسبات والمسابقات']) + `<div class="card ld-h" style="border-inline-start-color:#b7791f"><h2>تقويم المناسبات والمسابقات</h2><p>المناسبة تظهر في يوم بداية تنفيذها من بطاقتها؛ اضغطيها لفتح صفحتها (الرسائل، الرمز، البطاقة، قياس الأثر).</p></div>
+    ${OC.err ? `<p class="ld-msg err">${esc(OC.err)}</p>` : !OC.occ ? '<p class="ld-empty">جارٍ تحميل المناسبات…</p>' : ''}
+    <div class="ld-links" style="align-items:center;justify-content:space-between"><button class="btn sm ghost" data-go="lcal/${prev.join('-')}">→ ${MONTHS[prev[1]]}</button>
+      <b style="font-size:18px">${MONTHS[m]} ${ar(y)}هـ</b><button class="btn sm ghost" data-go="lcal/${next.join('-')}">${MONTHS[next[1]]} ←</button></div>
+    <div class="ld-cal">${DAYN.map(d => `<div class="hd">${d}</div>`).join('')}${cells.join('')}</div>
+    <p class="ld-empty">* يوم إضافة المناسبة، لأن بطاقة تنفيذها لم تُعبأ بعد.</p>
+    <div class="ld-links" style="margin-top:10px"><button class="btn sm" data-go="lo">+ إضافة مناسبة</button></div>
+    <h3 class="ld-sec">المسابقات (${ar(C.length)}) — بلا تاريخ في النظام</h3>
+    <div class="ld-links">${C.map((c, i) => `<button class="btn sm ghost" style="border-color:var(--part);color:var(--part)" data-go="lk/${i}">${esc(c.n)}</button>`).join('')}</div>`;
+  }
   window.LEADER = {
     nr: nrView,
     render(D, v, a) { style(); events(); ocEvents(); window.__LD = D; prep(D); const tt = document.getElementById('title'); if (tt) tt.textContent = this.title;
-      return v === 'lo' ? occasions(D, a) : v === 'lk' ? (a === undefined || a === '' ? compsPage(D) : comp(D, +a)) : v === 'lnr' ? nrPage(D, a) : v === 'lt' ? teacher(D, +a) : v === 'ltc' ? teacherClass(D, +a) : v === 'ltn' ? teacherNon(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : v === 'la' ? alerts(D) : v === 'lcd' ? cardsPage(D, a) : home(D); },
+      return v === 'lcal' ? calPage(D, a) : v === 'lo' ? occasions(D, a) : v === 'lk' ? (a === undefined || a === '' ? compsPage(D) : comp(D, +a)) : v === 'lnr' ? nrPage(D, a) : v === 'lt' ? teacher(D, +a) : v === 'ltc' ? teacherClass(D, +a) : v === 'ltn' ? teacherNon(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : v === 'la' ? alerts(D) : v === 'lcd' ? cardsPage(D, a) : home(D); },
     title: 'صفحة رائد النشاط : منى العمري',
   };
 })();

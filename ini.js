@@ -48,7 +48,10 @@
 .in-tbl td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
 .in-tbl tr.f td{border-top:2px solid var(--line)}
 .in-tbl tr:hover td:not(.tn){background:var(--soft)}
-.in-tbl td.tn{font-weight:700}
+.in-tbl td.tn{font-weight:700;white-space:nowrap}
+.in-tbl .nw{white-space:nowrap}
+.in-tbl .ms{display:grid;gap:4px}
+.in-h3{margin:6px 0 0;font-size:1.05rem;color:var(--brand-2)}
 .in-tbl .lnk{border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--brand-2);cursor:pointer;text-align:right}
 .in-tbl .lnk:hover{text-decoration:underline}
 .in-tbl .num{text-align:center;width:70px}
@@ -57,6 +60,23 @@
 .in-q{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .in-q input{flex:1 1 220px;min-height:40px;border:1px solid var(--line);border-radius:12px;padding:0 12px;font:inherit;background:var(--card);color:var(--ink)}
 #iniPrint{display:none}
+.in-paper{background:#fff;color:#000;border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);padding:14mm 12mm;max-width:210mm;margin:0 auto;overflow-x:auto}
+.idoc{font:13px/1.7 Tahoma,Arial,sans-serif;direction:rtl;color:#000}
+.idoc .hd{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #0f7c74;padding-bottom:8px;margin-bottom:12px}
+.idoc .hd .r{font-weight:700;line-height:1.8;font-size:12px}.idoc .hd img{height:2cm}
+.idoc h1{text-align:center;font-size:19px;margin:10px 0 2px;color:#0f7c74}
+.idoc .sb{text-align:center;color:#444;margin:0 0 12px}
+.idoc .kp{display:flex;gap:10px;margin-bottom:6px}.idoc .kp div{flex:1;border:1px solid #9bb;text-align:center;padding:6px;border-radius:4px}.idoc .kp b{display:block;font-size:20px;color:#0f7c74}
+.idoc .bar{background:#0f7c74;color:#fff;font-weight:700;padding:5px 12px;margin:16px 0 0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.idoc table{width:100%;border-collapse:collapse;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.idoc th{background:#e2f2f0;border:1px solid #9bb;padding:6px 8px;text-align:right;white-space:nowrap}
+.idoc td{border:1px solid #9bb;padding:6px 8px;vertical-align:middle}
+.idoc tbody tr:nth-child(even) td{background:#f6fbfa}
+.idoc td.c,.idoc th.c{text-align:center;width:34px}
+.idoc .nw{white-space:nowrap}.idoc td.ms div{white-space:nowrap}
+.idoc tr{break-inside:avoid}
+.idoc .zz{margin:6px 0 0;line-height:1.9}
+.idoc .sig{display:flex;justify-content:space-between;margin-top:36px;text-align:center;break-inside:avoid}.idoc .sig div{width:30%}
 @media (max-width:600px){.in-yrs{grid-template-columns:1fr}.in-k{grid-template-columns:1fr 1fr}}
 @media print{
   body.ini-printing>*:not(#iniPrint){display:none!important}
@@ -74,6 +94,8 @@
   #iniPrint th{background:#e2f2f0;border:1px solid #9bb;padding:5px;text-align:right}
   #iniPrint td{border:1px solid #9bb;padding:5px;vertical-align:top}
   #iniPrint tr{break-inside:avoid}
+  #iniPrint td.nw,#iniPrint th.nw{white-space:nowrap}
+  #iniPrint td.ms div{white-space:nowrap}
   #iniPrint .kp{display:flex;gap:10px}#iniPrint .kp div{flex:1;border:1px solid #9bb;text-align:center;padding:6px}#iniPrint .kp b{display:block;font-size:20px;color:#0f7c74}
   #iniPrint .sig{display:flex;justify-content:space-between;margin-top:36px;text-align:center}#iniPrint .sig div{width:30%}
   #iniPrint .ttl{font-weight:700;font-size:15px;margin:0 0 6px;text-align:center}
@@ -103,10 +125,18 @@
     return { n: new Set(list.map(r => gKey(r.it) + (r.it.g ? '' : '|' + r.t.name))).size, teachers: T.filter(t => itemsOf(t, y).length).length, all: T.length,
       shared: new Set(list.filter(r => partners(y, r.t, r.it).length).map(r => gKey(r.it))).size, list }; };
 
+  // 2026-11-12: جدولان — المبادرات الفردية (لكل معلمة)، والمشتركة (مرة واحدة بأسماء المعلمات)
+  const solo = y => I().teachers.flatMap((t, i) => itemsOf(t, y).filter(it => !partners(y, t, it).length).map(it => ({ t, i, it })));
+  const groups = y => { const M = new Map();
+    I().teachers.forEach((t, i) => itemsOf(t, y).forEach(it => { if (!partners(y, t, it).length) return; const k = gKey(it);
+      if (!M.has(k)) M.set(k, { n: it.n, m: [], files: [] }); const g = M.get(k); g.m.push({ t, i }); g.files.push(...it.files); }));
+    return [...M.values()]; };
+  const nameCell = (y, t, i) => `<button class="lnk" data-go="ini/${y}-${i}">${esc(t.name)}</button>`;
   function render(a) {
     if (!I()) return '<div class="card pad">لا توجد بيانات.</div>';
     const [y, ti] = String(a || '').split('-');
     if (!YEARS.includes(y)) return home();
+    if (ti === 'r') return reportView(y);
     if (ti !== undefined && I().teachers[+ti]) { setTimeout(fillThumbs, 0); return teacher(y, +ti); }
     return year(y);
   }
@@ -121,18 +151,21 @@
       <div class="in-top"><h2>مبادرات المعلمات · ${AR(y)}هـ</h2>
         <div class="in-seg">${YEARS.map(x => `<button data-go="ini/${x}"${x === y ? ' class="on"' : ''}>${AR(x)}هـ</button>`).join('')}</div></div>
       <div class="in-k"><div><b>${nf(s.n)}</b><span>مبادرة (المشتركة مرة واحدة)</span></div><div><b>${nf(s.shared)}</b><span>مبادرة مشتركة</span></div><div><b>${nf(s.teachers)} / ${nf(s.all)}</b><span>معلمة لها مبادرات</span></div></div>
-      <div class="in-acts"><button class="in-b" data-inirep="${y}">تنزيل تقرير ${AR(y)}هـ (PDF)</button><button class="in-b gh" data-iniall="${y}">طباعة كل مبادرات ${AR(y)}هـ بشواهدها</button></div>
+      <div class="in-acts"><button class="in-b" data-go="ini/${y}-r">تقرير كل المبادرات ${AR(y)}هـ (بدون شواهد): عرض · طباعة · تنزيل</button></div>
       <div class="in-q"><input id="iniQ" type="search" placeholder="ابحثي باسم المعلمة أو المبادرة" aria-label="بحث"></div>
-      <div class="in-tw"><table class="in-tbl" id="iniTbl">
-        <thead><tr><th>م</th><th>المعلمة</th><th>المبادرة</th><th>تاريخ الرفع</th><th>مشتركة مع</th><th class="num">الشواهد</th><th></th></tr></thead>
-        <tbody>${(() => { let k = 0; return T.map((t, i) => { const L = itemsOf(t, y);
-          if (!L.length) return `<tr class="f z" data-q="${esc(t.name)}"><td>—</td><td class="tn">${esc(t.name)}</td><td colspan="5">لا توجد مبادرات مرفوعة لهذا العام</td></tr>`;
-          return L.map((it, j) => { const p = partners(y, t, it);
-            return `<tr class="${j ? '' : 'f'}" data-q="${esc(t.name + ' ' + it.n)}"><td>${nf(++k)}</td>
-              <td class="tn">${j ? '' : `<button class="lnk" data-go="ini/${y}-${i}">${esc(t.name)}</button>`}</td>
-              <td>${esc(it.n)}</td><td style="white-space:nowrap">${itDate(it)}</td>
-              <td>${p.length ? esc(p.join('، ')) : '—'}</td><td class="num">${nf(it.files.length)}</td>
-              <td><button class="in-b gh" style="min-height:32px;padding:0 12px" data-go="ini/${y}-${i}">عرض</button></td></tr>`; }).join(''); }).join(''); })()}</tbody></table></div></div>`;
+      ${(() => { const S = solo(y), G = groups(y), Z = T.filter(t => !itemsOf(t, y).length);
+        const btn = (y, i) => `<button class="in-b gh" style="min-height:32px;padding:0 12px" data-go="ini/${y}-${i}">عرض</button>`;
+        return `<h3 class="in-h3">المبادرات الفردية (${nf(S.length)})</h3>
+      <div class="in-tw"><table class="in-tbl iniTbl">
+        <thead><tr><th>م</th><th>المعلمة</th><th>المبادرة</th><th>تاريخ الرفع</th><th></th></tr></thead>
+        <tbody>${S.map((r, k) => `<tr data-q="${esc(r.t.name + ' ' + r.it.n)}"><td>${nf(k + 1)}</td><td class="tn">${nameCell(y, r.t, r.i)}</td>
+          <td>${esc(r.it.n)}</td><td class="nw">${itDate(r.it)}</td><td>${btn(y, r.i)}</td></tr>`).join('') || '<tr><td colspan="5">لا توجد مبادرات فردية</td></tr>'}</tbody></table></div>
+      <h3 class="in-h3">المبادرات المشتركة (${nf(G.length)})</h3>
+      <div class="in-tw"><table class="in-tbl iniTbl">
+        <thead><tr><th>م</th><th>المبادرة</th><th>المعلمات المشتركات</th><th>تاريخ الرفع</th></tr></thead>
+        <tbody>${G.map((g, k) => `<tr data-q="${esc(g.n + ' ' + g.m.map(x => x.t.name).join(' '))}"><td>${nf(k + 1)}</td><td>${esc(g.n)}</td>
+          <td class="tn"><div class="ms">${g.m.map(x => `<span>${nameCell(y, x.t, x.i)}</span>`).join('')}</div></td><td class="nw">${itDate(g)}</td></tr>`).join('') || '<tr><td colspan="4">لا توجد مبادرات مشتركة</td></tr>'}</tbody></table></div>
+      ${Z.length ? `<p class="in-note">معلمات بلا مبادرات مرفوعة لهذا العام: ${esc(Z.map(t => t.name).join('، '))}</p>` : ''}`; })()}</div>`;
   }
   function teacher(y, i) {
     const t = I().teachers[i], L = itemsOf(t, y);
@@ -192,21 +225,48 @@
     }
     return html;
   }
-  function report(y) {
-    const s = stats(y), rows = s.list;
-    return `<div class="pg">${head()}<h1>تقرير مبادرات المعلمات لعام ${AR(y)}هـ</h1><p class="sb">تاريخ التقرير: ${hijriToday()}</p>
-      <div class="kp"><div><b>${AR(s.n)}</b>مبادرة</div><div><b>${AR(s.shared)}</b>مبادرة مشتركة</div><div><b>${AR(s.teachers)} / ${AR(s.all)}</b>معلمة لها مبادرات</div></div>
-      <div class="bar">قائمة المبادرات</div>
-      <table><tr><th>م</th><th>المعلمة</th><th>المبادرة</th><th>تاريخ الرفع</th><th>مشتركة مع</th><th>الشواهد</th></tr>
-      ${rows.map((r, k) => `<tr><td>${AR(k + 1)}</td><td>${esc(r.t.name)}</td><td>${esc(r.it.n)}</td><td style="white-space:nowrap">${itDate(r.it)}</td><td>${esc(partners(y, r.t, r.it).join('، ') || '—')}</td><td>${AR(r.it.files.length)}</td></tr>`).join('')}</table>
-      ${(() => { const z = I().teachers.filter(t => !itemsOf(t, y).length); return z.length ? `<div class="bar">معلمات بلا مبادرات مرفوعة لهذا العام</div><p>${esc(z.map(t => t.name).join('، '))}</p>` : ''; })()}
+  // تقرير كل المبادرات بدون شواهد — نفس المحتوى للعرض في المتصفح والطباعة والتنزيل (2026-11-12)
+  const byT = (a, b) => a.t.name.localeCompare(b.t.name, 'ar') || itDate(a.it).localeCompare(itDate(b.it));
+  function docHTML(y, logo) {
+    const s = stats(y), S = solo(y).sort(byT), G = groups(y).sort((a, b) => a.n.localeCompare(b.n, 'ar')), Z = I().teachers.filter(t => !itemsOf(t, y).length);
+    return `<div class="idoc"><div class="hd"><div class="r">المملكة العربية السعودية<br>وزارة التعليم<br>الإدارة العامة للتعليم بمنطقة عسير<br>${esc(D.school || 'المتوسطة الحادية والعشرون')}</div><img src="${logo || 'moe-logo.png?v=3'}" alt="وزارة التعليم"></div>
+      <h1>تقرير مبادرات المعلمات لعام ${AR(y)}هـ</h1><p class="sb">تاريخ التقرير: ${hijriToday()}</p>
+      <div class="kp"><div><b>${AR(s.n)}</b>مبادرة</div><div><b>${AR(S.length)}</b>مبادرة فردية</div><div><b>${AR(G.length)}</b>مبادرة مشتركة</div><div><b>${AR(s.teachers)} / ${AR(s.all)}</b>معلمة لها مبادرات</div></div>
+      <div class="bar">أولًا: المبادرات الفردية (${AR(S.length)})</div>
+      <table><thead><tr><th class="c">م</th><th>المعلمة</th><th>المبادرة</th><th>تاريخ الرفع</th></tr></thead><tbody>
+      ${S.map((r, k) => `<tr><td class="c">${AR(k + 1)}</td><td class="nw">${esc(r.t.name)}</td><td>${esc(r.it.n)}</td><td class="nw">${itDate(r.it)}</td></tr>`).join('') || '<tr><td colspan="4">لا توجد</td></tr>'}</tbody></table>
+      <div class="bar">ثانيًا: المبادرات المشتركة (${AR(G.length)})</div>
+      <table><thead><tr><th class="c">م</th><th>المبادرة</th><th>المعلمات المشتركات</th><th>تاريخ الرفع</th></tr></thead><tbody>
+      ${G.map((g, k) => `<tr><td class="c">${AR(k + 1)}</td><td>${esc(g.n)}</td><td class="ms">${g.m.map(x => `<div>${esc(x.t.name)}</div>`).join('')}</td><td class="nw">${itDate(g)}</td></tr>`).join('') || '<tr><td colspan="4">لا توجد</td></tr>'}</tbody></table>
+      ${Z.length ? `<div class="bar">ثالثًا: معلمات بلا مبادرات مرفوعة لهذا العام (${AR(Z.length)})</div><p class="zz">${esc(Z.map(t => t.name).join('، '))}</p>` : ''}
       <div class="sig"><div><b>منسقة المبادرات</b><br><br>${D.ro ? '' : esc(D.me || '')}</div><div><b>وكيلة المدرسة</b><br><br>فوزية خبتي الدوسري</div><div><b>مديرة المدرسة</b><br><br>أمينة آل مشيط</div></div></div>`;
+  }
+  const report = y => `<div class="pg">${docHTML(y)}</div>`;
+  function reportView(y) {
+    return `<div class="in">
+      <div class="in-top"><h2>تقرير المبادرات · ${AR(y)}هـ</h2><div class="in-seg"><button data-go="ini/${y}">← الجدول</button>${YEARS.map(x => `<button data-go="ini/${x}-r"${x === y ? ' class="on"' : ''}>${AR(x)}هـ</button>`).join('')}</div></div>
+      <div class="in-acts"><button class="in-b" data-inirep="${y}">طباعة</button><button class="in-b" data-inirep="${y}">حفظ PDF</button><button class="in-b gh" data-inidl="${y}">تنزيل التقرير</button></div>
+      <p class="in-note">«حفظ PDF»: اختاري «حفظ بتنسيق PDF» في نافذة الطباعة. «تنزيل التقرير»: ملف يُفتح في أي متصفح ويُطبع منه.</p>
+      <div class="in-paper">${docHTML(y)}</div></div>`;
+  }
+  async function download(y, btn) {
+    const o = btn.textContent; btn.disabled = true; btn.textContent = 'جارٍ التجهيز…';
+    let logo = '';
+    try { const bl = await (await fetch('moe-logo.png?v=3')).blob(); logo = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(bl); }); } catch {}
+    const css = [...document.getElementById('ini-css').textContent.matchAll(/^\.idoc[^\n]*$/gm)].map(m => m[0]).join('\n');
+    const html = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>تقرير مبادرات المعلمات ${AR(y)}هـ</title>
+<style>body{margin:0;background:#eef2f2}.pp{background:#fff;max-width:210mm;margin:16px auto;padding:14mm 12mm;box-shadow:0 2px 12px rgba(0,0,0,.12);overflow-x:auto}@page{size:A4 portrait;margin:10mm}@media print{body{background:#fff}.pp{margin:0;padding:0;box-shadow:none;max-width:none}}
+${css}</style></head><body><div class="pp">${docHTML(y, logo)}</div></body></html>`;
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' })), download: `تقرير مبادرات المعلمات ${y}هـ.html` });
+    document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    btn.disabled = false; btn.textContent = o;
   }
 
   if (!window.__iniBound) { window.__iniBound = 1;
     document.addEventListener('input', e => { if (e.target.id !== 'iniQ') return; const q = e.target.value.trim();
-      document.querySelectorAll('#iniTbl tbody tr').forEach(r => { r.hidden = !!q && !r.dataset.q.includes(q); }); });
+      document.querySelectorAll('.iniTbl tbody tr').forEach(r => { r.hidden = !!q && !r.dataset.q.includes(q); }); });
     document.addEventListener('click', async e => {
+      const dl = e.target.closest('[data-inidl]'); if (dl) return download(dl.dataset.inidl, dl);
       const f = e.target.closest('[data-inif]'), p = e.target.closest('[data-iniprt]'), r = e.target.closest('[data-inirep]'), all = e.target.closest('[data-iniall]');
       if (!f && !p && !r && !all) return;
       const [y, ti] = (location.hash.split('/')[1] || '').split('-');
