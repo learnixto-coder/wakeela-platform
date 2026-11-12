@@ -154,7 +154,7 @@
   function openProfile(k) {
     const skin = () => document.querySelector('.pr-sh')?.classList.add('pa-skin');   // نفس الصفحة بألوان نموذج أ وخطه
     if (window.PR && PR.profile) return PR.profile(k).then(skin);
-    prLoading ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'pr.js?v=20261112c'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+    prLoading ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'pr.js?v=20261112d'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
     prLoading.then(() => PR.profile(k).then(skin), () => { prLoading = null; });
   }
 

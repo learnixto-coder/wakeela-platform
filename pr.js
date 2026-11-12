@@ -12,9 +12,11 @@
   --t1:#ffe4f2;--t1i:#d6418f;--t2:#ede4ff;--t2i:#7a45e8;--t3:#ffe6d4;--t3i:#e0701c;--t4:#e7f3ff;--t4i:#0072d6;--ok:#e3f6ea;--oki:#1d8a4a;
   position:relative;overflow:hidden;isolation:isolate;background:var(--wh);border-radius:28px;border:1px solid var(--ln);padding:22px 24px 28px;color:var(--ink);
   font-family:"Readex Pro","IBM Plex Sans Arabic",system-ui,sans-serif;line-height:1.6}
-/* 2026-11-12 («مرتبة جدا، مزعج»): الضباب كان يُرسم فوق البطاقات الأخيرة فتبهت → خلف المحتوى، ضبابة واحدة أعلى الصفحة فقط */
-.pr::before{content:"";position:absolute;z-index:-1;width:360px;height:280px;top:-90px;left:-70px;background:#ece6ff;border-radius:50%;filter:blur(60px);pointer-events:none}
-.pr .bl{display:none}
+/* 2026-11-12 «بالضبط مثل التصميم» (artifact JP7k1LqSQ1domCoJwXQ5Ek): الضبابات الثلاث كما في التصميم، لكن خلف المحتوى (z-index:-1) حتى لا تبهت البطاقات */
+.pr::before,.pr::after,.pr .bl{content:"";position:absolute;z-index:-1;border-radius:50%;filter:blur(60px);pointer-events:none}
+.pr::before{width:320px;height:320px;top:-80px;left:-60px;background:#e6defe}
+.pr::after{width:300px;height:300px;bottom:6%;right:-80px;background:#f2fbd4}
+.pr .bl{width:260px;height:260px;top:40%;left:30%;background:#dfeffe}
 .pr>*{position:relative}
 .pr h2,.pr h3,.pr h4{margin:0;font-family:inherit;font-weight:600}
 .pr button{font:inherit;color:inherit}
@@ -51,9 +53,39 @@
 .pr .chips button{flex:none;border:0;background:var(--pri-soft);color:var(--pri-d);border-radius:12px;height:38px;padding:0 16px;cursor:pointer;font-weight:500}
 .pr .chips button[aria-pressed=true]{background:var(--pri);color:#fff}
 .pr .els{display:flex;flex-direction:column;gap:10px}
-.pr .el{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:4px 12px;width:100%;border:1px solid var(--ln);background:var(--wh);border-radius:18px;padding:14px 16px;text-align:start;cursor:pointer;transition:border-color .15s,box-shadow .15s}
-.pr .el:hover{border-color:#cfc3fb;box-shadow:0 6px 18px rgba(95,51,225,.08)}
-.pr .el.empty .no{background:#f3f2f6!important;color:#9a96a8!important}
+.pr .el{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:4px 12px;width:100%;border:0;background:var(--wh);border-radius:20px;padding:14px 16px;text-align:start;cursor:pointer;box-shadow:0 4px 18px rgba(36,37,44,.06);transition:transform .15s}
+.pr .el:hover{transform:translateY(-2px)}
+.pr .fu{background:var(--wh);border-radius:20px;padding:14px 16px;box-shadow:0 4px 18px rgba(36,37,44,.06);display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.pr .fu-r{display:flex;gap:12px;align-items:flex-start}
+.pr .fu-r .dot{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none}
+.pr .fu-r b{display:block;font-weight:500;font-size:14.5px}
+.pr .fu-r p{margin:2px 0 0;color:var(--mut);font-size:13px}
+.pr .sig{margin-inline-start:auto;font-size:12px;border-radius:8px;padding:1px 10px;white-space:nowrap}
+.pr-sh .ind{display:flex;flex-direction:column;gap:8px}
+.pr-sh .ir2{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;align-items:center;padding:10px 12px;border-radius:14px;background:#fdfcfd;border:1px solid #eeeaf0}
+.pr-sh .ir2>span:first-child{font-size:14px}
+.pr-sh .tog{display:flex;background:#fff;border:1px solid #eeeaf0;border-radius:10px;padding:3px}
+.pr-sh .tog button{border:0;background:transparent;border-radius:8px;height:30px;padding:0 10px;font:inherit;font-size:12.5px;cursor:pointer;color:#6e6a7c}
+.pr-sh .tog button[aria-pressed=true].y{background:#e3f6ea;color:#1d8a4a;font-weight:600}
+.pr-sh .tog button[aria-pressed=true].n{background:#ffe4f2;color:#d6418f;font-weight:600}
+.pr-sh .ev{grid-column:1/3;display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:#6e6a7c}
+.pr-sh .ev .fth{margin:0}
+.pr-sh .ev .th-i{width:40px;height:52px;border-radius:7px}
+.pr-sh .ev .add{border:1px dashed #c9bdf6;background:#fff;color:#4a22c4;border-radius:8px;height:30px;padding:0 10px;font:inherit;font-size:12px;cursor:pointer}
+.pr-sh .qrbox{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center;background:#eee9ff;border-radius:18px;padding:14px}
+.pr-sh .qr{background:#fff;padding:8px;border-radius:12px;width:112px;height:112px}
+.pr-sh .qr svg{display:block;width:96px;height:96px}
+.pr-sh .qrbox b{display:block;font-weight:600}
+.pr-sh .qrbox p{margin:4px 0 0;color:#6e6a7c;font-size:13px}
+.pr-sh .acts2{display:flex;gap:8px;flex-wrap:wrap}
+.pr-sh .btn3{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;border:0;border-radius:14px;padding:0 16px;font:inherit;font-weight:600;background:#5f33e1;color:#fff;cursor:pointer;text-decoration:none}
+.pr-sh .btn3.gh{background:#eee9ff;color:#4a22c4}
+.pr-sh .note2{font-size:12px;color:#6e6a7c;text-align:center;margin:0}
+.pr-sh .ev label.add{border:1px dashed #c9bdf6;background:#fff;color:#4a22c4;border-radius:8px;height:34px;padding:0 12px;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center}
+.pr-sh .ev label.add:hover{background:#f6f3ff}
+.pr-sh label.btn3{cursor:pointer}
+.pr-sh .uq{flex-basis:100%;font-size:12.5px;padding:4px 10px;border-radius:8px;background:#f6f3ff;color:#4a22c4}
+.pr-sh .uq.ok{background:#e3f6ea;color:#1d8a4a}.pr-sh .uq.fail{background:#ffe4f2;color:#c2185b}
 .pr .bar1{grid-column:2/4;height:5px;border-radius:99px;background:#f0eef4;overflow:hidden;margin-top:4px}
 .pr .bar1 i{display:block;height:100%;border-radius:99px;background:var(--pri)}
 .pr .none-t{color:#9a96a8}
@@ -92,8 +124,8 @@
 .pr-sh .fth{gap:6px}
 .pr-sh .th-i{width:60px;height:78px;border-radius:9px}
 .pr-sh .soon{font-size:12.5px;color:#b5520b;background:#ffe6d4;border-radius:10px;padding:8px 10px}
-.pr .scroll{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px;margin-top:10px}
-.pr .pc{border:0;border-radius:18px;padding:12px 14px;text-align:start;cursor:pointer;display:flex;flex-direction:column;gap:8px;min-height:108px}
+.pr .scroll{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 8px;margin-top:10px;scroll-snap-type:x mandatory}
+.pr .pc{flex:0 0 150px;scroll-snap-align:start;border:0;border-radius:18px;padding:12px 14px;text-align:start;cursor:pointer;display:flex;flex-direction:column;gap:8px;min-height:104px}
 .pr .pc .ic{width:30px;height:30px;border-radius:9px;background:#fff;display:grid;place-items:center}
 .pr .pc .ic svg.i{width:17px;height:17px}
 .pr .pc b{font-weight:500;font-size:14px;line-height:1.4}
@@ -137,6 +169,7 @@
     { t: 'تحليل نتائج المتعلمين وتشخيص مستوياتهم', w: 10, c: 4, ind: ['تحليل نتائج الاختبارات', 'تصنيف الطالبات حسب النتائج', 'معالجة الفاقد التعليمي', 'تحديد نقاط القوة والضعف'] },
     { t: 'تنوع أساليب التقويم', w: 10, c: 1, ind: ['تطبيق الاختبارات الورقية والإلكترونية', 'المشاريع الطلابية', 'المهام الأدائية', 'ملفات إنجاز الطالبات'] }
   ];
+  const PF_DIR = 'سجل الأداء الوظيفي', PF_N = k => String(k + 1).padStart(2, '0') + ' - ' + EL[k].t;   // نفس أسماء tools/inbox.js
   // مجلدات «ملفاتي» → [العنصر، المؤشر]؛ «البرامج» و«المبادرات» تظهر في «ملفات أخرى من سجلك»
   const FMAP = { 'الحلقات التنشيطية': [1, 0], 'زيارات تبادلية': [1, 1], 'دروس تطبيقية': [1, 2], 'الدورات': [1, 3], 'ورش العمل': [1, 3],
     'انماط التعلم': [3, 1], 'الخطة العلاجية': [4, 1], 'الخطة الإثرائية': [4, 2],
@@ -177,8 +210,15 @@
     try { const d = await rpc('pf_get_by_pid', { p_pid: await teacherId(phoneOf(sc)) }); if (sc !== sessionCode) return; PF = d || {}; PFS = sc; PFERR = ''; }
     catch (x) { PF = {}; PFS = sc; PFERR = 'حفظ التعريف لم يُفعَّل بعد'; }
     redraw();
+    const m = location.hash.match(/^#pr\/e(\d+)$/); if (m && +m[1] >= 1 && +m[1] <= EL.length) openEl(+m[1] - 1);   // من باركود العنصر
   }
   const pfDone = k => k === 'cv' ? !!(PF && PF.cv && PF.cv.qual && PF.cv.major) : k === 'certs' ? me().cells.some(c => c.f.label === 'الدورات' && c.info && c.info.count) : true;
+  // بطاقات «التعريف بالمعلمة» الست كما في التصميم؛ البطاقة المركّبة تفتح صفحة فيها خانة لكل جزء. [مفتاح البطاقة، العنوان، الأيقونة، اللون، الحقول]
+  const PCARDS = [['cv', 'السيرة الذاتية', PROFILE[0][2], 1, ['cv']], ['g-intro', 'المقدمة وأهداف الملف', PROFILE[1][2], 2, ['intro', 'goals']],
+    ['policy', 'سياسة التعليم في المملكة', PROFILE[6][2], 3, ['policy']], ['g-vision', 'الرؤية والرسالة والقيم', '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>', 4, ['vision', 'mission', 'values']],
+    ['charter', 'ميثاق أخلاقيات المهنة', PROFILE[7][2], 1, ['charter']], ['certs', 'الشهادات والدورات', PROFILE[8][2], 2, ['certs']]];
+  // «نفّذ / لم ينفّذ» يدويًا (طلب المستخدمة: «بالضبط» كالتصميم): يُحفظ في PF.ind["k.j"]؛ إن لم تختر المعلمة فالحالة من الشاهد (له ملف = نفّذ)
+  const indState = (k, j, auto) => { const v = PF && PF.ind && PF.ind[k + '.' + j]; return v === 1 || v === 0 ? v : auto ? 1 : null; };
   let F = 'all';
   const me = () => D.teachers[0];
   const keyOf = (t, c, x) => t.name + '|' + c.f.key + '|' + x.n;
@@ -190,9 +230,14 @@
     const cells = t.cells.filter(c => c.info);
     const E = EL.map((e, k) => {
       const ind = e.ind.map((name, j) => ({ name, cells: cells.filter(c => { const m = FMAP[c.f.label]; return m && m[0] === k && m[1] === j; }) }));
-      ind.forEach(x => { x.n = x.cells.reduce((a, c) => a + c.info.count, 0); x.done = x.n > 0; });
-      const all = ind.flatMap(x => x.cells), done = ind.filter(x => x.done).length;
-      return { ...e, k, ind, all, done, files: all.reduce((a, c) => a + c.info.count, 0), full: done === ind.length, auto: all.length > 0 };
+      // + ما رُفع من هذه الصفحة للمؤشرات: <المعلمة>\سجل الأداء الوظيفي\<NN - العنصر>\«م<j> - …» (t.pf من export.js)
+      const pfE = (t.pf || {})[k], pfCell = files => ({ f: { key: PF_DIR + '\\' + PF_N(k), label: e.t, group: PF_DIR, i: -1 }, info: { url: pfE.url, files, count: files.length } });
+      ind.forEach((x, j) => { const pff = pfE ? pfE.files.filter(f => f.j === j) : [];
+        x.all = [...x.cells, ...(pff.length ? [pfCell(pff)] : [])];
+        x.n = x.all.reduce((a, c) => a + c.info.count, 0); x.st = indState(k, j, x.n > 0); x.done = x.st === 1; });
+      const loose = pfE ? pfE.files.filter(f => f.j < 0 || f.j >= e.ind.length) : [];
+      const all = ind.flatMap(x => x.cells), shown = [...ind.flatMap(x => x.all), ...(loose.length ? [pfCell(loose)] : [])], done = ind.filter(x => x.done).length;
+      return { ...e, k, ind, all, shown, pfUrl: pfE && pfE.url, done, files: shown.reduce((a, c) => a + c.info.count, 0), full: done === ind.length, auto: all.length > 0 };
     });
     const other = cells.filter(c => !FMAP[c.f.label]);
     const score = Math.round(E.reduce((a, e) => a + e.w * e.done / e.ind.length, 0));
@@ -205,26 +250,29 @@
     const { E, other, score } = model(t), fullN = E.filter(e => e.full).length;
     const L = E.filter(e => F === 'all' || (F === 'full' ? e.full : F === 'need' ? !e.full : !e.auto));
     const title = score >= 80 ? 'سجلك قارب على الاكتمال!' : score >= 40 ? 'تقدّم جيد، أكملي العناصر الناقصة' : 'ابدئي بتوثيق عناصر التقييم';
+    // ترتيب التصميم بالضبط: (يمين) التحية، البطاقة البنفسجية، التعريف بالمعلمة (شريط)، توزيع الأوزان، متابعة التوثيق | (يسار) عناصر التقييم
+    const fu = (PF && PF.fu) || {};
+    const fuRow = (x, who, wait) => x && x.at ? `<div class="fu-r"><span class="dot" style="background:var(--ok);color:var(--oki)">${I('<path d="m5 12 5 5L20 7"/>')}</span><div><b>${who[0]}</b><p>${esc(who[1])}: «${esc(x.note || '')}»</p></div><span class="sig" style="background:var(--ok);color:var(--oki)">وُقّعت ${esc(x.at)}</span></div>`
+      : `<div class="fu-r"><span class="dot" style="background:var(--pri-soft);color:var(--pri)">${I('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>')}</span><div><b>${who[0]}</b><p>${who[1]}${wait}</p></div><span class="sig" style="background:var(--pri-soft);color:var(--pri-d)">لم تبدأ</span></div>`;
     return `<div class="pr" id="prRoot"><i class="bl"></i><div class="cols">
       <div class="col">
         <div class="top"><span class="ava">${esc(t.short.trim()[0] || '')}</span><div><small>مرحبًا</small><h2>أ. ${esc(t.short)}</h2></div><span class="yr">العام الدراسي ١٤٤٨هـ</span></div>
-        <div class="hero"><div class="tx"><h3>${title}</h3><p class="sub">${AR(fullN)} من ${AR(E.length)} عناصر مكتملة الشواهد، ${AR(t.total)} ملفًا</p>
-          <div class="acts"><button class="go" type="button" data-pr-need>عرض العناصر الناقصة</button><a class="go gh" href="${esc(t.url)}" target="_blank" rel="noopener">فتح مجلدي في OneDrive</a></div></div>
+        <div class="hero"><div class="tx"><h3>${title}</h3><p class="sub">${AR(fullN)} من ${AR(E.length)} عناصر مكتملة الشواهد</p><button class="go" type="button" data-pr-need>عرض العناصر الناقصة</button></div>
           <div class="ring" style="--v:${score}"><b>${AR(score)}٪<small>من الأوزان</small></b></div></div>
-        <div><div class="h"><h3>التعريف بالمعلمة</h3><span class="c">${AR(PROFILE.length)}</span><span class="more">تُعبّأ مرة واحدة</span></div>
-          <div class="scroll">${PROFILE.map(([k, l, p, c]) => `<button class="pc" type="button" data-pr-p="${k}" style="background:var(--t${c})"><span class="ic" style="color:var(--t${c}i)">${I(p)}</span><b>${l}</b>
-            <small>${k === 'cv' || k === 'certs' ? (pfDone(k) ? '✓ مكتمل' : k === 'cv' ? 'اكتبيها مرة واحدة' : 'لا توجد شهادات بعد') : PF && PF[k] ? '✓ كتبتِها' : 'نص مقترح، عدّليه'}</small></button>`).join('')}</div></div>
-        ${''/* «توزيع الأوزان» أُخفي بطلب المستخدمة 2026-11-12 («حاليا هذه لا اريد أن تظهر»)؛ الأنماط .bars/.bar-r باقية لإرجاعه */}
-        ${other.length ? `<div><div class="h"><h3>ملفات أخرى من سجلك</h3><span class="c">${AR(other.length)}</span><span class="more">خارج عناصر التقييم</span></div>
-          <div class="oth">${other.map(c => `<button class="el" type="button" data-pr-o="${c.f.i}"><span class="no" style="background:var(--t2);color:var(--t2i)">${I('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>')}</span><b>${esc(c.f.label)}</b><span class="w">${AR(c.info.count)} ملف</span>
-            ${thumbs(t, [c], 6)}</button>`).join('')}</div></div>` : ''}
+        <div><div class="h"><h3>التعريف بالمعلمة</h3><span class="c">${AR(PCARDS.length)}</span><span class="more">تُعبّأ مرة واحدة</span></div>
+          <div class="scroll">${PCARDS.map(([k, l, p, c, fs]) => { const ok = k === 'cv' || k === 'certs' ? pfDone(k) : fs.some(f => PF && PF[f]);
+            return `<button class="pc" type="button" data-pr-p="${k}" style="background:var(--t${c})"><span class="ic" style="color:var(--t${c}i)">${I(p)}</span><b>${l}</b><small>${ok ? '✓ مكتمل' : 'لم يُعبّأ بعد'}</small></button>`; }).join('')}</div></div>
+        <div><div class="h"><h3>توزيع الأوزان</h3><span class="more">نسبة المؤشرات الموثّقة في كل عنصر</span></div>
+          <div class="bars">${E.map(e => `<button class="bar-r" type="button" data-pr-k="${e.k}"><span>${AR(e.k + 1)}. ${esc(e.t)}</span><span class="trk"><i style="width:${Math.round(e.done / e.ind.length * 100)}%"></i></span><em>${AR(e.w)}٪</em></button>`).join('')}</div></div>
+        <div><div class="h"><h3>متابعة التوثيق</h3></div>
+          <div class="fu">${fuRow(fu.a, ['المتابعة الأولى', 'وكيلة الشؤون التعليمية'], '، عند المراجعة.')}${fuRow(fu.b, ['المتابعة الثانية', 'مديرة المدرسة'], '، بعد اكتمال العناصر.')}</div></div>
       </div>
       <div class="col">
         <div class="h"><h3>عناصر التقييم</h3><span class="c">${AR(L.length)}</span><span class="more">مجموع الأوزان ١٠٠٪</span></div>
-        <div class="chips">${[['all', 'الكل'], ['full', 'مكتمل'], ['need', 'ناقص'], ['man', 'بلا مجلد بعد']].map(([k, l]) => `<button type="button" data-pr-st="${k}" aria-pressed="${F === k}">${l}</button>`).join('')}</div>
-        <div class="els">${L.map(e => `<button class="el${e.files ? '' : ' empty'}" type="button" data-pr-k="${e.k}"><span class="no" style="background:var(--t${e.c});color:var(--t${e.c}i)">${AR(e.k + 1)}</span><b>${esc(e.t)}</b><span class="w">${AR(e.w)}٪</span>
-          <span class="meta">${e.files ? `<span>${AR(e.done)} من ${AR(e.ind.length)} مؤشرات، ${AR(e.files)} ملف</span>` : `<span class="none-t">لا توجد شواهد بعد</span>`}</span>
-          <span class="bar1"><i style="width:${Math.round(e.done / e.ind.length * 100)}%"></i></span>${thumbs(t, e.all, 6)}</button>`).join('') || '<div style="text-align:center;color:var(--mut);padding:18px">لا توجد عناصر هنا</div>'}</div>
+        <div class="chips">${[['all', 'الكل'], ['full', 'مكتمل'], ['need', 'ناقص'], ['man', 'بلا مجلد في المنصة']].map(([k, l]) => `<button type="button" data-pr-st="${k}" aria-pressed="${F === k}">${l}</button>`).join('')}</div>
+        <div class="els">${L.map(e => `<button class="el" type="button" data-pr-k="${e.k}"><span class="no" style="background:var(--t${e.c});color:var(--t${e.c}i)">${AR(e.k + 1)}</span><b>${esc(e.t)}</b><span class="w">${AR(e.w)}٪</span>
+          <span class="meta"><span>${AR(e.done)} من ${AR(e.ind.length)} مؤشرات، ${AR(e.files)} شاهد</span>${e.auto ? `<span class="src auto">تلقائي من: ${esc([...new Set(e.all.map(c => c.f.group || c.f.label))].join('، '))}</span>` : '<span class="src man">ترفعينه هنا</span>'}</span>
+          <span class="pg">${e.ind.map(x => `<i class="${x.done ? 'on' : ''}"></i>`).join('')}</span>${thumbs(t, e.shown, 6)}</button>`).join('') || '<div style="text-align:center;color:var(--mut);padding:18px">لا توجد عناصر هنا</div>'}</div>
       </div></div>
       ${upOn(t) ? `<div class="upw" id="prUp" hidden>${uploadCard(t)}</div>` : ''}</div>`;
   }
@@ -243,12 +291,43 @@
     const root = document.getElementById('prRoot'); const P0 = { '--t1': '#ffe4f2', '--t1i': '#d6418f', '--t2': '#ede4ff', '--t2i': '#7a45e8', '--t3': '#ffe6d4', '--t3i': '#e0701c', '--t4': '#e7f3ff', '--t4i': '#0072d6' }; if (!root) Object.entries(P0).forEach(([v, x]) => sh.style.setProperty(v, x)); if (root) { const cs = getComputedStyle(root); ['1', '2', '3', '4'].forEach(n => ['--t' + n, '--t' + n + 'i'].forEach(v => sh.style.setProperty(v, cs.getPropertyValue(v)))); }
     thumbsFill(sh); sh.querySelector('[data-pr-x]').focus();
   }
+  // نافذة العنصر كما في التصميم: سلالم التقدير (نفّذ / لم ينفّذ + الشواهد + «إرفاق شاهد»)، باركود العنصر، زرّا الرفع وOneDrive
+  const QR_BASE = 'https://learnixto-coder.github.io/wakeela-platform/#pr/e';
+  let openK = null, togMsg = '';
+  // الرفع السريع لكل مؤشر (طلب المستخدمة 2026-11-12: «افتح المؤشر وارفع كل شاهد بصورة سريعة على حدة»): لكل المعلمات.
+  // المؤشر الذي له مجلد بين مجلدات «ملفاتي» يُرفع إلى مجلده، وغيره إلى «سجل الأداء الوظيفي\NN - العنصر» باسم «م<j> - …» (tools/inbox.js).
+  const QUP = {};   // ما رُفع في هذه الجلسة لكل مؤشر "k.j": [{n, st: 'up'|'ok'|'fail', err}]
+  const upBtn = (k, j, label, cls) => D.inbox ? `<label class="${cls}">${label}<input type="file" multiple hidden data-pr-in="${k}.${j}" accept="${UP_ACCEPT}"></label>` : '';
+  const upList = (k, j) => (QUP[k + '.' + j] || []).map(f => `<span class="uq ${f.st}">${f.st === 'up' ? '⏳' : f.st === 'ok' ? '✓' : '✗'} ${esc(f.n)}${f.st === 'ok' ? '، يظهر هنا خلال دقائق' : f.err ? '، ' + esc(f.err) : ''}</span>`).join('');
+  async function quickUp(k, j, list) {
+    const t = me(), x = model(t).E[k].ind[j], key = x.cells[0] ? x.cells[0].f.key : `pf:${k}.${j}`, q = QUP[k + '.' + j] ||= [];
+    const items = [...list].map(file => ({ file, n: file.name, st: 'up', err: !UP_EXT.test(file.name) ? 'نوع غير مدعوم' : file.size > UP_MAX ? 'أكبر من ٢٠ م.ب' : '' }));
+    items.forEach(it => { if (it.err) it.st = 'fail'; q.push(it); }); openEl(k);
+    for (const it of items.filter(it => it.st === 'up')) {
+      try { await sealUpload(it.file, key, t); it.st = 'ok'; pendSet([...pendGet(), { to: t.name, n: it.n, f: EL[k].t, at: Date.now() }]); }
+      catch (e) { it.st = 'fail'; it.err = e.message === 'gh401' || e.message === 'gh403' ? 'الرفع غير متاح حاليًا' : 'تحقّقي من الاتصال'; }
+      if (openK === k) openEl(k);
+    }
+  }
   function openEl(k) {
-    const t = me(), e = model(t).E[k];
-    const body = `${e.ind.some(x => !x.cells.length) ? '<span class="soon" style="background:#f3f2f6;color:#6e6a7c">المؤشرات التي ليس لها مجلد بعد تُضاف مع الرفع عبر Drive في المرحلة القادمة.</span>' : ''}
-      <h4>سلالم التقدير</h4>${e.ind.map((x, j) => `<div class="ir"><div class="ir-h"><span>${AR(j + 1)}. ${esc(x.name)}</span><span class="stt ${x.done ? 'y' : 'n'}">${x.done ? 'نفّذ' : 'لا يوجد شاهد'}</span></div>
-      ${thumbs(t, x.cells, 12)}${x.cells.map(c => foldActs(t, c)).join('')}</div>`).join('')}`;
-    openSheet(sheetHtml(AR(k + 1), esc(e.t), `الوزن ${AR(e.w)}٪، ${AR(e.done)} من ${AR(e.ind.length)} مؤشرات لها شواهد`, `background:var(--t${e.c});color:var(--t${e.c}i)`, body), e.t);
+    const t = me(), e = model(t).E[k]; openK = k;
+    const f0 = e.all[0], next = Math.max(0, e.ind.findIndex(x => !x.done));
+    const body = `<h4>سلالم التقدير</h4><div class="ind">${e.ind.map((x, j) => `<div class="ir2"><span>${AR(j + 1)}. ${esc(x.name)}</span>
+        <span class="tog"><button type="button" class="y" data-pr-t="${j}:1" aria-pressed="${x.st === 1}">نفّذ</button><button type="button" class="n" data-pr-t="${j}:0" aria-pressed="${x.st === 0}">لم ينفّذ</button></span>
+        <span class="ev">${x.n ? thumbs(t, x.all, 5) + `<span>${AR(x.n)} شاهد</span>` : '<span>لا يوجد شاهد</span>'}${upBtn(k, j, '+ إرفاق شاهد', 'add')}${upList(k, j)}</span></div>`).join('')}</div>
+      ${togMsg ? `<p class="note2">${togMsg}</p>` : ''}
+      <div class="qrbox"><div class="qr" data-qr="${QR_BASE}${k + 1}"></div><div><b>باركود شواهد العنصر</b><p>يُطبع في ملفك الورقي، ومن يمسحه يرى كل شواهد «${esc(e.t)}».</p></div></div>
+      <div class="acts2">${upBtn(k, next, 'رفع شاهد لهذا العنصر', 'btn3')}<a class="btn3 gh" href="${esc(f0 ? f0.info.url : e.pfUrl || t.url)}" target="_blank" rel="noopener">فتح في OneDrive</a></div>`;
+    openSheet(sheetHtml(AR(k + 1), esc(e.t), `الوزن ${AR(e.w)}٪، ${AR(e.done)} من ${AR(e.ind.length)} مؤشرات منفّذة`, `background:var(--t${e.c});color:var(--t${e.c}i)`, body), e.t);
+    document.querySelectorAll('.pr-sh [data-qr]').forEach(drawQr);
+  }
+  async function toggle(j, v) {
+    const k = openK, key = k + '.' + j, ind = { ...((PF && PF.ind) || {}) }, e = model(me()).E[k], cur = e.ind[j].st;
+    if (cur === v) delete ind[key]; else ind[key] = v;   // الضغط على الزر المختار يلغي الاختيار اليدوي (ترجع الحالة من الشاهد)
+    PF = { ...(PF || {}), ind }; togMsg = '';
+    try { await rpc('pf_save_by_pid', { p_pid: await teacherId(phoneOf(sessionCode)), p_data: PF }); }
+    catch (x) { togMsg = 'تغيّرت الحالة في هذه الصفحة فقط، الحفظ لم يُفعَّل بعد'; }
+    redraw(); openEl(k);
   }
   function openOther(fi) {
     const t = me(), c = t.cells.find(x => x.f.i === fi); if (!c || !c.info) return;
@@ -257,6 +336,8 @@
   }
 
   function openProfile(k) {
+    const card = PCARDS.find(x => x[0] === k);
+    if (card && card[4].length > 1) return openGroup(card);   // «المقدمة وأهداف الملف» و«الرؤية والرسالة والقيم»: صفحة بخانة لكل جزء
     const t = me(), [, l, p, c] = PROFILE.find(x => x[0] === k), v = (PF && PF.cv) || {};
     let body = '';
     if (k === 'cv') body = `<div class="cv">${CV.map(([f, lab, w]) => `<label class="${w ? 'w2' : ''}">${lab}<input id="pf-${f}" data-cv="${f}" value="${esc(v[f] ?? (f === 'name' ? t.name : f === 'title' ? 'معلمة' : ''))}"${f === 'email' ? ' type="email" dir="ltr"' : ''}></label>`).join('')}</div>`
@@ -268,9 +349,17 @@
     else { const cs = t.cells.filter(x => x.f.label === 'الدورات' && x.info); body = cs.length ? `<div class="ir">${thumbs(t, cs, 40)}${cs.map(x => foldActs(t, x)).join('')}</div>` : '<span class="soon">لا يوجد مجلد «الدورات» في سجلك</span>'; }
     openSheet(sheetHtml(I(p), l, k === 'cv' ? 'تكتبها المعلمة مرة واحدة وتظهر في سجلها' : k === 'certs' ? 'من مجلد «المجتمع المهني / الدورات»' : 'اكتبي في الخانة ثم اضغطي «حفظ»', `background:var(--t${c});color:var(--t${c}i)`, body), l);
   }
+  function openGroup([, l, p, c, fs]) {
+    const body = fs.map(f => { const d = PROFILE.find(x => x[0] === f);
+      return `${f === 'intro' ? '<div class="ayah">﴿وَقُلِ اعْمَلُوا فَسَيَرَى اللَّهُ عَمَلَكُمْ وَرَسُولُهُ وَالْمُؤْمِنُونَ﴾<br><small style="color:#6e6a7c">التوبة: ١٠٥</small></div>' : ''}
+        <h4>${d[1]}</h4><textarea data-k="${f}" aria-label="${esc(d[1])}" style="min-height:${f === 'intro' || f === 'goals' ? 170 : 110}px">${esc((PF && PF[f]) || d[4])}</textarea>`; }).join('')
+      + `<div class="save"><button type="button" data-pr-save="multi">حفظ</button><span id="pfMsg" class="${PFERR ? 'err' : ''}">${PFERR ? esc(PFERR) + '، سيُحفظ بعد التفعيل' : 'هذا نص مقترح من ملف السجل، اكتبي بأسلوبك'}</span></div>`;
+    openSheet(sheetHtml(I(p), l, 'اكتبي في الخانات ثم اضغطي «حفظ»', `background:var(--t${c});color:var(--t${c}i)`, body), l);
+  }
   async function pfSave(kind, btn) {
     const msg = document.getElementById('pfMsg'), next = { ...(PF || {}) };
     if (kind === 'cv') { const cv = {}; document.querySelectorAll('.pr-sh [data-cv]').forEach(i => cv[i.dataset.cv] = i.value.trim()); next.cv = cv; }
+    else if (kind === 'multi') document.querySelectorAll('.pr-sh textarea[data-k]').forEach(a => next[a.dataset.k] = a.value.trim());
     else next[kind] = document.getElementById('pf-text').value.trim();
     btn.disabled = true; msg.className = ''; msg.textContent = 'جارٍ الحفظ…';
     try { await rpc('pf_save_by_pid', { p_pid: await teacherId(phoneOf(sessionCode)), p_data: next }); PF = next; PFERR = ''; msg.textContent = 'تم الحفظ ✓'; redraw(); }
@@ -278,12 +367,15 @@
     btn.disabled = false;
   }
 
+  document.addEventListener('change', e => { const i = e.target.closest('input[data-pr-in]'); if (!i || !i.files.length) return;
+    const [k, j] = i.dataset.prIn.split('.').map(Number); quickUp(k, j, i.files); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.querySelector('.pr-sh') && !document.querySelector('.wv-lb')) closeSheet(); });
   window.addEventListener('hashchange', closeSheet);
   document.addEventListener('click', e => {
     if (e.target.closest('.th-i')) return;   // الصورة المصغّرة تفتح المعاينة (thumbsFill)
     if (e.target.closest('[data-pr-x]')) return closeSheet();
     const sv = e.target.closest('[data-pr-save]'); if (sv) return pfSave(sv.dataset.prSave, sv);
+    const tg = e.target.closest('[data-pr-t]'); if (tg) { const [j, v] = tg.dataset.prT.split(':').map(Number); return toggle(j, v); }
     const pp = e.target.closest('[data-pr-p]'); if (pp) return openProfile(pp.dataset.prP);
     const up = e.target.closest('[data-pr-up]');
     if (up) { const v = up.dataset.prUp; closeSheet(); const w = document.getElementById('prUp'); if (w) w.hidden = false;   // بطاقة الرفع مخفية حتى تُطلب
