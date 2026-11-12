@@ -81,6 +81,10 @@
 .pr-sh.pa-skin .cv input,.pr-sh.pa-skin textarea{border-radius:0;border-color:#e6e6e6;font-family:inherit}
 .pr-sh.pa-skin .cv input:focus,.pr-sh.pa-skin textarea:focus{outline-color:#ef9aa3}
 .pr-sh.pa-skin .ayah{border-radius:0;background:#fbe9eb}
+.pr-sh.pa-skin .cvcard{background:#141414;border-radius:0}
+.pr-sh.pa-skin .cvcard b{font-family:"Thmanyah Serif Display",serif}
+.pr-sh.pa-skin .cvf{border-radius:0;border-color:#e6e6e6}
+.pr-sh.pa-skin .cvedit{border-radius:0;background:#fff;border:1px solid #141414;color:#141414}
 @media (max-width:760px){
   .pa .cov{grid-template-columns:1fr;margin:0}.pa .cov .art{order:-1;min-height:220px}.pa .cov .tx{padding:22px 18px 28px}
   .pa .prw{grid-template-columns:1fr;gap:14px;padding:26px 0}.pa .ppn{grid-template-columns:1fr;padding:12px}
@@ -154,7 +158,7 @@
   function openProfile(k) {
     const skin = () => document.querySelector('.pr-sh')?.classList.add('pa-skin');   // نفس الصفحة بألوان نموذج أ وخطه
     if (window.PR && PR.profile) return PR.profile(k).then(skin);
-    prLoading ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'pr.js?v=20261112e'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+    prLoading ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'pr.js?v=20261112f'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
     prLoading.then(() => PR.profile(k).then(skin), () => { prLoading = null; });
   }
 

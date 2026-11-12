@@ -86,6 +86,18 @@
 .pr-sh label.btn3{cursor:pointer}
 .pr-sh .uq{flex-basis:100%;font-size:12.5px;padding:4px 10px;border-radius:8px;background:#f6f3ff;color:#4a22c4}
 .pr-sh .uq.ok{background:#e3f6ea;color:#1d8a4a}.pr-sh .uq.fail{background:#ffe4f2;color:#c2185b}
+.pr-sh .cvcard{border-radius:20px;background:linear-gradient(135deg,#5f33e1,#7b56f0);color:#fff;padding:20px;display:flex;align-items:center;gap:16px}
+.pr-sh .cvcard .cva{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.2);display:grid;place-items:center;font-size:26px;font-weight:700;flex:none}
+.pr-sh .cvcard b{display:block;font-size:19px}
+.pr-sh .cvcard span{opacity:.88;font-size:14px}
+.pr-sh .cvg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pr-sh .cvf{background:#fdfcfd;border:1px solid #eeeaf0;border-radius:14px;padding:10px 14px;min-width:0}
+.pr-sh .cvf small{display:block;color:#6e6a7c;font-size:12px}
+.pr-sh .cvf b{font-weight:500;font-size:15px;overflow-wrap:anywhere}
+.pr-sh .cvf b[dir=ltr]{display:block;text-align:right}
+.pr-sh .cvf.w2{grid-column:1/3}
+.pr-sh .cvedit{border:0;background:#eee9ff;color:#4a22c4;border-radius:12px;height:46px;font:inherit;font-weight:600;cursor:pointer}
+@media (max-width:520px){.pr-sh .cvg{grid-template-columns:1fr}.pr-sh .cvf.w2{grid-column:auto}}
 .pr .bar1{grid-column:2/4;height:5px;border-radius:99px;background:#f0eef4;overflow:hidden;margin-top:4px}
 .pr .bar1 i{display:block;height:100%;border-radius:99px;background:var(--pri)}
 .pr .none-t{color:#9a96a8}
@@ -271,23 +283,24 @@
       </div>
       <div class="col">
         <div class="h"><h3>عناصر التقييم</h3><span class="c">${AR(L.length)}</span><span class="more">مجموع الأوزان ١٠٠٪</span></div>
-        <div class="chips">${[['all', 'الكل'], ['full', 'مكتمل'], ['need', 'ناقص'], ['man', 'بلا مجلد في المنصة']].map(([k, l]) => `<button type="button" data-pr-st="${k}" aria-pressed="${F === k}">${l}</button>`).join('')}</div>
+        <div class="chips">${[['all', 'الكل'], ['full', 'مكتمل'], ['need', 'ناقص']].map(([k, l]) => `<button type="button" data-pr-st="${k}" aria-pressed="${F === k}">${l}</button>`).join('')}</div>
         <div class="els">${L.map(e => `<button class="el" type="button" data-pr-k="${e.k}"><span class="no" style="background:var(--t${e.c});color:var(--t${e.c}i)">${AR(e.k + 1)}</span><b>${esc(e.t)}</b><span class="w">${AR(e.w)}٪</span>
-          <span class="meta"><span>${AR(e.done)} من ${AR(e.ind.length)} مؤشرات، ${AR(e.files)} شاهد</span>${e.auto ? `<span class="src auto">تلقائي من: ${esc([...new Set(e.all.map(c => c.f.group || c.f.label))].join('، '))}</span>` : '<span class="src man">ترفعينه هنا</span>'}</span>
+          <span class="meta"><span>${AR(e.done)} من ${AR(e.ind.length)} مؤشرات، ${AR(e.files)} شاهد</span>${e.auto ? `<span class="src auto">تلقائي من: ${esc([...new Set(e.all.map(c => c.f.group || c.f.label))].join('، '))}</span>` : ''}</span>
           <span class="pg">${e.ind.map(x => `<i class="${x.done ? 'on' : ''}"></i>`).join('')}</span>${thumbs(t, e.shown, 6)}</button>`).join('') || '<div style="text-align:center;color:var(--mut);padding:18px">لا توجد عناصر هنا</div>'}</div>
       </div></div>
       ${upOn(t) ? `<div class="upw" id="prUp" hidden>${uploadCard(t)}</div>` : ''}</div>`;
   }
 
   function redraw() { const r = document.getElementById('prRoot'); if (!r) return; r.outerHTML = render(); bind(document.getElementById('prRoot')); }
-  function closeSheet() { document.querySelectorAll('.pr-sh,.pr-bd').forEach(x => x.remove()); }
+  function closeSheet() { document.querySelectorAll('.pr-sh,.pr-bd').forEach(x => x.remove()); CVEDIT = false; }   // الإغلاق يرجّع السيرة الذاتية لعرض البطاقة
   const foldActs = (t, c) => `<span class="fold"><span>${esc(c.f.group ? c.f.group + ' / ' + c.f.label : c.f.label)}: ${AR(c.info.count)} ملف</span>
     ${upOn(t) && D.inbox ? `<button type="button" data-pr-up="f:${c.f.i}">+ رفع ملف</button>` : ''}<a href="${esc(c.info.url)}" target="_blank" rel="noopener">فتح في OneDrive</a></span>`;
   const sheetHtml = (head, title, sub, color, body) => `<div class="grab"></div><div class="sh-h"><span class="no" style="${color}">${head}</span><div><h2>${title}</h2><p>${sub}</p></div>
       <button class="x" type="button" data-pr-x aria-label="إغلاق">${I('<path d="M6 6l12 12M18 6 6 18"/>')}</button></div><div class="b">${body}</div>`;
   function openSheet(html, label) {
+    const skin = !!document.querySelector('.pr-sh.pa-skin');   // فُتحت من نموذج أ: تبقى بألوانه حين تتحدّث النافذة
     closeSheet();
-    const bd = Object.assign(document.createElement('div'), { className: 'pr-bd' }), sh = Object.assign(document.createElement('div'), { className: 'pr-sh' });
+    const bd = Object.assign(document.createElement('div'), { className: 'pr-bd' }), sh = Object.assign(document.createElement('div'), { className: 'pr-sh' + (skin ? ' pa-skin' : '') });
     sh.setAttribute('role', 'dialog'); sh.setAttribute('aria-modal', 'true'); sh.setAttribute('aria-label', label);
     sh.innerHTML = html; bd.addEventListener('click', closeSheet); document.body.append(bd, sh);
     const root = document.getElementById('prRoot'); const P0 = { '--t1': '#ffe4f2', '--t1i': '#d6418f', '--t2': '#ede4ff', '--t2i': '#7a45e8', '--t3': '#ffe6d4', '--t3i': '#e0701c', '--t4': '#e7f3ff', '--t4i': '#0072d6' }; if (!root) Object.entries(P0).forEach(([v, x]) => sh.style.setProperty(v, x)); if (root) { const cs = getComputedStyle(root); ['1', '2', '3', '4'].forEach(n => ['--t' + n, '--t' + n + 'i'].forEach(v => sh.style.setProperty(v, cs.getPropertyValue(v)))); }
@@ -337,12 +350,19 @@
       `<div class="ir">${thumbs(t, [c], 40)}${foldActs(t, c)}</div>`), c.f.label);
   }
 
+  let CVEDIT = false;
   function openProfile(k) {
+    if (k !== 'cv') CVEDIT = false;
     const card = PCARDS.find(x => x[0] === k);
     if (card && card[4].length > 1) return openGroup(card);   // «المقدمة وأهداف الملف» و«الرؤية والرسالة والقيم»: صفحة بخانة لكل جزء
     const t = me(), [, l, p, c] = PROFILE.find(x => x[0] === k), v = (PF && PF.cv) || {};
     let body = '';
-    if (k === 'cv') body = `<div class="cv">${CV.map(([f, lab, w]) => `<label class="${w ? 'w2' : ''}">${lab}<input id="pf-${f}" data-cv="${f}" value="${esc(v[f] ?? (f === 'name' ? t.name : f === 'title' ? 'معلمة' : ''))}"${f === 'email' ? ' type="email" dir="ltr"' : ''}></label>`).join('')}</div>`
+    // بطاقة السيرة الذاتية بعد الحفظ (نموذج artifact 3hqLJXXbLAbA69p3NZ3fgW، «طبّق البطاقة» 2026-11-12)، وزر «تعديل» يرجع للخانات
+    if (k === 'cv' && (v.qual || v.major || v.email) && !CVEDIT) body = `<div class="cvcard"><span class="cva">${esc((v.name || t.name).replace(/^أ\.\s*/, '').trim()[0] || '')}</span>
+        <div><b>${esc(v.name || t.name)}</b><span>${esc([v.title, v.major].filter(Boolean).join('، '))}</span></div></div>
+      <div class="cvg">${CV.slice(2).map(([f, lab, w]) => `<div class="cvf${w ? ' w2' : ''}"><small>${lab}</small><b${f === 'email' ? ' dir="ltr"' : ''}>${esc(v[f] || '—')}</b></div>`).join('')}</div>
+      <button type="button" class="cvedit" data-pr-cvedit>تعديل السيرة الذاتية</button>`;
+    else if (k === 'cv') body = `<div class="cv">${CV.map(([f, lab, w]) => `<label class="${w ? 'w2' : ''}">${lab}<input id="pf-${f}" data-cv="${f}" value="${esc(v[f] ?? (f === 'name' ? t.name : f === 'title' ? 'معلمة' : ''))}"${f === 'email' ? ' type="email" dir="ltr"' : ''}></label>`).join('')}</div>`
       + `<div class="save"><button type="button" data-pr-save="cv">حفظ السيرة الذاتية</button><span id="pfMsg" class="${PFERR ? 'err' : ''}">${PFERR ? esc(PFERR) + '، ستُحفظ بعد التفعيل' : ''}</span></div>`;
     else if (k !== 'certs') { const def = PROFILE.find(x => x[0] === k)[4];
       body = `${k === 'intro' ? '<div class="ayah">﴿وَقُلِ اعْمَلُوا فَسَيَرَى اللَّهُ عَمَلَكُمْ وَرَسُولُهُ وَالْمُؤْمِنُونَ﴾<br><small style="color:#6e6a7c">التوبة: ١٠٥</small></div>' : ''}
@@ -364,7 +384,8 @@
     else if (kind === 'multi') document.querySelectorAll('.pr-sh textarea[data-k]').forEach(a => next[a.dataset.k] = a.value.trim());
     else next[kind] = document.getElementById('pf-text').value.trim();
     btn.disabled = true; msg.className = ''; msg.textContent = 'جارٍ الحفظ…';
-    try { await rpc('pf_save_by_pid', { p_pid: await teacherId(phoneOf(sessionCode)), p_data: next }); PF = next; PFERR = ''; msg.textContent = 'تم الحفظ ✓'; redraw(); }
+    try { await rpc('pf_save_by_pid', { p_pid: await teacherId(phoneOf(sessionCode)), p_data: next }); PF = next; PFERR = ''; msg.textContent = 'تم الحفظ ✓'; redraw();
+      if (kind === 'cv') { CVEDIT = false; setTimeout(() => openProfile('cv'), 700); } }
     catch (x) { msg.className = 'err'; msg.textContent = 'ما تم الحفظ: حفظ التعريف لم يُفعَّل بعد'; }
     btn.disabled = false;
   }
@@ -377,6 +398,7 @@
     if (e.target.closest('.th-i')) return;   // الصورة المصغّرة تفتح المعاينة (thumbsFill)
     if (e.target.closest('[data-pr-x]')) return closeSheet();
     const sv = e.target.closest('[data-pr-save]'); if (sv) return pfSave(sv.dataset.prSave, sv);
+    if (e.target.closest('[data-pr-cvedit]')) { CVEDIT = true; return openProfile('cv'); }
     const tg = e.target.closest('[data-pr-t]'); if (tg) { const [j, v] = tg.dataset.prT.split(':').map(Number); return toggle(j, v); }
     const pp = e.target.closest('[data-pr-p]'); if (pp) return openProfile(pp.dataset.prP);
     const up = e.target.closest('[data-pr-up]');
