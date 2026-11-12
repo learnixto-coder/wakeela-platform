@@ -1365,20 +1365,20 @@ const prOn = () => !D?.planOnly && D?.teachers?.length === 1;
 let prLoad = null, paLoad = null;
 function paPage() {
   if (window.PA) return PA.render();
-  paLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'pa.js?v=20261112d'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  paLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'pa.js?v=20261112e'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { paLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
 function prPage() {
   if (window.PR) return PR.render();
-  prLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'pr.js?v=20261112d'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  prLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'pr.js?v=20261112e'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { prLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
 let recLoad = null;
 function recPage() {
   if (window.REC) return REC.render();
-  recLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = achOn() ? 'rec-ibt.js?v=20261112d' : 'rec.js?v=20261112c';   /* 2026-11-12 «انشر لابتسام»: نسخة القصص المحسّنة لابتسام الشهري فقط (achOn)؛ للتعميم: انسخي rec-ibt.js فوق rec.js وأزيلي الشرط */ s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  recLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'rec.js?v=20261112e';   /* 2026-11-12 «انشر للكل»: القصص المحسّنة لكل المعلمات */ s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { recLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }

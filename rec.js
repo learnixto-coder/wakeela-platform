@@ -24,22 +24,28 @@
   }
   async function load() {
     const sc = sessionCode;
-    try { const pid = await teacherId(phoneOf(sc)); const r = await rpc('act_record_by_pid', { p_pid: pid }); if (sc !== sessionCode) return; PID = pid; R = r; ERR = R ? '' : 'رقمك غير مربوط بسجل الأنشطة بعد، راجعي الوكيلة'; }
+    try { const pid = await teacherId(phoneOf(sc)); const r = await rpc('act_record_by_pid', { p_pid: pid }); if (sc !== sessionCode) return; await localFolders(r); PID = pid; R = r; ERR = R ? '' : 'رقمك غير مربوط بسجل الأنشطة بعد، راجعي الوكيلة'; }
     catch (x) { if (sc !== sessionCode) return; ERR = x.message || 'تعذّر الاتصال'; }
     paint();
     const waiting = (R?.executions || []).some(x => x.status === 'requested');
     clearTimeout(poll); if (waiting && location.hash.startsWith('#rec')) poll = setTimeout(load, 20000);   // متابعة الطلب حتى يصدر
   }
 
+  // معاينة محلية فقط (localhost): روابط المجلدات من folders.local.json حتى تُطبَّق migration 0015 — لا أثر في الموقع المنشور
+  async function localFolders(r) {
+    if (!r || !/^(localhost|127.0.0.1)$/.test(location.hostname)) return;
+    try { const m = await (await fetch('folders.local.json', { cache: 'no-store' })).json();
+      [...(r.assignments || []), ...(r.weeks || [])].forEach(x => { if (!x.folder && m[x.id]) x.folder = m[x.id]; }); } catch (x) {}
+  }
   /* عناصر الصفحة: برامج صفية + أسابيع لاصفية */
   function items() {
     // 2026-11-12: تقرير صدر من النظام السابق = منجز (legacy_reports من القاعدة)، ما لم يصدر تقرير جديد
     const ex = R.executions || [], lg = R.legacy_reports || [], exOf = (k, id) => ex.find(x => x.kind === k && x.target === id)
       || (l => l && { status: 'issued', legacy: true, issued_at: l.issued_at })(lg.find(x => x.kind === k && x.target === id));
-    const a = (R.assignments || []).map(x => ({ k: 'class', id: x.id, title: x.program, sub: ar(x.class || ''), from: x.from ?? x.start_date, to: x.to ?? x.end_date, partners: x.partners || [], ev: x.evidence || 0, survey: x.responses ?? x.survey ?? 0, ex: exOf('class', x.id) }));
-    const w = (R.weeks || []).map(x => ({ k: 'nonclass', id: x.id, week: x.week, title: 'الأسبوع ' + ar(x.week), sub: ar(x.class || ''), from: x.from ?? x.start_date, to: x.to ?? x.end_date, radio: x.radio_title, prayer: x.prayer_title, partners: x.partners || [], ev: x.evidence || 0, ex: exOf('nonclass', x.id) }));
+    const a = (R.assignments || []).map(x => ({ k: 'class', id: x.id, title: x.program, sub: ar(x.class || ''), from: x.from ?? x.start_date, to: x.to ?? x.end_date, partners: x.partners || [], folder: x.folder || x.folder_id || '', ev: x.evidence || 0, survey: x.responses ?? x.survey ?? 0, ex: exOf('class', x.id) }));
+    const w = (R.weeks || []).map(x => ({ k: 'nonclass', id: x.id, week: x.week, title: 'الأسبوع ' + ar(x.week), sub: ar(x.class || ''), from: x.from ?? x.start_date, to: x.to ?? x.end_date, radio: x.radio_title, prayer: x.prayer_title, partners: x.partners || [], folder: x.folder || x.folder_id || '', ev: x.evidence || 0, ex: exOf('nonclass', x.id) }));
     // مناسبات المعلمة (2026-11-11): خاصة بفصلها، إدخال يدوي، نفس نموذج تقرير المناسبات المعتمد — لا تظهر لرائدة النشاط
-    const o = (R.occasions || []).map(x => ({ k: 'occasion', id: x.id, title: x.name, sub: ar(x.class || ''), from: x.date, to: x.date, partners: x.partners || [], ev: x.evidence || 0, ex: exOf('occasion', x.id) }));
+    const o = (R.occasions || []).map(x => ({ k: 'occasion', id: x.id, title: x.name, sub: ar(x.class || ''), from: x.date, to: x.date, partners: x.partners || [], folder: x.folder || x.folder_id || '', ev: x.evidence || 0, ex: exOf('occasion', x.id) }));
     return [...a, ...w, ...o].map(it => (it.st = stat(it), it)).sort((p, q) => String(p.from || '9').localeCompare(String(q.from || '9')));
   }
   function stat(it) {
@@ -80,10 +86,9 @@
   .rc-ring .o{width:70px;height:70px;border-radius:50%;padding:3px;background:conic-gradient(#f5a524,#6c5ce7,#ff7eb3,#f5a524)}.rc-ring.seen .o{background:#d6d2e8}
   .rc-ring .c{width:100%;height:100%;border-radius:50%;border:3px solid var(--card,#fff);background:#ece9fb center/cover;display:grid;place-items:center;font-weight:700;color:#6c5ce7;font-size:.8em;overflow:hidden}
   .rc-ring small{font-size:.7em;line-height:1.25;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .rc-st{position:fixed;inset:0;background:#0b0914;z-index:9999;display:grid;place-items:center;direction:rtl}
-  .rc-st-in{position:relative;width:min(440px,100%);height:min(100%,780px);overflow:hidden;background:#000;border-radius:0}
-  @media (min-width:600px){.rc-st-in{border-radius:18px;height:min(92vh,780px)}}
-  .rc-st-in>img{width:100%;height:100%;object-fit:contain;background:#000}.rc-st-bg{position:absolute;inset:0;background:center/cover;filter:blur(24px) brightness(.55);transform:scale(1.2)}
+  .rc-st{position:fixed;inset:0;background:#0b0914b3;z-index:9999;display:grid;place-items:center;direction:rtl;padding:16px}
+  .rc-st-in{position:relative;width:min(270px,78vw);height:min(420px,56vh);overflow:hidden;background:#000;border-radius:18px;box-shadow:0 12px 40px #0008}
+  .rc-st-in>img{width:100%;height:100%;object-fit:contain;background:transparent;padding:58px 14px 74px;box-sizing:border-box}.rc-st-bg{position:absolute;inset:0;background:center/cover;filter:blur(24px) brightness(.55);transform:scale(1.2)}
   .rc-st-in>img{position:relative}
   .rc-st-p{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));inset-inline:10px;display:flex;gap:3px;z-index:3}.rc-st-p i{flex:1;height:3px;background:#fff5;border-radius:3px;overflow:hidden}.rc-st-p i b{display:block;height:100%;width:0;background:#fff}
   .rc-st-h{position:absolute;top:calc(22px + env(safe-area-inset-top,0px));inset-inline:12px;color:#fff;z-index:4;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.9em;text-shadow:0 1px 4px #000a}
@@ -91,8 +96,9 @@
   .rc-st-f{position:absolute;bottom:0;inset-inline:0;padding:40px 16px calc(18px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,#000c);color:#fff;z-index:4}
   .rc-cheer{display:inline-block;background:#f5a524;color:#3a2600;font-weight:800;border-radius:99px;padding:4px 12px;margin-bottom:6px;animation:rcpop .4s ease}
   @keyframes rcpop{from{transform:scale(.6);opacity:0}}
-  .rc-st-tap{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;z-index:2}.rc-st-tap button{background:none;border:0;cursor:pointer}
-  .rc-st-msg{position:absolute;inset:0;display:grid;place-items:center;color:#fff;z-index:1;text-align:center;padding:20px}
+  .rc-st-tap{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;z-index:2}.rc-st-tap button{background:none;border:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}.rc-st{touch-action:manipulation}
+  .rc-st-msg{position:absolute;inset:0;display:grid;place-items:center;color:#fff;z-index:1;text-align:center;padding:20px;pointer-events:none}
+  .rc-spin{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.35);border-top-color:#fff;animation:rcsp .8s linear infinite}@keyframes rcsp{to{transform:rotate(360deg)}}
   .rc-st-end{position:absolute;inset:0;z-index:5;display:grid;place-content:center;gap:12px;text-align:center;color:#fff;padding:24px;background:radial-gradient(circle at 50% 30%,#8e7cf8,#2d2363)}
   .rc-st-end h3{margin:0;font-size:1.5em}.rc-st-end .rc-btns{justify-content:center}
   .rc-confetti{position:fixed;inset:0;pointer-events:none;z-index:10000}
@@ -280,13 +286,18 @@
     return o.p;
   }
   // صورة بحجم مناسب للشاشة (٩٠٠ بكسل)، تُحفظ في الذاكرة فقط
-  const BIG = {};
+  const BIG = {}, BIGV = {};   // BIGV = الصور الجاهزة (تُعرض فورًا بلا انتظار)
+  // 2026-11-12 «ليست سريعة»: كل صور النشاط تُجلب معًا (٤ في وقت واحد) لحظة فتح القصة، لا صورة صورة
+  function preload(o, from = 0) {
+    const q = o.ph.slice(from).filter(f => !BIG[f.id]);
+    return Promise.all([0, 1, 2, 3].map(async () => { while (q.length) await bigOf(o, q.shift()); }));
+  }
   function bigOf(o, f) {
     return BIG[f.id] ||= (async () => {
-      if (o.one) { const j = await ctGet(o.one, 'tthumb', f.id, { sz: 900 }); return j.b64 ? `data:${j.m || 'image/jpeg'};base64,${j.b64}` : ''; }
+      if (o.one) { const j = await ctGet(o.one, 'tthumb', f.id, { sz: 600 }); return j.b64 ? `data:${j.m || 'image/jpeg'};base64,${j.b64}` : ''; }
       const r = await post({ a: 'nthumbs', tok: D.cn.tok, sid: f.sid, ids: [f.id], sz: 900 }, 120000), v = (r.th || {})[f.id];
       return v ? `data:${v.m || 'image/jpeg'};base64,${v.b64}` : f.src;
-    })().catch(() => { delete BIG[f.id]; return f.src || ''; });
+    })().then(v => (v && (BIGV[f.id] = v), v)).catch(() => { delete BIG[f.id]; return f.src || ''; });
   }
   async function openOldRep(o, btn) {
     const w = window.open('', '_blank'); if (w) w.document.write('<p dir="rtl" style="font-family:sans-serif;padding:20px">جارٍ فتح التقرير…</p>');
@@ -318,7 +329,7 @@
     q.forEach(c => c.dataset.done = 1);
     const one = async c => {
       const k = c.closest('[data-rcs]').dataset.rcs, it = items().find(i => i.k + ':' + i.id === k); if (!it) return;
-      try { if (!(k in COVER)) { const o = await photos(it), f = o.ph[o.ph.length - 1]; COVER[k] = f ? (f.src || await bigOf(o, f)) : ''; }
+      try { if (!(k in COVER)) { const o = await photos(it), f = o.ph[0]; COVER[k] = f ? (f.src || await bigOf(o, f)) : ''; }
         if (SP[k]?.st === 'ok' && !SP[k].ph.length) { document.querySelectorAll(`[data-rcs="${k}"]`).forEach(x => x.remove()); return; }
         document.querySelectorAll(`[data-rcs="${k}"] .c`).forEach(x => { if (COVER[k]) { x.style.backgroundImage = `url("${COVER[k]}")`; x.textContent = ''; } }); } catch (x) {}
     };
@@ -349,16 +360,22 @@
       if (!only) { const nx = SQ[SQ.indexOf(key) + 1]; if (nx) return story(nx, 0); }
       return stClose();
     }
-    const f = o.ph[j];
-    d.innerHTML = `<div class="rc-st-in"><div class="rc-st-bg"></div><div class="rc-st-p">${o.ph.map((_, k) => `<i><b style="width:${k < j ? 100 : 0}%"></b></i>`).join('')}</div>${head(j + 1, N)}
-      <div class="rc-st-msg">…</div><img alt="${e(f.n)}" hidden><div class="rc-st-tap"><button data-st="nx" aria-label="التالية"></button><button data-st="pv" aria-label="السابقة"></button></div>
+    const f = o.ph[j], ready = BIGV[f.id] || f.src, prev = d.querySelector('.rc-st-in > img:not([hidden])')?.src || '';
+    if (j === 0) { preload(o); const nx = SQ[SQ.indexOf(key) + 1], ni = nx && items().find(i => i.k + ':' + i.id === nx); if (ni) photos(ni).then(p => p.ph[0] && bigOf(p, p.ph[0])); }
+    d.innerHTML = `<div class="rc-st-in"><div class="rc-st-bg"${ready || prev ? ` style="background-image:url('${ready || prev}')"` : ''}></div><div class="rc-st-p">${o.ph.map((_, k) => `<i><b style="width:${k < j ? 100 : 0}%"></b></i>`).join('')}</div>${head(j + 1, N)}
+      <div class="rc-st-msg">${BIGV[f.id] ? '' : '<span class="rc-spin" aria-label="جارٍ التحميل"></span>'}</div><img alt="${e(f.n)}"${ready || prev ? ` src="${ready || prev}"` : ' hidden'}><div class="rc-st-tap"><button data-st="nx" aria-label="التالية"></button><button data-st="pv" aria-label="السابقة"></button></div>
       <div class="rc-st-f">${cheer()}</div></div>`;
     const im = d.querySelector('img'), bar = d.querySelectorAll('.rc-st-p b')[j];
     if (f.src) { im.src = f.src; im.hidden = false; d.querySelector('.rc-st-bg').style.backgroundImage = `url("${f.src}")`; }
-    const src = await bigOf(o, f); if (d.dataset.k !== key || +d.dataset.j !== j) return;
-    if (src) { im.src = src; im.hidden = false; d.querySelector('.rc-st-bg').style.backgroundImage = `url("${src}")`; d.querySelector('.rc-st-msg').textContent = ''; }
-    else d.querySelector('.rc-st-msg').textContent = 'لا توجد معاينة لهذه الصورة';
-    if (o.ph[j + 1]) bigOf(o, o.ph[j + 1]);   // تجهيز التالية
+    // 2026-11-12 طلبها: الصورة التي لا يمكن عرضها لا تظهر أبدًا (لا نقاط ولا رسالة) — تُحذف من القصة ويُنتقل للتالية فورًا
+    const skip = () => { if (d.dataset.k !== key || +d.dataset.j !== j) return; const x = o.ph.indexOf(f); if (x >= 0) o.ph.splice(x, 1); delete BIGV[f.id]; story(key, j, only); };
+    im.onerror = skip;
+    // مهلة ١٠ ثوانٍ (ctGet قد يعيد المحاولة دقائق): إن تأخرت الصورة ← التالية فورًا دون حذفها، أو تبقى المصغّرة إن وُجدت
+    const TO = {}, src = await Promise.race([bigOf(o, f), new Promise(ok => setTimeout(() => ok(TO), 10000))]); if (d.dataset.k !== key || +d.dataset.j !== j) return;
+    if (src === TO) { if (!f.src) return story(key, j + 1, only); d.querySelector('.rc-st-msg').textContent = ''; }
+    else if (src) { im.src = src; im.hidden = false; d.querySelector('.rc-st-bg').style.backgroundImage = `url("${src}")`; d.querySelector('.rc-st-msg').textContent = ''; }
+    else return skip();
+    if (o.ph[j + 1] && !BIG[o.ph[j + 1].id]) preload(o, j + 1);   // تجهيز ما بعدها
     requestAnimationFrame(() => { bar.style.transition = 'width 3.5s linear'; bar.style.width = '100%'; });
     STM = setTimeout(() => story(key, j + 1, only), 3500);
   }
@@ -371,11 +388,13 @@
   }
   document.addEventListener('click', ev => {
     const d = document.getElementById('rc-st'); if (!d || !d.contains(ev.target)) return;
+    if (ev.target === d) return stClose();   // الضغط خارج نافذة القصة يغلقها
     const b = ev.target.closest('[data-st]'); if (!b) return;
     const k = d.dataset.k, j = +d.dataset.j, only = !!d.dataset.only, a = b.dataset.st;
     if (a === 'x') return stClose();
+    // 2026-11-12 (تصحيح طلبها): الضغط ← الصورة التالية/السابقة فورًا، وكل ضغطة سريعة = صورة واحدة (بعد آخر صورة ← النشاط التالي)
     if (a === 'nx') return story(k, j + 1, only);
-    if (a === 'pv') return story(k, Math.max(0, j - 1), only);
+    if (a === 'pv') { if (j > 0) return story(k, j - 1, only); const pv = only ? null : SQ[SQ.indexOf(k) - 1]; return story(pv || k, 0, only); }
     if (a === 'next') return story(b.dataset.k, 0);
     if (a === 'rep') return openOldRep(SP[k], b);
     if (a === 'open') { clearTimeout(STM); d.remove(); document.body.style.overflow = ''; OPEN = k; CT = 'u'; paint(); document.getElementById('rc-root')?.scrollIntoView({ block: 'start' }); }
@@ -394,7 +413,8 @@
     if (!o) { photos(it).then(() => { if (OPEN === it.k + ':' + it.id) paint(); }); return ''; }
     return o.rep ? `<div class="card pad" style="margin:10px 0;border:1px dashed #b8b2d9"><b>التقرير السابق</b><p class="muted" style="margin:4px 0 8px">صدر من النظام السابق: ${e(String(o.rep.n || '').replace(/\.pdf$/i, ''))}</p><button class="btn sm" data-rc="oldrep">فتح التقرير السابق</button></div>` : '';
   }
-  const storyBtn = it => it.ev > 0 && storyable(it) ? `<button class="btn sm" data-rc="story" style="margin-top:8px">▶ شاهدي صورك كقصة</button>` : '';
+  // 2026-11-12 طلبها: بدل «شاهدي صورك كقصة» ← زر يفتح مجلد النشاط في درايف (المفتاح folder من act_record_by_pid، migration 0015)
+  const storyBtn = it => it.folder ? `<a class="btn sm" href="https://drive.google.com/drive/folders/${encodeURIComponent(it.folder)}" target="_blank" rel="noopener" style="margin-top:8px;display:inline-flex">📁 فتح مجلدي في Drive</a>` : '';
 
   function body() {
     if (ERR) return `<div class="card pad"><p class="rc-err">تعذّر تحميل سجلك: ${e(ERR)}</p><button class="btn sm" data-rc="reload">إعادة المحاولة</button></div>`;

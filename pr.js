@@ -124,8 +124,9 @@
 .pr-sh .fth{gap:6px}
 .pr-sh .th-i{width:60px;height:78px;border-radius:9px}
 .pr-sh .soon{font-size:12.5px;color:#b5520b;background:#ffe6d4;border-radius:10px;padding:8px 10px}
-.pr .scroll{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 8px;margin-top:10px;scroll-snap-type:x mandatory}
-.pr .pc{flex:0 0 150px;scroll-snap-align:start;border:0;border-radius:18px;padding:12px 14px;text-align:start;cursor:pointer;display:flex;flex-direction:column;gap:8px;min-height:104px}
+/* «التعريف بالمعلمة» أزرار متتابعة بلا شريط تنقّل (طلبها 2026-11-12، مرتين) */
+.pr .scroll{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
+.pr .pc{min-width:0;border:0;border-radius:18px;padding:12px 14px;text-align:start;cursor:pointer;display:flex;flex-direction:column;gap:8px;min-height:104px}
 .pr .pc .ic{width:30px;height:30px;border-radius:9px;background:#fff;display:grid;place-items:center}
 .pr .pc .ic svg.i{width:17px;height:17px}
 .pr .pc b{font-weight:500;font-size:14px;line-height:1.4}
@@ -147,6 +148,7 @@
 .pr-sh .save span{font-size:13px;color:#6e6a7c}
 .pr-sh .save span.err{color:#c2185b}
 @media (max-width:560px){.pr-sh .cv{grid-template-columns:1fr}.pr-sh .cv label.w2{grid-column:auto}}
+@media (max-width:520px){.pr .scroll{grid-template-columns:1fr 1fr}}
 @media (max-width:820px){.pr{padding:18px 14px 22px}.pr .cols{grid-template-columns:1fr}.pr .ring{width:88px;height:88px}.pr .ring b{width:70px;height:70px;font-size:18px}.pr .top .yr{display:none}}
 @media (prefers-reduced-motion:reduce){.pr .el{transition:none}}
 </style>`);
