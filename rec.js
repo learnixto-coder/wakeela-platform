@@ -36,10 +36,13 @@
     const ex = R.executions || [], exOf = (k, id) => ex.find(x => x.kind === k && x.target === id);
     const a = (R.assignments || []).map(x => ({ k: 'class', id: x.id, title: x.program, sub: ar(x.class || ''), from: x.from ?? x.start_date, to: x.to ?? x.end_date, partners: x.partners || [], ev: x.evidence || 0, survey: x.responses ?? x.survey ?? 0, ex: exOf('class', x.id) }));
     const w = (R.weeks || []).map(x => ({ k: 'nonclass', id: x.id, week: x.week, title: 'الأسبوع ' + ar(x.week), sub: ar(x.class || ''), from: x.from ?? x.start_date, to: x.to ?? x.end_date, radio: x.radio_title, prayer: x.prayer_title, partners: x.partners || [], ev: x.evidence || 0, ex: exOf('nonclass', x.id) }));
-    return [...a, ...w].map(it => (it.st = stat(it), it)).sort((p, q) => String(p.from || '9').localeCompare(String(q.from || '9')));
+    // مناسبات المعلمة (2026-11-11): خاصة بفصلها، إدخال يدوي، نفس نموذج تقرير المناسبات المعتمد — لا تظهر لرائدة النشاط
+    const o = (R.occasions || []).map(x => ({ k: 'occasion', id: x.id, title: x.name, sub: ar(x.class || ''), from: x.date, to: x.date, partners: x.partners || [], ev: x.evidence || 0, ex: exOf('occasion', x.id) }));
+    return [...a, ...w, ...o].map(it => (it.st = stat(it), it)).sort((p, q) => String(p.from || '9').localeCompare(String(q.from || '9')));
   }
   function stat(it) {
     const s = it.ex?.status;
+    if (it.k === 'occasion' && !s) return ['opt', it.ev ? 'بلا تقرير (اختياري)' : 'مفعّلة'];
     if (s === 'issued') return ['done', it.ex.mine === false ? 'أصدرته زميلتك' : 'صدر التقرير'];
     if (s === 'requested') return ['wait', 'جارٍ الإصدار…'];
     if (s === 'failed') return ['fail', 'تعذّر الإصدار'];
@@ -55,7 +58,7 @@
   .rc-it.done{border-inline-start-color:#22a06b}.rc-it.need,.rc-it.fail{border-inline-start-color:#e5793a}.rc-it.wait,.rc-it.now{border-inline-start-color:#6c5ce7}
   .rc-h{display:flex;justify-content:space-between;gap:8px;align-items:center}.rc-h b{font-weight:600}.rc-d{font-size:.86em;opacity:.75;margin-top:4px}
   .rc-chip{font-size:.78em;padding:2px 10px;border-radius:999px;background:#eeeafc;white-space:nowrap}.rc-chip.done{background:#dcf5e8;color:#11683f}.rc-chip.need,.rc-chip.fail{background:#fde9dc;color:#8a3a0e}
-  .rc-kind{font-size:.74em;background:#6c5ce7;color:#fff;border-radius:6px;padding:1px 7px;margin-inline-end:6px}.rc-kind.n{background:#0e8a6a}
+  .rc-kind{font-size:.74em;background:#6c5ce7;color:#fff;border-radius:6px;padding:1px 7px;margin-inline-end:6px}.rc-kind.n{background:#0e8a6a}.rc-kind.o{background:#c0712a}
   .rc-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:12px 0}.rc-meta div{background:#f6f4fd;border-radius:10px;padding:8px 10px}.rc-meta small{display:block;opacity:.65;font-size:.78em}
   .rc-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.rc-pair div{border:1px solid #e5e2f0;border-radius:10px;padding:8px 10px}.rc-pair b{display:block;font-size:.8em;opacity:.7}
   .rc-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:10px 0}.rc-form label{display:grid;gap:4px;font-size:.9em}
@@ -76,6 +79,8 @@
     if (it.k === 'class') return `<div class="rc-form">${num('parents', 'عدد أولياء الأمور المشاركين')}${num('disability', 'عدد الطالبات ذوات الإعاقة')}${num('partners_count', 'عدد الشراكات')}
       <label>أسماء الشراكات<input data-f="partners_names" value="${v('partners_names')}"></label>
       <div class="rc-chk"><span class="muted">المجالات:</span>${DOMAINS.map(d => `<label><input type="checkbox" data-dom value="${e(d)}"${(f.domains || []).includes(d) ? ' checked' : ''}> ${e(d)}</label>`).join('')}</div></div>`;
+    if (it.k === 'occasion') return `<div class="rc-form">${num('students', 'عدد الطالبات المشاركات')}${num('disability', 'عدد الطالبات ذوات الإعاقة')}${num('parents', 'عدد أولياء الأمور المشاركين')}
+      ${num('partners_count', 'عدد الشراكات')}<label>أسماء الشراكات<input data-f="partners_names" value="${v('partners_names')}"></label>${num('periods', 'عدد الحصص (إن وُجدت)')}</div>`;
     return `<div class="rc-form">${num('students', 'عدد الطالبات المشاركات')}${num('dis', 'عدد الطالبات ذوات الإعاقة')}<label style="grid-column:1/-1">ملاحظات<textarea data-f="notes" rows="2">${v('notes')}</textarea></label></div>`;
   }
   function readForm(box) {
@@ -114,8 +119,8 @@
     if (it.k === 'class') return classPage(it);
     const x = it.ex, s = x?.status;
     let h = `<div class="card pad"><button class="btn sm ghost" data-rc="back">→ رجوع</button>
-      <h2 style="margin:10px 0 4px"><span class="rc-kind${it.k === 'class' ? '' : ' n'}">${it.k === 'class' ? 'نشاط صفي' : 'نشاط لاصفي'}</span>${e(it.title)}</h2>
-      <div class="rc-meta"><div><small>الفصل</small>${e(it.sub || '—')}</div><div><small>البداية</small>${hijri(it.from)}</div><div><small>النهاية</small>${hijri(it.to)}</div>
+      <h2 style="margin:10px 0 4px"><span class="rc-kind${it.k === 'occasion' ? ' o' : ' n'}">${it.k === 'occasion' ? 'مناسبة' : 'نشاط لاصفي'}</span>${e(it.title)}</h2>
+      <div class="rc-meta"><div><small>الفصل</small>${e(it.sub || '—')}</div>${it.k === 'occasion' ? `<div><small>التاريخ</small>${hijri(it.from)}</div>` : `<div><small>البداية</small>${hijri(it.from)}</div><div><small>النهاية</small>${hijri(it.to)}</div>`}
       <div><small>${it.partners.length > 1 ? 'زميلاتك' : 'زميلتك'}</small>${e(it.partners.join('، ') || '—')}</div><div><small>الشواهد</small>${ar(it.ev)}</div>${it.k === 'class' ? `<div><small>ردود الاستبانة</small>${ar(it.survey)}</div>` : ''}</div>`;
     if (it.k === 'nonclass') h += `<div class="rc-pair"><div><b>الاصطفاف الصباحي</b>${e(it.radio || '—')}</div><div><b>الصلاة</b>${e(it.prayer || '—')}</div></div>`;
     h += upBox(it);
@@ -130,7 +135,8 @@
       h += `<h3 style="margin:14px 0 4px">بيانات التقرير</h3><p class="muted" style="margin:0">اسم البرنامج والتواريخ والفصل والتوقيعات تُعبّأ تلقائيًا. أكملي الباقي ثم اضغطي «إصدار التقرير».</p>${form(it)}
         <div class="rc-btns"><button class="btn" data-rc="issue"${busy ? ' disabled' : ''}>إصدار التقرير${it.k === 'class' ? ' + قياس الأثر' : ''}</button>
         ${it.k === 'class' ? `<a class="btn ghost" href="${SURVEY}?a=${e(it.id)}" target="_blank" rel="noopener">استبانة الطالبات</a>` : ''}</div>
-        <p class="muted" style="font-size:.85em">تقرير واحد لكل ${it.k === 'class' ? 'برنامج في الفصل' : 'أسبوع'}؛ إذا أصدرته زميلتك يظهر هنا لكما معًا.</p>`;
+        <p class="muted" style="font-size:.85em">تقرير واحد لكل ${it.k === 'class' ? 'برنامج في الفصل' : it.k === 'occasion' ? 'مناسبة (بنموذج الأيام والمناسبات المعتمد)' : 'أسبوع'}؛ إذا أصدرته زميلتك يظهر هنا لكما معًا.</p>`;
+      if (it.k === 'occasion' && !it.ev && !x && !UP['occasion:' + it.id]) h += `<p style="margin-top:14px"><button class="btn sm ghost" data-rc="odel">حذف هذه المناسبة (أُضيفت خطأً)</button></p>`;
     }
     return h + '</div>';
   }
@@ -145,11 +151,12 @@
   const nonTargets = it => (D.cn?.weeks || []).filter(x => +x.w === +it.title.replace(/\D/g, '').replace(/[٠-٩]/g, c => AR.indexOf(c)) || +x.w === it.week);
   function upBox(it) {
     const k = it.k + ':' + it.id, n = UP[k] || 0;
-    const ok = it.k === 'class' ? !!clsTarget(it) : nonTargets(it).length > 0;
+    const ok = it.k === 'class' ? !!clsTarget(it) : it.k === 'occasion' ? !!(D.cn?.tok && D.cn?.cls) : nonTargets(it).length > 0;
     const sel = it.k === 'nonclass' ? `<label class="rc-form" style="margin:6px 0"><span>الشاهد عن</span><select id="rc-kind" style="font:inherit;padding:8px;border-radius:10px;border:1px solid #d9d4ee">${nonTargets(it).map((x, i) => `<option value="${i}">${x.kind === 'الصلاة' ? 'الصلاة' : 'الاصطفاف الصباحي (الإذاعة)'}${x.prog ? ': ' + e(x.prog) : ''}</option>`).join('')}</select></label>` : '';
     return `<div class="rc-ev"><h3 style="margin:14px 0 4px">الشواهد</h3>
       <p class="muted" style="margin:0">${ar(it.ev)} شاهدًا محفوظًا${n ? ' · رفعتِ الآن ' + ar(n) : ''}. ${it.k === 'class' ? 'صور أو فيديو أو PDF (الصور تُصغَّر قبل الرفع، والفيديو حتى ٥٠٠ م.ب).' : 'صور فقط، تصل إلى مجلد الفصل المشترك.'}</p>
       ${ok ? sel + `<label class="btn" style="margin-top:8px;display:inline-flex;cursor:pointer">إرفاق الشواهد<input type="file" id="rc-file" multiple accept="${it.k === 'class' ? 'image/*,video/*,application/pdf' : 'image/*'}" hidden></label>`
+        : it.k === 'occasion' ? '<p class="rc-err">تعذّر ربط حسابك بمجلد فصلك، راجعي الوكيلة.</p>'
         : '<p class="rc-err">تعذّر ربط هذا البرنامج بمجلد شواهده، ارفعي من زر «' + (it.k === 'class' ? 'الأنشطة الصفية' : 'الأنشطة اللاصفية') + '» مؤقتًا.</p>'}
       <div id="rc-upmsg" class="muted" style="margin-top:6px">${e(UPMSG)}</div></div>`;
   }
@@ -174,6 +181,11 @@
           const fl = f.size > 20 * 1048576 ? await cpBig(one, f, p => msg(`جارٍ رفع ${ar(i + 1)} من ${ar(files.length)}… ${ar(p)}٪`))
             : (await post({ a: 'tupload', uid, tok: one.it.tok, key: one.p.key, name: f.name, mime: f.type || 'image/jpeg', b64: await b64of(f) }, f.size > 3e6 ? 240000 : 45000)).file;
           one.p.files && one.p.files.push(fl);
+        } else if (it.k === 'occasion') {
+          if (!/^image\//.test(f0.type)) throw new Error('تُقبل الصور فقط');
+          const f = await shrinkImage(f0); if (f.size > 25 * 1048576) throw new Error('الصورة أكبر من ٢٥ م.ب');
+          const x = await post({ a: 'oupload', uid, tok: D.cn.tok, cls: D.cn.cls, occ: it.title, name: f.name, mime: f.type || 'image/jpeg', b64: await b64of(f) }, 45000);
+          await rpc('act_add_occasion_evidence_by_pid', { p_pid: PID, p_event: it.id, p_drive_id: x.file.id, p_name: x.file.n, p_mime: x.file.m || f.type, p_size: x.file.s || f.size, p_folder_id: x.file.folder || null });
         } else {
           const w = nonTargets(it)[+(document.getElementById('rc-kind')?.value || 0)];
           if (!/^image\//.test(f0.type)) throw new Error('تُقبل الصور فقط');
@@ -185,21 +197,44 @@
       } catch (er) { err = `تعذّر رفع «${f0.name}»: ${er.message}`; }
     }
     UPMSG = (ok ? `✓ رُفع ${ar(ok)} من ${ar(files.length)} ووصلت إلى مجلد الشواهد` : '') + (err ? ' · ' + err : '');
+    if (it.k === 'occasion' && ok) { Object.keys(UP).forEach(k => k === 'occasion:' + it.id && delete UP[k]); return load(); }   // العدد من القاعدة مباشرة (لا جسر للمناسبات)
     paint();
   }
 
+  /* إضافة مناسبة يدويًا: من قائمة المناسبات الرسمية أو «أخرى» + التاريخ (يظهر هجريًا) */
+  let ADD = false, ADDMSG = '';
+  /* «الأيام والمناسبات» (2026-11-11): قائمة المكتبة كاملة، تفعّل المعلمة ما نفّذته فقط، + «مناسبة أخرى» يدويًا */
+  function addBox() {
+    if (!ADD) return `<div class="rc-btns" style="margin:4px 0 10px"><button class="btn ghost" data-rc="oadd">＋ مناسبة أخرى (ليست في القائمة)</button></div>`;
+    return `<div class="card pad" id="rc-add" style="margin-bottom:10px"><h3 style="margin:0 0 6px">مناسبة أخرى</h3><div class="rc-form">
+      <label>اسم المناسبة<input id="rc-otext" maxlength="80" placeholder="اكتبي اسم المناسبة"></label>
+      <label>التاريخ<input id="rc-odate" type="date" value="${e(TODAY)}"><small id="rc-ohij" class="muted">${hijri(TODAY)}</small></label></div>
+      <div class="rc-btns"><button class="btn" data-rc="osave"${busy ? ' disabled' : ''}>حفظ المناسبة</button><button class="btn ghost" data-rc="ocancel">إلغاء</button></div>
+      ${ADDMSG ? `<p class="rc-err">${e(ADDMSG)}</p>` : ''}</div>`;
+  }
+  function occBox(mine) {
+    const by = n => mine.find(i => i.title === n);
+    return `<div class="ok" style="margin:0 0 10px">ليس ضروريًا إصدار التقرير ولا تفعيل جميع المناسبات — فعّلي فقط ما نفّذتِه مع طالباتك.</div>
+      <div class="rc-list">${(R.occasion_list || []).map(x => { const it = by(x.name);
+        return it ? `<button class="rc-it ${it.st[0]}" data-rco="occasion:${e(it.id)}"><div class="rc-h"><b><span class="rc-kind o">مفعّلة</span>${e(x.name)}</b><span class="rc-chip ${it.st[0]}">${it.st[1]}</span></div><div class="rc-d">${hijri(it.from)} · ${ar(it.ev)} صورة</div></button>`
+          : `<div class="rc-it" style="cursor:default"><div class="rc-h"><b>${e(x.name)}</b><button class="btn sm" data-rc="oon" data-n="${e(x.name)}" data-d="${e(x.date || TODAY)}"${busy ? ' disabled' : ''}>تفعيل</button></div><div class="rc-d">${x.date ? hijri(x.date) : '—'}</div></div>`; }).join('')}</div>
+      ${addBox()}`;
+  }
   function body() {
     if (ERR) return `<div class="card pad"><p class="rc-err">تعذّر تحميل سجلك: ${e(ERR)}</p><button class="btn sm" data-rc="reload">إعادة المحاولة</button></div>`;
     if (!R) return '<div class="card pad"><p class="muted" style="margin:0">جارٍ تحميل سجلك…</p></div>';
     const L = items();
     if (OPEN) { const it = L.find(i => i.k + ':' + i.id === OPEN); if (it) return page(it); OPEN = null; }
-    const done = L.filter(i => i.st[0] === 'done').length, need = L.filter(i => i.st[0] === 'need' || i.st[0] === 'fail');
-    const vis = L.filter(i => TAB === 'all' || i.k === TAB);
-    return `<div class="card hero th-hero"><div class="grow"><h2>سجل إنجازي</h2><p class="muted">أ. ${e(R.teacher?.name || '')} · الأنشطة الصفية واللاصفية · الفصل الدراسي الأول ١٤٤٨هـ · ${ar(done)} من ${ar(L.length)} تقريرًا صدر</p></div></div>
+    const Q = L.filter(i => i.k !== 'occasion');   // المناسبات اختيارية: لا تدخل في «يحتاج منك» ولا في العدّ
+    const done = Q.filter(i => i.st[0] === 'done').length, need = Q.filter(i => i.st[0] === 'need' || i.st[0] === 'fail');
+    const libN = new Set((R.occasion_list || []).map(x => x.name)), mine = L.filter(i => i.k === 'occasion');
+    const vis = TAB === 'occasion' ? mine.filter(i => !libN.has(i.title)) : L.filter(i => TAB === 'all' || i.k === TAB);
+    return `<div class="card hero th-hero"><div class="grow"><h2>سجل إنجازي</h2><p class="muted">أ. ${e(R.teacher?.name || '')} · الأنشطة الصفية واللاصفية والأيام والمناسبات · الفصل الدراسي الأول ١٤٤٨هـ · ${ar(done)} من ${ar(Q.length)} تقريرًا صدر</p></div></div>
       ${need.length ? `<div class="warn" style="margin-top:10px"><b>يحتاج منك:</b> ${need.map(i => e(i.title)).join('، ')}</div>` : ''}
-      <nav class="rc-tabs">${[['all', 'الكل'], ['class', 'الأنشطة الصفية'], ['nonclass', 'الأنشطة اللاصفية']].map(([k, l]) => `<button data-rct="${k}" aria-pressed="${TAB === k}">${l}</button>`).join('')}</nav>
-      <div class="rc-list">${vis.map(i => `<button class="rc-it ${i.st[0]}" data-rco="${i.k}:${e(i.id)}"><div class="rc-h"><b><span class="rc-kind${i.k === 'class' ? '' : ' n'}">${i.k === 'class' ? 'صفية' : 'لاصفية'}</span>${e(i.title)}</b><span class="rc-chip ${i.st[0]}">${i.st[1]}</span></div>
-        <div class="rc-d">${hijri(i.from)} إلى ${hijri(i.to)} · ${e(i.sub)} · ${ar(i.ev)} شاهدًا</div></button>`).join('') || '<p class="muted">لا يوجد شيء في هذا القسم.</p>'}</div>`;
+      <nav class="rc-tabs">${[['all', 'الكل'], ['class', 'الأنشطة الصفية'], ['nonclass', 'الأنشطة اللاصفية'], ['occasion', 'الأيام والمناسبات']].map(([k, l]) => `<button data-rct="${k}" aria-pressed="${TAB === k}">${l}</button>`).join('')}</nav>
+      ${TAB === 'occasion' ? occBox(mine) + (vis.length ? '<h3 style="margin:14px 0 6px">مناسبات أضفتِها</h3>' : '') : ''}
+      <div class="rc-list">${vis.map(i => `<button class="rc-it ${i.st[0]}" data-rco="${i.k}:${e(i.id)}"><div class="rc-h"><b><span class="rc-kind${i.k === 'class' ? '' : i.k === 'occasion' ? ' o' : ' n'}">${i.k === 'class' ? 'صفية' : i.k === 'occasion' ? 'مناسبة' : 'لاصفية'}</span>${e(i.title)}</b><span class="rc-chip ${i.st[0]}">${i.st[1]}</span></div>
+        <div class="rc-d">${i.k === 'occasion' ? hijri(i.from) : hijri(i.from) + ' إلى ' + hijri(i.to)} · ${e(i.sub)} · ${ar(i.ev)} شاهدًا</div></button>`).join('') || (TAB === 'occasion' ? '' : '<p class="muted">لا يوجد شيء في هذا القسم.</p>')}</div>`;
   }
   function paint() { const el = document.getElementById('rc-root'); if (!el) return; el.innerHTML = body(); if (typeof drawQr === 'function') el.querySelectorAll('[data-qr]').forEach(drawQr); }
 
@@ -212,6 +247,30 @@
     if (b.dataset.rc === 'back') { OPEN = null; return paint(); }
     if (b.dataset.rc === 'copy') { try { await navigator.clipboard.writeText(b.dataset.u); b.textContent = '✓ نُسخ'; } catch (x) { prompt('انسخي الرابط:', b.dataset.u); } return; }
     if (b.dataset.rc === 'reload') { R = null; paint(); return load(); }
+    if (b.dataset.rc === 'oadd') { ADD = true; ADDMSG = ''; return paint(); }
+    if (b.dataset.rc === 'ocancel') { ADD = false; ADDMSG = ''; return paint(); }
+    if (b.dataset.rc === 'oon' && !busy) {   // تفعيل مناسبة من المكتبة بتاريخها
+      busy = true; b.disabled = true; b.textContent = 'جارٍ التفعيل…';
+      try { const r = await rpc('act_add_occasion_by_pid', { p_pid: PID, p_name: b.dataset.n, p_date: b.dataset.d }); busy = false; await load(); OPEN = 'occasion:' + r.id; paint(); }
+      catch (x) { busy = false; paint(); alert('تعذّر التفعيل: ' + x.message); }
+      return;
+    }
+    if (b.dataset.rc === 'osave' && !busy) {
+      const name = document.getElementById('rc-otext').value.trim(), d = document.getElementById('rc-odate').value;
+      if (name.length < 3) { ADDMSG = 'اكتبي اسم المناسبة'; return paint(); }
+      if (!d) { ADDMSG = 'اختاري التاريخ'; return paint(); }
+      busy = true; b.disabled = true; b.textContent = 'جارٍ الحفظ…';
+      try { const r = await rpc('act_add_occasion_by_pid', { p_pid: PID, p_name: name, p_date: d }); busy = false; ADD = false; ADDMSG = ''; await load(); OPEN = 'occasion:' + r.id; CT = 's'; paint(); }
+      catch (x) { busy = false; ADDMSG = x.message; paint(); }
+      return;
+    }
+    if (b.dataset.rc === 'odel' && !busy) {
+      if (!confirm('حذف هذه المناسبة؟')) return;
+      const id = OPEN.split(':')[1]; busy = true;
+      try { await rpc('act_del_occasion_by_pid', { p_pid: PID, p_id: id }); busy = false; OPEN = null; await load(); }
+      catch (x) { busy = false; alert('تعذّر الحذف: ' + x.message); }
+      return;
+    }
     if (b.dataset.rc === 'issue' && !busy) {
       const [k, id] = OPEN.split(':'); busy = true; b.disabled = true; b.textContent = 'جارٍ الإرسال…';
       try { await rpc('act_request_report_by_pid', { p_pid: PID, p_kind: k, p_target: id, p_form: readForm(b.closest('.card')) }); busy = false; await load(); }
@@ -220,11 +279,17 @@
   });
 
   document.addEventListener('change', ev => {
+    if (ev.target.id === 'rc-odate') { document.getElementById('rc-ohij').textContent = hijri(ev.target.value); return; }
     if (ev.target.id !== 'rc-file' || !ev.target.files.length || !OPEN) return;
     const it = items().find(i => i.k + ':' + i.id === OPEN), files = [...ev.target.files]; ev.target.value = '';
     if (it) upload(it, files);
   });
 
-  window.REC = { render() { if (SC !== sessionCode) { SC = sessionCode; R = null; ERR = ''; PID = null; OPEN = null; TAB = 'all'; UPMSG = ''; Object.keys(UP).forEach(k => delete UP[k]); clearTimeout(poll); }
-     if (!R && !ERR) load(); return CSS + '<div id="rc-root">' + body() + '</div>'; } };
+  const sync = () => { if (SC !== sessionCode) { SC = sessionCode; R = null; ERR = ''; PID = null; OPEN = null; TAB = 'all'; UPMSG = ''; Object.keys(UP).forEach(k => delete UP[k]); clearTimeout(poll); LP = null; ADD = false; ADDMSG = ''; } };
+  let LP = null;   // تحميل واحد مشترك بين الصفحة و«لوحتي»
+  const ensure = () => (R || ERR) ? Promise.resolve() : (LP ||= load().finally(() => { LP = null; }));
+  window.REC = { render() { sync(); ensure(); return CSS + '<div id="rc-root">' + body() + '</div>'; },
+    // «لوحتي» (2026-11-11): نفس بيانات «سجل إنجازي» ونفس الحالة، وزر يفتح البرنامج/الأسبوع نفسه
+    async data() { sync(); await ensure(); if (ERR) throw new Error(ERR); return items().filter(i => i.k !== 'occasion').map(i => ({ key: i.k + ':' + i.id, k: i.k, title: i.title, sub: i.sub, from: i.from, to: i.to, ev: i.ev, st: i.st[0], stl: i.st[1], radio: i.radio, prayer: i.prayer })); },
+    open(key) { sync(); OPEN = key; CT = 's'; } };
 })();
