@@ -16,7 +16,12 @@
   const stateOf = p => !p.from || !p.to ? 'nodate' : today < day(p.from.g) ? 'wait' : today > day(p.to.g) ? 'done' : 'run';
   const evChip = p => p.ev.length ? `<span class="chip s-ok">${ar(p.ev.length)} شاهد</span>` : (p.s === 'done' || p.s === 'run') ? '<span class="chip s-none">لا شواهد</span>' : '<span class="chip s-na">—</span>';
 
-  const CSS = `.ld-h{border-inline-start:5px solid var(--brand);padding:16px 18px;margin-bottom:14px}.ld-h h2{margin:0;font-size:19px}.ld-h p{margin:4px 0 0;color:var(--muted);font-size:13.5px}
+  const CSS = `.cd-chip{display:inline-block;background:#ece9ff;color:#3f33a8;border-radius:99px;padding:2px 9px;font-size:12px;margin:1px 0;white-space:nowrap}.cd-auto{display:inline-block;background:#fff1d6;color:#8a5a00;border-radius:6px;padding:1px 6px;font-size:11px;font-weight:700}
+.cd-doms{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}.cd-doms .cd-chip{font-size:13px;padding:4px 12px}.cd-f{margin:0 0 10px}.cd-f select{margin-inline-start:6px;padding:6px 8px;border-radius:8px}
+.cd-t td small{display:block;color:var(--muted);font-size:12px}.cd-n{text-align:center;white-space:nowrap}.cd-st{display:inline-block;border-radius:99px;padding:2px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+.cd-ok{background:#dff5ea;color:#11683f}.cd-run{background:#e6efff;color:#2850a8}.cd-wait{background:#eee;color:#555}.cd-bad{background:#fde4e1;color:#9b2a1e}
+@media (prefers-color-scheme:dark){.cd-chip{background:#2f2a55;color:#cfc8ff}.cd-auto{background:#4a3a14;color:#ffd98a}.cd-ok{background:#123b28;color:#8fe0b6}.cd-run{background:#1b2c52;color:#a9c3ff}.cd-wait{background:#333;color:#ccc}.cd-bad{background:#4a1f1a;color:#ffb3a8}}
+.ld-h{border-inline-start:5px solid var(--brand);padding:16px 18px;margin-bottom:14px}.ld-h h2{margin:0;font-size:19px}.ld-h p{margin:4px 0 0;color:var(--muted);font-size:13.5px}
 .ld-k{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}.ld-k .card{padding:12px 14px}.ld-k b{display:block;font-size:24px}.ld-k span{color:var(--muted);font-size:12.5px}
 .ld-sec{margin:20px 0 10px;font-size:16px}.ld-links{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
 .ld-tw{overflow-x:auto}.ld-t{width:100%;min-width:760px;border-collapse:separate;border-spacing:0;font-size:13.5px}
@@ -366,6 +371,7 @@
     <div class="ld-hub">
       ${D.shareK ? hubBtn('share', 'مشاركات الطالبات وأولياء الأمور', 'اليوم الوطني · يوم المعلم · درع الوطن', '#2A7F9E') : ''}   ${/* «مشاركات الطالبات وأولياء الأمور» (2026-11-09) أول زر */ ''}
       ${hubBtn('lg', 'الأنشطة الصفية', 'المعلمات · المجالات · المجلدات · لوحة المؤشرات', '#0f6b63')}
+      ${D.cards ? hubBtn('lcd', 'بطاقات تنفيذ الأنشطة الصفية', (n => `${ar(n)} من ${ar(D.cards.length)} بطاقة صدرت · المجالات وأولياء الأمور`)(D.cards.filter(c => c.ex && c.ex.status === 'issued').length), '#5b4bd6') : ''}
       ${/* زر «الأنشطة اللاصفية» (#ln) أُزيل 2026-10-27: محتواه مكرر مع «تقارير المعلمات في الأنشطة اللاصفية»؛ الصفحة باقية وتُستدعى بإعادة هذا السطر:
         hubBtn('ln', 'الأنشطة اللاصفية', `الفترات حسب الأسبوع · ${ar(D.weeks.length)} أسبوعًا`, '#7a4fb5') */ ''}
       ${hubBtn('lnr', 'تقارير المعلمات في الأنشطة اللاصفية', 'التقارير حسب الأسبوع · المؤشرات والخطة الزمنية', '#b5477a')}
@@ -907,12 +913,41 @@
       } catch (e) { say(e.message, 1); b.disabled = false; }
     });
   }
+  // ── «بطاقات تنفيذ الأنشطة الصفية» (2026-11-12): من Supabase عبر tools/leader.js (D.cards) ──
+  // ما لم تعبئه المعلمة يُعبّأ تلقائيًا: المجال «بنك الإثراءات» وأولياء الأمور ٥ (form.auto) ويظهر بشارة «تلقائي»
+  const CD_DOMS = ['بنك الإثراءات', 'التطوير الذاتي', 'قيمنا الغالية', 'نادي القراءة'];
+  function cdOf(c) {
+    const x = c.ex || {}, f = x.form || {}, auto = [].concat(f.auto || []);
+    if (!c.ex) return { none: true, dm: [], par: 0, auto: [], st: ['لم تصدر', 'wait'], dis: null, pc: 0, pn: '' };   // لا بطاقة بعد: لا تعبئة
+    let dm = [].concat(f.domains || f.icons || []).filter(Boolean); if (!dm.length) { dm = ['بنك الإثراءات']; if (!auto.includes('domains')) auto.push('domains'); }
+    let par = +f.parents || 0; if (!(par > 0)) { par = 5; if (!auto.includes('parents')) auto.push('parents'); }
+    const st = x.status === 'issued' ? (x.legacy && !x.pdf ? ['منجز سابقًا', 'ok'] : ['صدرت', 'ok']) : x.status === 'requested' ? ['جارٍ الإصدار', 'run'] : x.status === 'failed' ? ['تعذّر الإصدار', 'bad'] : ['لم تصدر', 'wait'];
+    return { dm, par, auto, st, dis: f.disability ?? f.dis, pc: +(f.partners_count ?? f.pcount) || 0, pn: f.partners_names ?? f.pnames ?? '', pdf: x.pdf, old: !x.pdf && x.drive ? 'https://drive.google.com/file/d/' + x.drive + '/view' : '', imp: x.impact };
+  }
+  function cardsPage(D, a) {
+    const C = D.cards || [], cls = [...new Set(C.map(c => c.cls))], sel = a ? decodeURIComponent(a) : '', R = C.filter(c => !sel || c.cls === sel).map(c => ({ c, v: cdOf(c) }));
+    const n = k => R.filter(r => r.v.st[1] === k).length, au = R.filter(r => r.v.auto.length).length, par = R.reduce((s, r) => s + r.v.par, 0);
+    const domN = CD_DOMS.map(d => [d, R.filter(r => r.v.dm.includes(d)).length]);
+    const badge = on => on ? ' <span class="cd-auto" title="لم تعبئه المعلمة فعُبّئ تلقائيًا">تلقائي</span>' : '';
+    const row = ({ c, v }) => `<tr><td><b>${esc(c.prog)}</b><small>${esc(c.dom || '')}</small></td><td>${esc(c.cls.replace(/\d+$/, ar))}<small>${esc(c.teachers || '')}</small></td>
+      <td>${v.none ? '<span class="ld-empty" style="margin:0">لم تُعبّأ بعد</span>' : ''}${v.dm.map(d => `<span class="cd-chip">${esc(d)}</span>`).join(' ')}${badge(v.auto.includes('domains'))}</td>
+      <td class="cd-n">${v.none ? '—' : ar(v.par) + badge(v.auto.includes('parents'))}</td><td class="cd-n">${v.dis == null || v.dis === '' ? '—' : ar(v.dis)}</td>
+      <td class="cd-n">${v.pc ? ar(v.pc) + (v.pn ? `<small>${esc(v.pn)}</small>` : '') : '—'}</td>
+      <td><span class="cd-st cd-${v.st[1]}">${v.st[0]}</span></td>
+      <td>${v.pdf ? `<a class="btn sm" href="${esc(v.pdf)}" target="_blank" rel="noopener">البطاقة PDF</a>` : v.old ? `<a class="btn sm ghost" href="${esc(v.old)}" target="_blank" rel="noopener">التقرير السابق</a>` : ''}${v.imp ? ` <a class="btn sm ghost" href="${esc(v.imp)}" target="_blank" rel="noopener">قياس الأثر</a>` : ''}</td></tr>`;
+    return nav(['lcd', 'بطاقات تنفيذ الأنشطة الصفية']) + `<div class="card ld-h"><h2>بطاقات تنفيذ الأنشطة الصفية (${ar(R.length)})</h2><p>بيانات «بطاقة تنفيذ برنامج نشاط طلابي» لكل فصل. ما لم تعبئه المعلمة عُبّئ تلقائيًا: المجال «بنك الإثراءات» وأولياء الأمور ٥، ويظهر بجانبه «تلقائي».</p></div>
+    <div class="ld-k">${[[n('ok'), 'صدرت بطاقته'], [n('run'), 'جارٍ إصدارها'], [n('wait') + n('bad'), 'لم تصدر بعد'], [par, 'من أولياء الأمور المشاركين'], [au, 'فيها تعبئة تلقائية']].map(([k, l]) => `<div class="card"><b>${ar(k)}</b><span>${l}</span></div>`).join('')}</div>
+    <div class="cd-doms">${domN.map(([d, k]) => `<span class="cd-chip">${esc(d)} <b>${ar(k)}</b></span>`).join('')}</div>
+    <div class="cd-f"><label>الفصل <select id="cdC"><option value="">كل الفصول</option>${cls.map(x => `<option${x === sel ? ' selected' : ''} value="${esc(x)}">${esc(x.replace(/\d+$/, ar))}</option>`).join('')}</select></label></div>
+    ${R.length ? `<div class="card ld-tw"><table class="ld-t cd-t"><thead><tr><th>البرنامج</th><th>الفصل والمعلمات</th><th>المجالات</th><th>أولياء الأمور</th><th>ذوات الإعاقة</th><th>الشراكات</th><th>الحالة</th><th>التقرير</th></tr></thead><tbody>${R.map(row).join('')}</tbody></table></div>` : '<p class="ld-empty">لا بطاقات.</p>'}`;
+  }
+  document.addEventListener('change', ev => { if (ev.target.id === 'cdC') location.hash = 'lcd' + (ev.target.value ? '/' + encodeURIComponent(ev.target.value) : ''); });
   // معلمة مطّلعة (سلمى القرني): D = { nplan, radio, nrecs } من ملفها، call = طلب برمزها (nallv / nthumbv)
   function nrView(D, a, call) { style(); NR.call = call; return nrPage(D, a); }
   window.LEADER = {
     nr: nrView,
     render(D, v, a) { style(); events(); ocEvents(); window.__LD = D; prep(D); const tt = document.getElementById('title'); if (tt) tt.textContent = this.title;
-      return v === 'lo' ? occasions(D, a) : v === 'lk' ? (a === undefined || a === '' ? compsPage(D) : comp(D, +a)) : v === 'lnr' ? nrPage(D, a) : v === 'lt' ? teacher(D, +a) : v === 'ltc' ? teacherClass(D, +a) : v === 'ltn' ? teacherNon(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : v === 'la' ? alerts(D) : home(D); },
+      return v === 'lo' ? occasions(D, a) : v === 'lk' ? (a === undefined || a === '' ? compsPage(D) : comp(D, +a)) : v === 'lnr' ? nrPage(D, a) : v === 'lt' ? teacher(D, +a) : v === 'ltc' ? teacherClass(D, +a) : v === 'ltn' ? teacherNon(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? reportsPage(D) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : v === 'la' ? alerts(D) : v === 'lcd' ? cardsPage(D, a) : home(D); },
     title: 'صفحة رائد النشاط : منى العمري',
   };
 })();

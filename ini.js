@@ -1,0 +1,220 @@
+// «المبادرات» (2026-11-12) لحساب سالمة العماري — اطلاع وطباعة. البيانات D.ini من tools/ini.js (export.js).
+// #ini            -> زرّا العامين
+// #ini/1448       -> ملخص العام + أسماء المعلمات + «تنزيل تقرير العام PDF»
+// #ini/1448-<i>   -> مبادرات المعلمة i وملفاتها (معاينة) + طباعة / تنزيل PDF لكل مبادرة أو لكل مبادراتها
+// المعاينات من site/prev (loadPrev / prevPage في index.html) بمفتاح «المعلمة|المبادرات|المسار». الطباعة: نافذة الطباعة → «حفظ PDF».
+// يعتمد على: D، esc، nf، go، loadPrev، prevPage.
+(function () {
+  'use strict';
+  document.head.insertAdjacentHTML('beforeend', `<style id="ini-css">
+.in{display:grid;gap:14px;max-width:980px;margin:0 auto}
+.in-yrs{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.in-yr{border:0;border-radius:20px;padding:26px 20px;cursor:pointer;font:inherit;text-align:right;color:#fff;display:grid;gap:6px;background:linear-gradient(135deg,var(--brand-2),var(--brand));box-shadow:var(--shadow)}
+.in-yr.o{background:var(--card);color:var(--brand-2);border:1px solid var(--line)}
+.in-yr b{font-size:1.9rem;line-height:1.2}.in-yr span{opacity:.92;font-size:.95rem}
+.in-yr:focus-visible{outline:3px solid var(--accent,#fca61f);outline-offset:3px}
+.in-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.in-top h2{margin:0;font-size:1.3rem}
+.in-seg{display:flex;gap:8px;flex-wrap:wrap}
+.in-seg button{font:inherit;border:1px solid var(--line);background:var(--card,#fff);border-radius:20px;padding:5px 16px;cursor:pointer}
+.in-seg button.on{background:var(--brand-2);border-color:var(--brand-2);color:#fff}
+.in-k{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.in-k div{background:var(--card,#fff);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
+.in-k b{display:block;font-size:1.6rem;color:var(--brand-2)}.in-k span{font-size:.85rem;color:var(--mut,#666)}
+.in-t{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.in-tb{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--card,#fff);border-radius:14px;padding:12px 14px;cursor:pointer;font:inherit;text-align:right}
+.in-tb .nm{flex:1;min-width:0;font-weight:600}.in-tb .c{flex:none;min-width:32px;height:32px;border-radius:10px;background:var(--soft);color:var(--brand-2);display:grid;place-items:center;font-weight:700}
+.in-tb.z{opacity:.6}.in-tb.z .c{background:#f3e3dc;color:#b4552d}
+.in-it{background:var(--card,#fff);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:grid;gap:10px}
+.in-it h3{margin:0;font-size:1.08rem;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.in-sh{font-size:.82rem;color:var(--accent,#c97d0a);font-weight:600}
+.in-chip{font-size:.78rem;border-radius:10px;padding:1px 9px;background:var(--soft);color:var(--brand-2);font-weight:600}
+.in-fs{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.in-f{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#f6f8f8;cursor:pointer;font:inherit;padding:0;display:grid;text-align:right}
+.in-f .im{aspect-ratio:3/4;display:grid;place-items:center;color:#8aa;font-size:.8rem;overflow:hidden;background:#eef3f2}
+.in-f .im img{width:100%;height:100%;object-fit:cover;object-position:top}
+.in-f .cap{font-size:.72rem;padding:4px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:rtl}
+.in-acts{display:flex;gap:8px;flex-wrap:wrap}
+.in-b{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 16px;border-radius:12px;border:0;background:var(--brand-2);color:#fff;font:inherit;font-weight:600;cursor:pointer}
+.in-b.gh{background:var(--soft);color:var(--brand-2)}
+.in-b:disabled{opacity:.6;cursor:default}
+.in-note{font-size:.85rem;color:var(--mut,#666);margin:0}
+.in-lb{position:fixed;inset:0;background:rgba(10,20,20,.75);z-index:60;overflow:auto;padding:16px}
+.in-lb .bx{max-width:900px;margin:0 auto;background:#fff;border-radius:14px;padding:12px;display:grid;gap:10px}
+.in-lb .bx img{width:100%;border:1px solid #ddd;border-radius:6px}
+.in-tw{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:16px}
+.in-tbl{width:100%;border-collapse:collapse;font-size:.92rem;min-width:640px}
+.in-tbl th{background:var(--soft);color:var(--ink);text-align:right;padding:10px 12px;font-weight:700;white-space:nowrap;border-bottom:1px solid var(--line)}
+.in-tbl td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.in-tbl tr.f td{border-top:2px solid var(--line)}
+.in-tbl tr:hover td:not(.tn){background:var(--soft)}
+.in-tbl td.tn{font-weight:700}
+.in-tbl .lnk{border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--brand-2);cursor:pointer;text-align:right}
+.in-tbl .lnk:hover{text-decoration:underline}
+.in-tbl .num{text-align:center;width:70px}
+.in-tbl .z td{color:var(--muted)}
+.in-tbl .na{font-size:.75rem;color:var(--muted);display:block}
+.in-q{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.in-q input{flex:1 1 220px;min-height:40px;border:1px solid var(--line);border-radius:12px;padding:0 12px;font:inherit;background:var(--card);color:var(--ink)}
+#iniPrint{display:none}
+@media (max-width:600px){.in-yrs{grid-template-columns:1fr}.in-k{grid-template-columns:1fr 1fr}}
+@media print{
+  body.ini-printing>*:not(#iniPrint){display:none!important}
+  body.ini-printing{background:#fff!important}
+  body.ini-printing #iniPrint{display:block;color:#000;font:12.5px/1.6 Tahoma,Arial,sans-serif;direction:rtl}
+  #iniPrint .pg{break-after:page}#iniPrint .pg:last-child{break-after:auto}
+  #iniPrint img.pv{display:block;max-width:100%;max-height:265mm;margin:0 auto}
+  #iniPrint .hd{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #0f7c74;padding-bottom:8px;margin-bottom:12px}
+  #iniPrint .hd .r{font-weight:700;line-height:1.8;font-size:12px}
+  #iniPrint .hd img{height:2cm}
+  #iniPrint h1{text-align:center;font-size:19px;margin:10px 0 4px}
+  #iniPrint .sb{text-align:center;color:#444;margin:0 0 12px}
+  #iniPrint .bar{background:#0f7c74;color:#fff;font-weight:700;padding:4px 12px;margin:14px 0 8px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #iniPrint table{width:100%;border-collapse:collapse;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #iniPrint th{background:#e2f2f0;border:1px solid #9bb;padding:5px;text-align:right}
+  #iniPrint td{border:1px solid #9bb;padding:5px;vertical-align:top}
+  #iniPrint tr{break-inside:avoid}
+  #iniPrint .kp{display:flex;gap:10px}#iniPrint .kp div{flex:1;border:1px solid #9bb;text-align:center;padding:6px}#iniPrint .kp b{display:block;font-size:20px;color:#0f7c74}
+  #iniPrint .sig{display:flex;justify-content:space-between;margin-top:36px;text-align:center}#iniPrint .sig div{width:30%}
+  #iniPrint .ttl{font-weight:700;font-size:15px;margin:0 0 6px;text-align:center}
+}
+</style>`);
+
+  const I = () => D.ini, FOLD = () => I().folder;
+  const YEARS = ['1448', '1447'];
+  const AR = s => String(s).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+  // تاريخ المبادرة = أقدم تاريخ رفع لملفاتها (d: YYYY-MM-DD من export.js)، بالهجري d/m/y
+  const hij = iso => { try { const p = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', { day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(new Date(iso + 'T12:00:00'));
+    const g = t => (p.find(x => x.type === t) || {}).value; return AR(`${g('day')}/${g('month')}/${parseInt(g('year'), 10)}`) + 'هـ'; } catch { return '—'; } };
+  const itDate = it => { const d = it.files.map(f => f.d).filter(Boolean).sort()[0]; return d ? hij(d) : '—'; };
+  const hijriToday = () => { try { const p = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', { day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(new Date());
+    const g = t => (p.find(x => x.type === t) || {}).value; return AR(`${g('day')}/${g('month')}/${parseInt(g('year'), 10)}`) + 'هـ'; } catch { return ''; } };
+  const yOf = it => it.y || '1448';   // العام غير المذكور = العام الحالي (مرفوع في سجلات ١٤٤٨هـ)
+  const itemsOf = (t, y) => t.items.filter(it => yOf(it) === y);
+  const gKey = it => it.g || it.n;
+  const partners = (y, t, it) => I().teachers.filter(o => o !== t && itemsOf(o, y).some(x => gKey(x) === gKey(it))).map(o => short(o.name));
+  const short = n => { const p = n.replace(/^أ\.\s*/, '').split(/\s+/).filter(Boolean); return p[0] + (p.length > 1 ? ' ' + p[p.length - 1] : ''); };
+  const pkey = (t, f) => t.name + '|' + FOLD() + '|' + f.n;
+  const isVid = f => /^(mp4|mov|m4v|avi|3gp|wmv|mkv)$/i.test(f.x || '');
+  const fname = n => n.split(' / ').pop().replace(/\p{Cf}/gu, '');
+  const stats = y => { const T = I().teachers, list = T.flatMap(t => itemsOf(t, y).map(it => ({ t, it })));
+    return { n: new Set(list.map(r => gKey(r.it) + (r.it.g ? '' : '|' + r.t.name))).size, teachers: T.filter(t => itemsOf(t, y).length).length, all: T.length,
+      shared: new Set(list.filter(r => partners(y, r.t, r.it).length).map(r => gKey(r.it))).size, list }; };
+
+  function render(a) {
+    if (!I()) return '<div class="card pad">لا توجد بيانات.</div>';
+    const [y, ti] = String(a || '').split('-');
+    if (!YEARS.includes(y)) return home();
+    if (ti !== undefined && I().teachers[+ti]) { setTimeout(fillThumbs, 0); return teacher(y, +ti); }
+    return year(y);
+  }
+  function home() {
+    return `<div class="in"><div class="in-yrs">${YEARS.map(y => { const s = stats(y);
+      return `<button class="in-yr${y === '1447' ? ' o' : ''}" data-go="ini/${y}"><b>مبادرات ${AR(y)}هـ</b><span>${nf(s.n)} مبادرة · ${nf(s.teachers)} معلمة</span></button>`; }).join('')}</div>
+      <p class="in-note">اختاري العام، ثم المعلمة لعرض مبادراتها وطباعتها أو حفظها PDF.</p></div>`;
+  }
+  function year(y) {
+    const s = stats(y), T = I().teachers;
+    return `<div class="in">
+      <div class="in-top"><h2>مبادرات المعلمات · ${AR(y)}هـ</h2>
+        <div class="in-seg">${YEARS.map(x => `<button data-go="ini/${x}"${x === y ? ' class="on"' : ''}>${AR(x)}هـ</button>`).join('')}</div></div>
+      <div class="in-k"><div><b>${nf(s.n)}</b><span>مبادرة (المشتركة مرة واحدة)</span></div><div><b>${nf(s.shared)}</b><span>مبادرة مشتركة</span></div><div><b>${nf(s.teachers)} / ${nf(s.all)}</b><span>معلمة لها مبادرات</span></div></div>
+      <div class="in-acts"><button class="in-b" data-inirep="${y}">تنزيل تقرير ${AR(y)}هـ (PDF)</button><button class="in-b gh" data-iniall="${y}">طباعة كل مبادرات ${AR(y)}هـ بشواهدها</button></div>
+      <div class="in-q"><input id="iniQ" type="search" placeholder="ابحثي باسم المعلمة أو المبادرة" aria-label="بحث"></div>
+      <div class="in-tw"><table class="in-tbl" id="iniTbl">
+        <thead><tr><th>م</th><th>المعلمة</th><th>المبادرة</th><th>تاريخ الرفع</th><th>مشتركة مع</th><th class="num">الشواهد</th><th></th></tr></thead>
+        <tbody>${(() => { let k = 0; return T.map((t, i) => { const L = itemsOf(t, y);
+          if (!L.length) return `<tr class="f z" data-q="${esc(t.name)}"><td>—</td><td class="tn">${esc(t.name)}</td><td colspan="5">لا توجد مبادرات مرفوعة لهذا العام</td></tr>`;
+          return L.map((it, j) => { const p = partners(y, t, it);
+            return `<tr class="${j ? '' : 'f'}" data-q="${esc(t.name + ' ' + it.n)}"><td>${nf(++k)}</td>
+              <td class="tn">${j ? '' : `<button class="lnk" data-go="ini/${y}-${i}">${esc(t.name)}</button>`}</td>
+              <td>${esc(it.n)}</td><td style="white-space:nowrap">${itDate(it)}</td>
+              <td>${p.length ? esc(p.join('، ')) : '—'}</td><td class="num">${nf(it.files.length)}</td>
+              <td><button class="in-b gh" style="min-height:32px;padding:0 12px" data-go="ini/${y}-${i}">عرض</button></td></tr>`; }).join(''); }).join(''); })()}</tbody></table></div></div>`;
+  }
+  function teacher(y, i) {
+    const t = I().teachers[i], L = itemsOf(t, y);
+    const card = (it, j) => { const p = partners(y, t, it);
+      return `<section class="in-it"><h3>${esc(it.n)} <span class="in-chip">${AR(yOf(it))}هـ</span> <span class="in-note">تاريخ الرفع: ${itDate(it)}</span></h3>
+        ${p.length ? `<span class="in-sh">مشتركة مع: ${esc(p.join('، '))}</span>` : ''}
+        <div class="in-fs">${it.files.map((f, k) => fileTile(t, f, `${j}:${k}`)).join('')}</div>
+        <div class="in-acts"><button class="in-b" data-iniprt="${y}-${i}-${j}">طباعة / حفظ PDF</button></div></section>`; };
+    return `<div class="in">
+      <div class="in-top"><h2>${esc(t.name)}</h2><div class="in-seg"><button data-go="ini/${y}">← كل المعلمات</button>${YEARS.map(x => `<button data-go="ini/${x}-${i}"${x === y ? ' class="on"' : ''}>${AR(x)}هـ</button>`).join('')}</div></div>
+      ${L.length ? `<div class="in-acts"><button class="in-b" data-iniprt="${y}-${i}-all">طباعة كل مبادراتها ${AR(y)}هـ / حفظ PDF</button></div>${L.map((it) => card(it, t.items.indexOf(it))).join('')}`
+        : `<div class="in-it"><p class="in-note">لا توجد مبادرات مرفوعة لعام ${AR(y)}هـ.</p></div>`}
+      ${t.other.length && y === '1448' ? `<section class="in-it"><h3>ملفات أخرى في مجلد المبادرات</h3><p class="in-note">ملفات بلا اسم مبادرة واضح.</p><div class="in-fs">${t.other.map((f, k) => fileTile(t, f, 'o:' + k)).join('')}</div></section>` : ''}
+    </div>`;
+  }
+  const fileTile = (t, f, id) => `<button class="in-f" data-inif="${esc(id)}" data-key="${esc(pkey(t, f))}" title="${esc(fname(f.n))}"><span class="im">${isVid(f) ? 'فيديو' : esc((f.x || '').toUpperCase())}</span><span class="cap">${esc(fname(f.n))}</span></button>`;
+
+  async function fillThumbs() {
+    let idx; try { idx = await loadPrev(); } catch { return; }
+    document.querySelectorAll('.in-f[data-key]:not([data-done])').forEach(b => { b.dataset.done = 1; const e = idx[b.dataset.key];
+      if (e && e.n) prevPage(e.id, 1).then(u => { b.querySelector('.im').innerHTML = `<img alt="" src="${u}">`; }).catch(() => {}); });
+  }
+  const pagesOf = async (t, f) => { const idx = await loadPrev(), e = idx[pkey(t, f)]; if (!e || !e.n) return [];
+    return Promise.all(Array.from({ length: e.n }, (_, k) => prevPage(e.id, k + 1))); };
+
+  // عرض ملف واحد بكل صفحاته
+  async function openFile(t, f) {
+    const lb = Object.assign(document.createElement('div'), { className: 'in-lb', role: 'dialog' });
+    lb.innerHTML = `<div class="bx"><div class="in-acts" style="justify-content:space-between"><b style="overflow-wrap:anywhere">${esc(fname(f.n))}</b><button class="in-b gh" data-x>إغلاق</button></div><div data-pp><p class="in-note">جارٍ التحميل…</p></div></div>`;
+    lb.addEventListener('click', e => { if (e.target === lb || e.target.closest('[data-x]')) lb.remove(); }); document.body.append(lb);
+    const box = lb.querySelector('[data-pp]');
+    try { const U = await pagesOf(t, f); box.innerHTML = U.length ? U.map(u => `<img alt="" src="${u}">`).join('') : `<p class="in-note">${isVid(f) ? 'مقطع فيديو: لا يُعرض هنا.' : 'لا توجد معاينة لهذا الملف بعد.'}</p>`; }
+    catch { box.innerHTML = '<p class="in-note">تعذر التحميل، حاولي مرة أخرى.</p>'; }
+  }
+
+  // الطباعة: صندوق #iniPrint ثم نافذة الطباعة (منها «حفظ PDF»)
+  const head = () => `<div class="hd"><div class="r">المملكة العربية السعودية<br>وزارة التعليم<br>الإدارة العامة للتعليم بمنطقة عسير<br>${esc(D.school || 'المتوسطة الحادية والعشرون')}</div><img src="moe-logo.png?v=3" alt="وزارة التعليم"></div>`;
+  async function doPrint(html, btn) {
+    const old = btn && btn.textContent; if (btn) { btn.disabled = true; btn.textContent = 'جارٍ التجهيز…'; }
+    let box = document.getElementById('iniPrint'); if (!box) { box = Object.assign(document.createElement('div'), { id: 'iniPrint' }); document.body.append(box); }
+    box.innerHTML = html;
+    await Promise.all([...box.querySelectorAll('img')].map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; })));
+    const pg = document.createElement('style'); pg.textContent = '@media print{@page{size:A4 portrait;margin:10mm}}'; document.head.append(pg);
+    document.body.classList.add('ini-printing');
+    const done = () => { document.body.classList.remove('ini-printing'); pg.remove(); box.innerHTML = ''; window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    if (btn) { btn.disabled = false; btn.textContent = old; }
+    window.print();
+  }
+  async function evidencePages(list) {   // list: [{t, it}] -> صفحة عنوان لكل مبادرة ثم صفحات ملفاتها
+    let html = '';
+    for (const { t, it } of list) {
+      html += `<div class="pg">${head()}<h1>${esc(it.n)}</h1><p class="sb">${esc(t.name)} · ${AR(yOf(it))}هـ</p>
+        <table><tr><th>م</th><th>الملف</th><th>ملاحظة</th></tr>${it.files.map((f, k) => `<tr><td>${AR(k + 1)}</td><td>${esc(fname(f.n))}</td><td>${isVid(f) ? 'مقطع فيديو (لا يُطبع)' : ''}</td></tr>`).join('')}</table></div>`;
+      for (const f of it.files) { if (isVid(f)) continue; let U = []; try { U = await pagesOf(t, f); } catch {}
+        U.forEach(u => { html += `<div class="pg"><p class="ttl">${esc(it.n)} — ${esc(short(t.name))}</p><img class="pv" alt="" src="${u}"></div>`; }); }
+    }
+    return html;
+  }
+  function report(y) {
+    const s = stats(y), rows = s.list;
+    return `<div class="pg">${head()}<h1>تقرير مبادرات المعلمات لعام ${AR(y)}هـ</h1><p class="sb">تاريخ التقرير: ${hijriToday()}</p>
+      <div class="kp"><div><b>${AR(s.n)}</b>مبادرة</div><div><b>${AR(s.shared)}</b>مبادرة مشتركة</div><div><b>${AR(s.teachers)} / ${AR(s.all)}</b>معلمة لها مبادرات</div></div>
+      <div class="bar">قائمة المبادرات</div>
+      <table><tr><th>م</th><th>المعلمة</th><th>المبادرة</th><th>تاريخ الرفع</th><th>مشتركة مع</th><th>الشواهد</th></tr>
+      ${rows.map((r, k) => `<tr><td>${AR(k + 1)}</td><td>${esc(r.t.name)}</td><td>${esc(r.it.n)}</td><td style="white-space:nowrap">${itDate(r.it)}</td><td>${esc(partners(y, r.t, r.it).join('، ') || '—')}</td><td>${AR(r.it.files.length)}</td></tr>`).join('')}</table>
+      ${(() => { const z = I().teachers.filter(t => !itemsOf(t, y).length); return z.length ? `<div class="bar">معلمات بلا مبادرات مرفوعة لهذا العام</div><p>${esc(z.map(t => t.name).join('، '))}</p>` : ''; })()}
+      <div class="sig"><div><b>منسقة المبادرات</b><br><br>${D.ro ? '' : esc(D.me || '')}</div><div><b>وكيلة المدرسة</b><br><br>فوزية خبتي الدوسري</div><div><b>مديرة المدرسة</b><br><br>أمينة آل مشيط</div></div></div>`;
+  }
+
+  if (!window.__iniBound) { window.__iniBound = 1;
+    document.addEventListener('input', e => { if (e.target.id !== 'iniQ') return; const q = e.target.value.trim();
+      document.querySelectorAll('#iniTbl tbody tr').forEach(r => { r.hidden = !!q && !r.dataset.q.includes(q); }); });
+    document.addEventListener('click', async e => {
+      const f = e.target.closest('[data-inif]'), p = e.target.closest('[data-iniprt]'), r = e.target.closest('[data-inirep]'), all = e.target.closest('[data-iniall]');
+      if (!f && !p && !r && !all) return;
+      const [y, ti] = (location.hash.split('/')[1] || '').split('-');
+      if (f) { const t = I().teachers[+ti], [j, k] = f.dataset.inif.split(':'); return openFile(t, j === 'o' ? t.other[+k] : t.items[+j].files[+k]); }
+      if (r) return doPrint(report(r.dataset.inirep), r);
+      if (all) { const yy = all.dataset.iniall; all.disabled = true; all.textContent = 'جارٍ التجهيز… قد يستغرق دقيقة';
+        const html = report(yy) + await evidencePages(stats(yy).list); all.disabled = false; all.textContent = `طباعة كل مبادرات ${AR(yy)}هـ بشواهدها`; return doPrint(html); }
+      if (p) { const [yy, i, j] = p.dataset.iniprt.split('-'), t = I().teachers[+i], L = j === 'all' ? itemsOf(t, yy) : [t.items[+j]];
+        p.disabled = true; const o = p.textContent; p.textContent = 'جارٍ التجهيز…'; const html = await evidencePages(L.map(it => ({ t, it }))); p.disabled = false; p.textContent = o; return doPrint(html); }
+    });
+  }
+  window.INI = { render };
+})();

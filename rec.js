@@ -45,7 +45,7 @@
     const a = (R.assignments || []).map(x => ({ k: 'class', id: x.id, title: x.program, sub: ar(x.class || ''), from: x.from ?? x.start_date, to: x.to ?? x.end_date, partners: x.partners || [], folder: x.folder || x.folder_id || '', ev: x.evidence || 0, survey: x.responses ?? x.survey ?? 0, ex: exOf('class', x.id) }));
     const w = (R.weeks || []).map(x => ({ k: 'nonclass', id: x.id, week: x.week, title: 'الأسبوع ' + ar(x.week), sub: ar(x.class || ''), from: x.from ?? x.start_date, to: x.to ?? x.end_date, radio: x.radio_title, prayer: x.prayer_title, partners: x.partners || [], folder: x.folder || x.folder_id || '', ev: x.evidence || 0, ex: exOf('nonclass', x.id) }));
     // مناسبات المعلمة (2026-11-11): خاصة بفصلها، إدخال يدوي، نفس نموذج تقرير المناسبات المعتمد — لا تظهر لرائدة النشاط
-    const o = (R.occasions || []).map(x => ({ k: 'occasion', id: x.id, title: x.name, sub: ar(x.class || ''), from: x.date, to: x.date, partners: x.partners || [], folder: x.folder || x.folder_id || '', ev: x.evidence || 0, ex: exOf('occasion', x.id) }));
+    const o = (R.occasions || []).map(x => ({ k: 'occasion', id: x.id, title: x.name, sub: ar(x.class || ''), from: x.date, to: x.date, partners: x.partners || [], folder: x.folder || x.folder_id || '', ev: x.evidence || 0, photos: x.photos || [], ex: exOf('occasion', x.id) }));
     return [...a, ...w, ...o].map(it => (it.st = stat(it), it)).sort((p, q) => String(p.from || '9').localeCompare(String(q.from || '9')));
   }
   function stat(it) {
@@ -86,9 +86,19 @@
   .rc-ring .o{width:70px;height:70px;border-radius:50%;padding:3px;background:conic-gradient(#f5a524,#6c5ce7,#ff7eb3,#f5a524)}.rc-ring.seen .o{background:#d6d2e8}
   .rc-ring .c{width:100%;height:100%;border-radius:50%;border:3px solid var(--card,#fff);background:#ece9fb center/cover;display:grid;place-items:center;font-weight:700;color:#6c5ce7;font-size:.8em;overflow:hidden}
   .rc-ring small{font-size:.7em;line-height:1.25;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .rc-st{position:fixed;inset:0;background:#0b0914b3;z-index:9999;display:grid;place-items:center;direction:rtl;padding:16px}
-  .rc-st-in{position:relative;width:min(270px,78vw);height:min(420px,56vh);overflow:hidden;background:#000;border-radius:18px;box-shadow:0 12px 40px #0008}
-  .rc-st-in>img{width:100%;height:100%;object-fit:contain;background:transparent;padding:58px 14px 74px;box-sizing:border-box}.rc-st-bg{position:absolute;inset:0;background:center/cover;filter:blur(24px) brightness(.55);transform:scale(1.2)}
+  .rc-gal-h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:16px 0 6px}
+  .rc-gal-h h3{margin:0}
+  .rc-gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+  .rc-gal .t{position:relative;aspect-ratio:1;background:#f3f1fb;border:1px solid #e4e0f3;border-radius:10px;overflow:hidden;padding:0;cursor:pointer}
+  .rc-gal .t img{width:100%;height:100%;object-fit:contain;display:block;transition:transform .2s}
+  .rc-gal .t .ld{position:absolute;inset:0;display:grid;place-items:center;color:#9a93c2;font-size:.8em}
+  .rc-gal .ed{position:absolute;inset-inline:4px;bottom:4px;display:flex;justify-content:space-between;gap:4px}
+  .rc-gal .ed button{width:34px;height:34px;border-radius:50%;border:0;background:#fffffff0;box-shadow:0 1px 4px #0003;cursor:pointer;font-size:16px}
+  .rc-gal .ed button.del{background:#e5484d;color:#fff}
+  .rc-gal.on .t{cursor:default;outline:2px dashed #b8b2d9;outline-offset:-2px}
+  .rc-st{position:fixed;inset:0;background:#0b0914b3;z-index:9999;display:grid;place-items:center;direction:rtl;padding:8px}
+  .rc-st-in{position:relative;width:min(960px,96vw);height:min(720px,88vh);overflow:hidden;background:#000;border-radius:18px;box-shadow:0 12px 40px #0008}
+  .rc-st-in>img{width:100%;height:100%;object-fit:contain;background:transparent;padding:64px 0 80px;box-sizing:border-box}.rc-st-bg{position:absolute;inset:0;background:center/cover;filter:blur(24px) brightness(.55);transform:scale(1.2)}
   .rc-st-in>img{position:relative}
   .rc-st-p{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));inset-inline:10px;display:flex;gap:3px;z-index:3}.rc-st-p i{flex:1;height:3px;background:#fff5;border-radius:3px;overflow:hidden}.rc-st-p i b{display:block;height:100%;width:0;background:#fff}
   .rc-st-h{position:absolute;top:calc(22px + env(safe-area-inset-top,0px));inset-inline:12px;color:#fff;z-index:4;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.9em;text-shadow:0 1px 4px #000a}
@@ -110,16 +120,19 @@
   const DOMAINS = ['بنك الإثراءات', 'التطوير الذاتي', 'قيمنا الغالية', 'نادي القراءة'];
   function form(it) {
     const f = it.ex?.form || {}, v = k => e(f[k] ?? ''), num = (k, l) => `<label>${l}<input data-f="${k}" type="number" min="0" inputmode="numeric" value="${v(k)}"></label>`;
-    if (it.k === 'class') return `<div class="rc-form">${num('parents', 'عدد أولياء الأمور المشاركين')}${num('disability', 'عدد الطالبات ذوات الإعاقة')}${num('partners_count', 'عدد الشراكات')}
+    if (it.k === 'class') { const dm = [].concat(f.domains || f.icons || []).filter(Boolean), dd = dm.length ? dm : ['بنك الإثراءات'], pv = +f.parents > 0 ? f.parents : 5;   // 2026-11-12: تعبئة تلقائية إن نسيت المعلمة
+      return `<div class="rc-form"><label>عدد أولياء الأمور المشاركين<input data-f="parents" type="number" min="0" inputmode="numeric" value="${e(pv)}"></label>${num('disability', 'عدد الطالبات ذوات الإعاقة')}${num('partners_count', 'عدد الشراكات')}
       <label>أسماء الشراكات<input data-f="partners_names" value="${v('partners_names')}"></label>
-      <div class="rc-chk"><span class="muted">المجالات:</span>${DOMAINS.map(d => `<label><input type="checkbox" data-dom value="${e(d)}"${(f.domains || []).includes(d) ? ' checked' : ''}> ${e(d)}</label>`).join('')}</div></div>`;
+      <div class="rc-chk"><span class="muted">المجالات:</span>${DOMAINS.map(d => `<label><input type="checkbox" data-dom value="${e(d)}"${dd.includes(d) ? ' checked' : ''}> ${e(d)}</label>`).join('')}</div>
+      <p class="muted" style="grid-column:1/-1;margin:0;font-size:.85em">إن لم تختاري مجالًا يُختار «بنك الإثراءات»، وإن لم تكتبي عدد أولياء الأمور يُكتب ٥ — عدّليهما إن لزم.</p></div>`; }
     if (it.k === 'occasion') return `<div class="rc-form">${num('students', 'عدد الطالبات المشاركات')}${num('disability', 'عدد الطالبات ذوات الإعاقة')}${num('parents', 'عدد أولياء الأمور المشاركين')}
       ${num('partners_count', 'عدد الشراكات')}<label>أسماء الشراكات<input data-f="partners_names" value="${v('partners_names')}"></label>${num('periods', 'عدد الحصص (إن وُجدت)')}</div>`;
     return `<div class="rc-form">${num('students', 'عدد الطالبات المشاركات')}${num('dis', 'عدد الطالبات ذوات الإعاقة')}<label style="grid-column:1/-1">ملاحظات<textarea data-f="notes" rows="2">${v('notes')}</textarea></label></div>`;
   }
   function readForm(box) {
     const o = {}; box.querySelectorAll('[data-f]').forEach(i => { if (i.value !== '') o[i.dataset.f] = i.type === 'number' ? +i.value : i.value.trim(); });
-    const d = [...box.querySelectorAll('[data-dom]:checked')].map(i => i.value); if (box.querySelector('[data-dom]')) o.domains = d;
+    const d = [...box.querySelectorAll('[data-dom]:checked')].map(i => i.value); if (box.querySelector('[data-dom]')) o.domains = d.length ? d : ['بنك الإثراءات'];
+    if (box.querySelector('[data-f="parents"]') && box.querySelector('[data-dom]') && !(o.parents > 0)) o.parents = 5;
     return o;
   }
 
@@ -208,7 +221,29 @@
       ${ok ? sel + `<label class="btn" style="margin-top:8px;display:inline-flex;cursor:pointer">إرفاق الشواهد<input type="file" id="rc-file" multiple accept="${it.k === 'class' ? 'image/*,video/*,application/pdf' : 'image/*'}" hidden></label>`
         : it.k === 'occasion' ? '<p class="rc-err">تعذّر ربط حسابك بمجلد فصلك، راجعي الوكيلة.</p>'
         : '<p class="rc-err">تعذّر ربط هذا البرنامج بمجلد شواهده، ارفعي من زر «' + (it.k === 'class' ? 'الأنشطة الصفية' : 'الأنشطة اللاصفية') + '» مؤقتًا.</p>'}
-      <div id="rc-upmsg" class="muted" style="margin-top:6px">${e(UPMSG)}</div></div>`;
+      <div id="rc-upmsg" class="muted" style="margin-top:6px">${e(UPMSG)}</div>${galBox(it)}</div>`;
+  }
+  // 2026-11-12 طلبها: صور كل نشاط مصغّرة بلا قص للاطلاع والتأكد؛ زر فوقها يفعّل التعديل (↻ تدوير للجميع) والحذف
+  let GED = null;
+  const canDel = (it, f) => it.k === 'class' ? f.own !== false : it.k === 'nonclass';   // المناسبات: لا حذف لكل صورة من هنا
+  function galBox(it) {
+    if (!storyable(it)) return '';
+    const key = it.k + ':' + it.id, o = SP[key];
+    if (!o || o.st === 'load') { photos(it).then(() => { if (OPEN === key) paint(); }); return '<p class="muted">جارٍ جلب صورك…</p>'; }
+    if (o.st === 'err') return `<p class="rc-err">تعذّر جلب الصور: ${e(o.err)}</p>`;
+    const A = o.all || o.ph; if (!A.length) return '';
+    const on = GED === key;
+    return `<div class="rc-gal-h"><h3>شواهدي (${ar(A.length)})</h3><button class="btn sm${on ? '' : ' ghost'}" data-rc="gal-ed">${on ? '✓ تم' : '↻ 🗑 تدوير وحذف الصور'}</button></div>
+      ${on ? '<p class="muted" style="margin:0 0 6px">↻ يدوّر الصورة للجميع، و🗑 يحذفها من مجلد الشواهد.</p>' : ''}
+      <div class="rc-gal${on ? ' on' : ''}">${A.map((f, j) => { const v = BIGV[f.id] || f.src, r = f.img ? ROT[f.id] || 0 : 0, ic = /video/.test(f.m) || /\.(mp4|mov|m4v|webm)$/i.test(f.n) ? '🎬' : '📄';
+        return `<div class="t" data-rc="${on ? '' : 'gal-open'}" data-id="${e(f.id)}" role="button" aria-label="${e(f.n)}">${v ? '' : f.img ? '<span class="ld">…</span>' : `<span class="ld" style="font-size:1em;text-align:center;padding:6px">${ic}<br><small>${e(String(f.n).slice(0, 24))}</small></span>`}<img data-gid="${e(f.id)}" alt="${e(f.n)}"${v ? ` src="${v}"` : ''} style="${r ? `transform:rotate(${r}deg)` : ''}">
+          ${on ? `<span class="ed">${f.img ? `<button data-rc="gal-rot" data-id="${e(f.id)}" aria-label="تدوير">↻</button>` : '<i></i>'}${canDel(it, f) ? `<button class="del" data-rc="gal-del" data-id="${e(f.id)}" aria-label="حذف">🗑</button>` : ''}</span>` : ''}</div>`; }).join('')}</div>`;
+  }
+  async function fillGal() {
+    const key = OPEN, o = key && SP[key]; if (!o || o.st !== 'ok') return;
+    const q = (o.all || o.ph).filter(f => f.img && !(BIGV[f.id] || f.src));
+    await Promise.all([0, 1].map(async () => { while (q.length) { const f = q.shift(); try { const v = await bigOf(o, f); if (OPEN !== key) return;
+      const im = document.querySelector(`.rc-gal img[data-gid="${f.id}"]`); if (im && v) { im.src = v; im.previousElementSibling?.remove(); } } catch (x) {} } }));
   }
   const b64of = f => new Promise((o, x) => { const fr = new FileReader(); fr.onload = () => o(String(fr.result).split(',')[1]); fr.onerror = x; fr.readAsDataURL(f); });
   async function post(body, ms) { let last = 'تعذر الاتصال';
@@ -275,24 +310,48 @@
   const SP = {};   // key → { st: 'load'|'ok'|'err', ph: [{id,n,src}], rep: {...}|null, sid?, err }
   const imgF = f => /^image\//.test(f.m || '') || /\.(jpe?g|png|webp|heic|gif)$/i.test(f.n || '');
   const pad2 = n => String(n).padStart(2, '0');
-  const storyable = it => it.k === 'class' ? !!clsTarget(it) : it.k === 'nonclass' ? nonTargets(it).length > 0 : false;
+  // 2026-11-12 طلبها: كل صور الصفية واللاصفية والأيام والمناسبات في «قصص أنشطتي» — يُفحص المجلد حتى لو عدد الشواهد في القاعدة صفر
+  // الأنشطة اليدوية القديمة من صفحة اللاصفية (مثل اليوم الوطني ويوم المعلم): تظهر في القصص فقط، لا في القوائم ولا العدّ
+  let MAN = null;
+  function loadMan() { if (MAN || !D.cn?.tok) return; MAN = [];
+    post({ a: 'nmine', tok: D.cn.tok }, 120000).then(r => { MAN = (r.items || []).filter(x => /^m\|/.test(x.sid) && String(x.name || '').trim()).map(x => ({ k: 'manual', id: x.sid, title: x.name || 'نشاط يدوي', sub: 'الأيام والمناسبات', from: String(x.at || '').slice(0, 10), ev: 1, partners: [] }));
+      if (MAN.length && document.querySelector('.rc-tabs')) paint(); }).catch(() => {}); }
+  const sItems = () => [...items(), ...(MAN || [])];
+  const hasPh = i => i.ev > 0 || (i.k === 'occasion' ? !!i.photos?.length : (!i.from || i.from <= TODAY));   // صفية + لاصفية + مناسبات
+  const storyable = it => it.k === 'manual' ? !!D.cn?.tok : it.k === 'class' ? !!clsTarget(it) : it.k === 'nonclass' ? nonTargets(it).length > 0 : it.k === 'occasion' ? !!(it.photos?.length && D.cn?.tok) : false;   // 2026-11-12: المناسبات التي أنشأتها المعلمة (مثل اليوم الوطني) قصص أيضًا
+  // 2026-11-12 طلبها «لا أريد التكرار»: الصورة الواحدة تظهر في قصة واحدة فقط
+  const OWN = {}, PRI = k => k === 'manual' ? 0 : 1;
+  function claim(key, k, ph) {
+    return ph.filter(f => { const o = OWN[f.id];
+      if (!o) { OWN[f.id] = key; return true; }
+      if (o === key) return false;   // مكررة داخل القصة نفسها
+      const ok = o.split(':')[0];
+      if (PRI(k) > PRI(ok) && SP[o]) { SP[o].ph = SP[o].ph.filter(x => x.id !== f.id); OWN[f.id] = key; delete COVER[o];
+        if (SP[o].st === 'ok' && !SP[o].ph.length) setTimeout(() => document.querySelectorAll(`[data-rcs="${o}"]`).forEach(x => x.remove()), 0);
+        return true; }
+      return false; });
+  }
   function photos(it) {
     const key = it.k + ':' + it.id; if (SP[key] && SP[key].st !== 'err') return SP[key].p || Promise.resolve(SP[key]);
-    const o = SP[key] = { st: 'load', ph: [], rep: null };
+    const o = SP[key] = { st: 'load', ph: [], all: [], rep: null };
     o.p = (async () => {
       try {
-        if (it.k === 'class') {
+        if (it.k === 'occasion') { o.occ = true; o.all = it.photos.map(f => ({ id: f.id, n: f.n, img: true })); }
+        else if (it.k === 'class') {
           const one = clsTarget(it); o.one = one;
-          o.ph = cpAll(one.p).filter(f => f.id && imgF(f)).sort((a, b) => String(a.t).localeCompare(String(b.t))).map(f => ({ id: f.id, n: f.n }));
+          o.all = cpAll(one.p).filter(f => f.id).sort((a, b) => String(a.t).localeCompare(String(b.t))).map(f => ({ id: f.id, n: f.n, m: f.m || '', own: !f.by, img: imgF(f) }));
           const r = (one.p.rep || []).find(f => f.id); if (r) o.rep = { k: 'c', id: r.id, n: r.n };
         } else {
-          const sids = [...new Set(nonTargets(it).map(x => 'w|' + pad2(x.w) + '|' + x.topic))];
+          const sids = it.k === 'manual' ? [it.id] : [...new Set(nonTargets(it).map(x => 'w|' + pad2(x.w) + '|' + x.topic))];
           for (const sid of sids) {
             const L = await post({ a: 'nget', tok: D.cn.tok, sid }, 120000);
-            (L.files || []).filter(imgF).forEach(f => o.ph.push({ id: f.id, n: f.n, sid, src: f.tb ? 'data:image/jpeg;base64,' + f.tb : '' }));
+            (L.files || []).forEach(f => { if (!o.all.some(x => x.id === f.id)) o.all.push({ id: f.id, n: f.n, m: f.m || '', sid, img: imgF(f), src: f.tb ? 'data:image/jpeg;base64,' + f.tb : '' }); });
             if (!o.rep && L.rec?.pdf?.id) o.rep = { k: 'n', sid, id: L.rec.pdf.id, n: L.rec.pdf.name };
           }
         }
+        o.ph = claim(key, it.k, o.all.filter(f => f.img));   // القصص: صور فقط وبلا تكرار؛ «شواهدي» تعرض o.all كاملة
+        const ims = o.all.filter(f => f.img).map(f => f.id);
+        if (ims.length && D.cn?.tok) try { Object.assign(ROT, (await post({ a: 'nrots', tok: D.cn.tok, ids: ims }, 60000)).rot || {}); } catch (x) {}
         o.st = 'ok';
       } catch (x) { o.st = 'err'; o.err = x.message; }
       delete o.p; return o;
@@ -308,8 +367,9 @@
   }
   function bigOf(o, f) {
     return BIG[f.id] ||= (async () => {
-      if (o.one) { const j = await ctGet(o.one, 'tthumb', f.id, { sz: 600 }); return j.b64 ? `data:${j.m || 'image/jpeg'};base64,${j.b64}` : ''; }
-      const r = await post({ a: 'nthumbs', tok: D.cn.tok, sid: f.sid, ids: [f.id], sz: 900 }, 120000), v = (r.th || {})[f.id];
+      if (o.one) { const j = await ctGet(o.one, 'tthumb', f.id, { sz: 800 }); return j.b64 ? `data:${j.m || 'image/jpeg'};base64,${j.b64}` : ''; }
+      if (o.occ) { const r = await post({ a: 'othumbs', tok: D.cn.tok, ids: [f.id], sz: 1000 }, 120000), v = (r.th || {})[f.id]; return v ? `data:${v.m || 'image/jpeg'};base64,${v.b64}` : ''; }
+      const r = await post({ a: 'nthumbs', tok: D.cn.tok, sid: f.sid, ids: [f.id], sz: 1000 }, 120000), v = (r.th || {})[f.id];
       return v ? `data:${v.m || 'image/jpeg'};base64,${v.b64}` : f.src;
     })().then(v => (v && (BIGV[f.id] = v), v)).catch(() => { delete BIG[f.id]; return f.src || ''; });
   }
@@ -342,7 +402,7 @@
     const q = [...document.querySelectorAll('[data-rcs] .c:not([data-done])')];
     q.forEach(c => c.dataset.done = 1);
     const one = async c => {
-      const k = c.closest('[data-rcs]').dataset.rcs, it = items().find(i => i.k + ':' + i.id === k); if (!it) return;
+      const k = c.closest('[data-rcs]').dataset.rcs, it = sItems().find(i => i.k + ':' + i.id === k); if (!it) return;
       try { if (!(k in COVER)) { const o = await photos(it), f = o.ph[0]; COVER[k] = f ? (f.src || await bigOf(o, f)) : ''; }
         if (SP[k]?.st === 'ok' && !SP[k].ph.length) { document.querySelectorAll(`[data-rcs="${k}"]`).forEach(x => x.remove()); return; }
         document.querySelectorAll(`[data-rcs="${k}"] .c`).forEach(x => { if (COVER[k]) { x.style.backgroundImage = `url("${COVER[k]}")`; x.textContent = ''; } }); } catch (x) {}
@@ -350,21 +410,29 @@
     await Promise.all([0, 1].map(async () => { while (q.length) await one(q.shift()); }));
   }
   function rings(L) {
-    const S = SEEN(), R2 = L.filter(i => i.ev > 0 && storyable(i) && !(SP[i.k + ':' + i.id]?.st === 'ok' && !SP[i.k + ':' + i.id].ph.length)).sort((a, b) => S.has(a.k + ':' + a.id) - S.has(b.k + ':' + b.id));
+    const S = SEEN(), R2 = L.filter(i => hasPh(i) && storyable(i) && !(SP[i.k + ':' + i.id]?.st === 'ok' && !SP[i.k + ':' + i.id].ph.length)).sort((a, b) => S.has(a.k + ':' + a.id) - S.has(b.k + ':' + b.id));
     if (!R2.length) return '';
     return `<div class="rc-rings" role="list" aria-label="قصص أنشطتي">${R2.map(i => { const k = i.k + ':' + i.id;
-      return `<button class="rc-ring${S.has(k) ? ' seen' : ''}" data-rcs="${e(k)}" role="listitem" title="${e(i.title)}"><span class="o"><span class="c">${ar(i.ev)}</span></span><small>${e(i.k === 'nonclass' ? i.title : i.title)}</small></button>`; }).join('')}</div>`;
+      return `<button class="rc-ring${S.has(k) ? ' seen' : ''}" data-rcs="${e(k)}" role="listitem" title="${e(i.title)}"><span class="o"><span class="c">${ar(i.k === 'occasion' ? i.photos.length : i.ev)}</span></span><small>${e(i.k === 'nonclass' ? i.title : i.title)}</small></button>`; }).join('')}</div>`;
   }
   // عارض القصة: صورة كل ٣٫٥ ثانية، اللمس يسارًا/يمينًا للتنقل، وفي النهاية بطاقة تهنئة + التقرير ثم النشاط التالي
   let STM = null, SQ = [];   // SQ = ترتيب القصص لحظة فتحها (لا يتغير أثناء المشاهدة)
-  function storyList() { const S = SEEN(); return items().filter(i => i.ev > 0 && storyable(i) && !(SP[i.k + ':' + i.id]?.st === 'ok' && !SP[i.k + ':' + i.id].ph.length)).sort((a, b) => S.has(a.k + ':' + a.id) - S.has(b.k + ':' + b.id)); }
+  function storyList() { const S = SEEN(); return sItems().filter(i => hasPh(i) && storyable(i) && !(SP[i.k + ':' + i.id]?.st === 'ok' && !SP[i.k + ':' + i.id].ph.length)).sort((a, b) => S.has(a.k + ':' + a.id) - S.has(b.k + ':' + b.id)); }
+  // 2026-11-12 طلبها: صورة محفوظة على جنبها ← زر ↻ يدوّرها، والتدوير يُحفظ في الخادم فيظهر للجميع (nrot/nrots)
+  const ROT = {};
+  function rotIm(im, id) {
+    const deg = ROT[id] || 0, box = im.parentElement; if (!box) return;
+    if (deg % 180) { const W = box.clientWidth, H = box.clientHeight;
+      im.style.cssText = `position:absolute;left:50%;top:50%;width:${H - 150}px;height:${W}px;padding:0;transform:translate(-50%,-50%) rotate(${deg}deg)`; }
+    else im.style.cssText = deg ? `transform:rotate(${deg}deg)` : '';
+  }
   async function story(key, j = 0, only) {
     clearTimeout(STM);
-    const it = items().find(i => i.k + ':' + i.id === key); if (!it) return;
+    const it = sItems().find(i => i.k + ':' + i.id === key); if (!it) return;
     let d = document.getElementById('rc-st');
     if (!d) { d = document.createElement('div'); d.id = 'rc-st'; d.className = 'rc-st'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', 'قصة النشاط'); document.body.append(d); document.body.style.overflow = 'hidden'; }
     d.dataset.k = key; d.dataset.j = j; d.dataset.only = only ? 1 : '';
-    const head = (n, of) => `<div class="rc-st-h"><span><b>${e(it.title)}</b>${of ? ' · ' + ar(n) + ' من ' + ar(of) : ''}<br><small>${e(it.sub)} · ${hijri(it.from)}</small></span><button data-st="x" aria-label="إغلاق">✕</button></div>`;
+    const head = (n, of) => `<div class="rc-st-h"><span><b>${e(it.title)}</b>${of ? ' · ' + ar(n) + ' من ' + ar(of) : ''}<br><small>${e(it.sub)} · ${hijri(it.from)}</small></span><span style="display:flex;gap:6px"><button data-st="x" aria-label="إغلاق">✕</button></span></div>`;
     const o = SP[key]?.st === 'ok' ? SP[key] : null;
     if (!o) { d.innerHTML = `<div class="rc-st-in">${head()}<div class="rc-st-msg">جارٍ جلب صورك…</div></div>`; const r = await photos(it); if (d.dataset.k !== key || !d.isConnected) return;
       if (r.st === 'err') { d.innerHTML = `<div class="rc-st-in">${head()}<div class="rc-st-msg">تعذّر جلب الصور: ${e(r.err)}</div></div>`; return; } return story(key, j, only); }
@@ -375,11 +443,11 @@
       return stClose();
     }
     const f = o.ph[j], ready = BIGV[f.id] || f.src, prev = d.querySelector('.rc-st-in > img:not([hidden])')?.src || '';
-    if (j === 0) { preload(o); const nx = SQ[SQ.indexOf(key) + 1], ni = nx && items().find(i => i.k + ':' + i.id === nx); if (ni) photos(ni).then(p => p.ph[0] && bigOf(p, p.ph[0])); }
+    if (j === 0) { preload(o); const nx = SQ[SQ.indexOf(key) + 1], ni = nx && sItems().find(i => i.k + ':' + i.id === nx); if (ni) photos(ni).then(p => p.ph[0] && bigOf(p, p.ph[0])); }
     d.innerHTML = `<div class="rc-st-in"><div class="rc-st-bg"${ready || prev ? ` style="background-image:url('${ready || prev}')"` : ''}></div><div class="rc-st-p">${o.ph.map((_, k) => `<i><b style="width:${k < j ? 100 : 0}%"></b></i>`).join('')}</div>${head(j + 1, N)}
       <div class="rc-st-msg">${BIGV[f.id] ? '' : '<span class="rc-spin" aria-label="جارٍ التحميل"></span>'}</div><img alt="${e(f.n)}"${ready || prev ? ` src="${ready || prev}"` : ' hidden'}><div class="rc-st-tap"><button data-st="nx" aria-label="التالية"></button><button data-st="pv" aria-label="السابقة"></button></div>
       <div class="rc-st-f">${cheer()}</div></div>`;
-    const im = d.querySelector('img'), bar = d.querySelectorAll('.rc-st-p b')[j];
+    const im = d.querySelector('img'), bar = d.querySelectorAll('.rc-st-p b')[j]; d.dataset.f = f.id; rotIm(im, f.id);
     if (f.src) { im.src = f.src; im.hidden = false; d.querySelector('.rc-st-bg').style.backgroundImage = `url("${f.src}")`; }
     // 2026-11-12 طلبها: الصورة التي لا يمكن عرضها لا تظهر أبدًا (لا نقاط ولا رسالة) — تُحذف من القصة ويُنتقل للتالية فورًا
     const skip = () => { if (d.dataset.k !== key || +d.dataset.j !== j) return; const x = o.ph.indexOf(f); if (x >= 0) o.ph.splice(x, 1); delete BIGV[f.id]; story(key, j, only); };
@@ -406,6 +474,9 @@
     const b = ev.target.closest('[data-st]'); if (!b) return;
     const k = d.dataset.k, j = +d.dataset.j, only = !!d.dataset.only, a = b.dataset.st;
     if (a === 'x') return stClose();
+    if (a === 'rot') { const id = d.dataset.f, im = d.querySelector('.rc-st-in > img'); if (!id || !im) return;
+      const was = ROT[id] || 0, deg = (was + 90) % 360; if (deg) ROT[id] = deg; else delete ROT[id]; rotIm(im, id);
+      if (D.cn?.tok) post({ a: 'nrot', tok: D.cn.tok, id, deg }, 60000).catch(x => { if (was) ROT[id] = was; else delete ROT[id]; if (d.dataset.f === id) rotIm(im, id); alert('تعذّر حفظ التدوير: ' + x.message); }); clearTimeout(STM); STM = setTimeout(() => story(k, j + 1, only), 3500); return; }
     // 2026-11-12 (تصحيح طلبها): الضغط ← الصورة التالية/السابقة فورًا، وكل ضغطة سريعة = صورة واحدة (بعد آخر صورة ← النشاط التالي)
     if (a === 'nx') return story(k, j + 1, only);
     if (a === 'pv') { if (j > 0) return story(k, j - 1, only); const pv = only ? null : SQ[SQ.indexOf(k) - 1]; return story(pv || k, 0, only); }
@@ -443,14 +514,14 @@
       ${(() => { const ph = L.reduce((a, i) => a + (i.ev || 0), 0), pct = Q.length ? Math.round(done * 100 / Q.length) : 0;
         return `<div class="rc-hero2"><b>أحسنتِ يا أ. ${e(String(R.teacher?.name || '').split(' ')[0])}! 🌟 هذا ما أنجزتِه</b><div class="rc-st3"><div><strong>${ar(ph)}</strong><span>صورة وشاهد</span></div><div><strong>${ar(Q.length)}</strong><span>برنامجًا وأسبوعًا</span></div><div><strong>${ar(done)}</strong><span>تقريرًا صدر</span></div></div>
           <div class="rc-bar"><i style="width:${pct}%"></i></div></div>`; })()}
-      ${rings(L)}
+      ${(loadMan(), rings([...L, ...(MAN || [])]))}
       ${need.length ? `<div class="warn" style="margin-top:10px"><b>يحتاج منك:</b> ${need.map(i => e(i.title)).join('، ')}</div>` : ''}
       <nav class="rc-tabs">${[['all', 'الكل'], ['class', 'الأنشطة الصفية'], ['nonclass', 'الأنشطة اللاصفية'], ['occasion', 'الأيام والمناسبات']].map(([k, l]) => `<button data-rct="${k}" aria-pressed="${TAB === k}">${l}</button>`).join('')}</nav>
       ${TAB === 'occasion' ? occBox(mine) + (vis.length ? '<h3 style="margin:14px 0 6px">مناسبات أضفتِها</h3>' : '') : ''}
       <div class="rc-list">${vis.map(i => `<button class="rc-it ${i.st[0]}" data-rco="${i.k}:${e(i.id)}"><div class="rc-h"><b><span class="rc-kind${i.k === 'class' ? '' : i.k === 'occasion' ? ' o' : ' n'}">${i.k === 'class' ? 'صفية' : i.k === 'occasion' ? 'مناسبة' : 'لاصفية'}</span>${e(i.title)}</b><span class="rc-chip ${i.st[0]}">${i.st[1]}</span></div>
         <div class="rc-d">${i.k === 'occasion' ? hijri(i.from) : hijri(i.from) + ' إلى ' + hijri(i.to)} · ${e(i.sub)} · ${ar(i.ev)} شاهدًا</div></button>`).join('') || (TAB === 'occasion' ? '' : '<p class="muted">لا يوجد شيء في هذا القسم.</p>')}</div>`;
   }
-  function paint() { const el = document.getElementById('rc-root'); if (!el) return; el.innerHTML = body(); if (typeof drawQr === 'function') el.querySelectorAll('[data-qr]').forEach(drawQr); if (typeof fillSrv === 'function') el.querySelectorAll('[data-srv]').forEach(fillSrv); setTimeout(covers, 0); }
+  function paint() { const el = document.getElementById('rc-root'); if (!el) return; el.innerHTML = body(); if (typeof drawQr === 'function') el.querySelectorAll('[data-qr]').forEach(drawQr); if (typeof fillSrv === 'function') el.querySelectorAll('[data-srv]').forEach(fillSrv); setTimeout(covers, 0); setTimeout(fillGal, 0); }
 
   document.addEventListener('click', async ev => {
     const root = document.getElementById('rc-root'); if (!root || !root.contains(ev.target)) return;
@@ -479,6 +550,25 @@
       busy = true; b.disabled = true; b.textContent = 'جارٍ الحفظ…';
       try { const r = await rpc('act_add_occasion_by_pid', { p_pid: PID, p_name: name, p_date: d }); busy = false; ADD = false; ADDMSG = ''; await load(); OPEN = 'occasion:' + r.id; CT = 's'; paint(); }
       catch (x) { busy = false; ADDMSG = x.message; paint(); }
+      return;
+    }
+    if (b.dataset.rc === 'gal-ed') { GED = GED === OPEN ? null : OPEN; return paint(); }
+    if (b.dataset.rc === 'gal-open') { const o = SP[OPEN], j = o ? o.ph.findIndex(x => x.id === b.dataset.id) : -1;
+      if (j >= 0) { clearTimeout(STM); SQ = [OPEN]; return story(OPEN, j, true); }
+      return window.open('https://drive.google.com/file/d/' + encodeURIComponent(b.dataset.id) + '/view', '_blank', 'noopener'); }
+    if (b.dataset.rc === 'gal-rot') { const id = b.dataset.id, was = ROT[id] || 0, deg = (was + 90) % 360;
+      if (deg) ROT[id] = deg; else delete ROT[id];
+      const im = document.querySelector(`.rc-gal img[data-gid="${id}"]`); if (im) im.style.transform = deg ? `rotate(${deg}deg)` : '';
+      if (D.cn?.tok) post({ a: 'nrot', tok: D.cn.tok, id, deg }, 60000).catch(x => { if (was) ROT[id] = was; else delete ROT[id]; paint(); alert('تعذّر حفظ التدوير: ' + x.message); });
+      return; }
+    if (b.dataset.rc === 'gal-del' && !busy) {
+      if (!confirm('حذف هذا الشاهد من مجلد الشواهد؟')) return;
+      const key = OPEN, o = SP[key], f = (o?.all || o?.ph || []).find(x => x.id === b.dataset.id); if (!f) return;
+      busy = true; b.disabled = true;
+      try { if (key.startsWith('class:')) { await ctGet(o.one, 'tdel', f.id); o.one.p.files = (o.one.p.files || []).filter(x => x.id !== f.id); }
+        else await post({ a: 'ndel', tok: D.cn.tok, sid: f.sid, id: f.id }, 60000);
+        o.ph = o.ph.filter(x => x.id !== f.id); o.all = (o.all || []).filter(x => x.id !== f.id); delete OWN[f.id]; delete COVER[key]; busy = false; paint(); }
+      catch (x) { busy = false; b.disabled = false; alert('تعذّر الحذف: ' + x.message); }
       return;
     }
     if (b.dataset.rc === 'odel' && !busy) {

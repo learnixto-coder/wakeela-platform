@@ -685,6 +685,7 @@ function route() {
       : v === 'ach' && achOn() ? tTabs('ach') + achPage()
       : v === 'pr' && prBOn() ? tTabs('pr') + prPage()
       : v === 'pa' && prOn() ? tTabs('pa') + paPage()
+      : v === 'ini' && D.ini ? tTabs('ini') + iniPage(a)
       : v === 'p3' && prOn() ? tTabs('p3') + p3Page()
       : v === 'rec' && recOn() ? tTabs('rec') + recPage()
       : v === 'share' && D.shareK ? tTabs('share') + sharePage(a)
@@ -706,7 +707,7 @@ function route() {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === top));
   const el = $('#view');
   el.innerHTML = ({ me, dash, share: () => D.shareK ? sharePage(a) : '<div class="empty card">لا توجد بيانات بعد</div>', w: () => wNode(a || ''), home, teachers, folders, board: home, alerts, admins, t: () => teacher(+a), f: () => folders(+a),
-    plan: planW, ctw: wHub, arc: () => actRepW('c', a), arn: () => actRepW('n', a),plans: plansW, timeline: () => plansW('timeline'), att: () => D.att ? attPage(location.hash.slice(5)) : '<div class="empty card">لا توجد بيانات بعد</div>', abs: () => D.att ? attPage('a/' + location.hash.slice(5)) : '<div class="empty card">لا توجد بيانات بعد</div>', attr: () => D.att ? attPage('all') : '<div class="empty card">لا توجد بيانات بعد</div>', qa: () => qaW(a), quality: qualityW, start: wHub }[v] || me)();
+    plan: planW, ini: () => D.ini ? iniPage(a) : '<div class="empty card">لا توجد بيانات بعد</div>', ctw: wHub, arc: () => actRepW('c', a), arn: () => actRepW('n', a),plans: plansW, timeline: () => plansW('timeline'), att: () => D.att ? attPage(location.hash.slice(5)) : '<div class="empty card">لا توجد بيانات بعد</div>', abs: () => D.att ? attPage('a/' + location.hash.slice(5)) : '<div class="empty card">لا توجد بيانات بعد</div>', attr: () => D.att ? attPage('all') : '<div class="empty card">لا توجد بيانات بعد</div>', qa: () => qaW(a), quality: qualityW, start: wHub }[v] || me)();
   if (v !== 'start') { const h = (D.ro ? MUD_G.flatMap(g => g[1]) : HUB).find(x => x[0] === (SUB_OF[v] || (v === 'w' ? 'me' : v))); el.insertAdjacentHTML('afterbegin', homeBar(h ? h[1] : '')); }
   bind(el); window.scrollTo(0, 0);
 }
@@ -727,6 +728,7 @@ const HUB_G = [['المشاركة المجتمعية', [['share', 'مشاركا�
 const HUB = HUB_G.flatMap(g => g[1]);
 // «حساب مديرة المدرسة» (2026-10-29): اطلاع فقط — بلا تدقيق الجودة ولا التنبيهات ولا الإداريات؛ الحضور والغياب كالموجهة الطلابية
 const MUD_G = [['المشاركة المجتمعية', [['share', 'مشاركات الطالبات وأولياء الأمور', 'اليوم الوطني · يوم المعلم · درع الوطن']]],
+  ['المبادرات', [['ini', 'مبادرات المعلمات', '١٤٤٧هـ و١٤٤٨هـ: جدول المبادرات وشواهدها، وطباعة وحفظ PDF']]],   // 2026-11-12 (tools/ini.js)
   ['الخطط والبرامج', [['plans', 'الخطة التشغيلية وخطة التحسين', 'الخطتان وبطاقات البرامج ومؤشراتها'], ['timeline', 'الخطة الزمنية', 'مواعيد تنفيذ البرامج'],
     ['plan', 'برامج الخطة 1448هـ', 'شواهد البرامج ومجلداتها']]],
   ['ملفات الوكيلة', [['me', 'مجلدات وكيلة المدرسة', 'أقسام ملفات الوكيلة وما فيها']]],
@@ -734,7 +736,7 @@ const MUD_G = [['المشاركة المجتمعية', [['share', 'مشاركا�
     ['dash', 'لوحة المؤشرات', 'مؤشرات إنجاز المعلمات']]],
   ['النشاط الطلابي (اطلاع)', [['arc', 'تقارير الأنشطة الصفية', 'ملف PDF واحد يجمع كل التقارير'], ['arn', 'تقارير الأنشطة اللاصفية', 'تقارير الفترات حسب الأسبوع']]],
   ['الحضور والغياب', [['att', 'توثيق الحضور في تيمز', 'تقارير حصص المعلمات اليومية: تصفّح وتنزيل'], ['abs', 'حصر الطالبات الغائبات', 'تقرير الغياب على مستوى حصة، والغياب الكامل والجزئي، والحصر التراكمي، وسجل كل طالبة']]]];
-const MUD_OK = new Set(['plans', 'timeline', 'plan', 'me', 'w', 'home', 'board', 'teachers', 't', 'folders', 'f', 'dash', 'arc', 'arn', 'att', 'abs', 'share']);
+const MUD_OK = new Set(['ini', 'plans', 'timeline', 'plan', 'me', 'w', 'home', 'board', 'teachers', 't', 'folders', 'f', 'dash', 'arc', 'arn', 'att', 'abs', 'share']);
 const shG = G => G.filter(([, gl]) => gl[0][0] !== 'share' || D.shareK);   // لمن عنده المفتاح فقط
 const hubBtns = L => `${L.map(([g, l, d]) => `<button class="hub-b" data-go="${g}"><span class="sec-ic">${['me', 'mine', 'home', 'admins'].includes(g) ? secIcon('') : planIcon}</span><span><span class="hub-t">${l}</span><span class="hub-s">${d}</span></span></button>`).join('')}`;
 const hub = (t, L, G) => `<h2 style="margin:4px 0 14px">${t}</h2>${G ? G.map(([gt, gl]) => `<h3 class="hub-h">${gt}</h3><div class="hub">${hubBtns(gl)}</div>`).join('') : `<div class="hub">${hubBtns(L)}</div>`}`;
@@ -1346,7 +1348,7 @@ function rvCard(p) {
 }
 // the teacher's «الرئيسية»: the same 4 buttons for every teacher (plan-only accounts have no «ملفاتي»)
 // «جودة شواهد البرامج» (rev) disabled 2026-10-17 at the user's request: no button, #rev → الرئيسية; teacherReview() kept unused
-const tList = () => [prOn() && ['pa', 'سجل توثيق الأداء الوظيفي', 'نموذج أ'], prOn() && ['p3', 'سجل توثيق الأداء الوظيفي', 'نموذج ب'],   /* 2026-11-12: السجل الجاهز (p3.js) = «نموذج ب» للجميع */ prBOn() && ['pr', 'سجل توثيق الأداء الوظيفي', 'نموذج ج'],   /* 2026-11-12: عناصر التقييم (pr.js) لابتسام الشهري فقط، اسمه «نموذج ج» */recOn() && ['rec', 'الأنشطة الصفية والأنشطة اللاصفية', 'بيانات البطاقة وإصدار التقرير'], D.shareK && ['share', 'مشاركات الطالبات وأولياء الأمور', 'اليوم الوطني · يوم المعلم · درع الوطن'], D.att && (D.att.mode === 'teacher' ? ['att', 'توثيق حصص التيمز', 'ارفعي ملفات حضور حصصك من Teams'] : D.att.mode === 'view' ? ['att', 'توثيق الحضور في تيمز', 'تقارير حصص المعلمات اليومية: تصفّح وتنزيل'] : ['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات وطباعة تقارير الغياب']), D.att && D.att.mode === 'view' && ['abs', 'حصر الطالبات الغائبات', 'تقرير الغياب على مستوى حصة، والغياب الكامل والجزئي، والحصر التراكمي، وسجل كل طالبة'], false && D.td && ['td', 'لوحتي', 'مستواكِ مقارنة بالجميع وخطتك الزمنية وما يحتاج منكِ'], 
+const tList = () => [D.ini && ['ini', 'المبادرات', 'مبادرات المعلمات ١٤٤٧هـ و١٤٤٨هـ: عرض وطباعة وحفظ PDF'],   /* 2026-11-12: سالمة العماري (tools/ini.js) */ prOn() && ['pa', 'سجل توثيق الأداء الوظيفي', 'نموذج أ'], prOn() && ['p3', 'سجل توثيق الأداء الوظيفي', 'نموذج ب'],   /* 2026-11-12: السجل الجاهز (p3.js) = «نموذج ب» للجميع */ prBOn() && ['pr', 'سجل توثيق الأداء الوظيفي', 'نموذج ج'],   /* 2026-11-12: عناصر التقييم (pr.js) لابتسام الشهري فقط، اسمه «نموذج ج» */recOn() && ['rec', 'الأنشطة الصفية والأنشطة اللاصفية', 'بيانات البطاقة وإصدار التقرير'], D.shareK && ['share', 'مشاركات الطالبات وأولياء الأمور', 'اليوم الوطني · يوم المعلم · درع الوطن'], D.att && (D.att.mode === 'teacher' ? ['att', 'توثيق حصص التيمز', 'ارفعي ملفات حضور حصصك من Teams'] : D.att.mode === 'view' ? ['att', 'توثيق الحضور في تيمز', 'تقارير حصص المعلمات اليومية: تصفّح وتنزيل'] : ['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات وطباعة تقارير الغياب']), D.att && D.att.mode === 'view' && ['abs', 'حصر الطالبات الغائبات', 'تقرير الغياب على مستوى حصة، والغياب الكامل والجزئي، والحصر التراكمي، وسجل كل طالبة'], false && D.td && ['td', 'لوحتي', 'مستواكِ مقارنة بالجميع وخطتك الزمنية وما يحتاج منكِ'], 
   ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها · تدقيق الجودة'], false && D.ct && ['cp', 'الأنشطة الصفية', 'برامجك في خطة النشاط ورفع صورها'], achOn() && ['ach', 'سجل إنجازي في النشاط', 'برامجك وصورك وأوسمتك وشهاداتك'], false && D.cn && ['cn', 'الأنشطة اللاصفية', 'أسابيع فصلك: بطاقة التنفيذ والشواهد والتقرير'], D.nv && ['lnr', 'تقارير المعلمات في الأنشطة اللاصفية', 'تقارير الأسابيع ومؤشراتها (اطلاع)'], D.ct && ['sig', 'تسجيل توقيعي', 'ارسمي توقيعك مرة واحدة ليظهر في تقارير برامجك'], !D.planOnly && ['mine', 'سجل الإنجاز', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
 // «الأنشطة اللاصفية» (2026-10-19): الأسابيع وبطاقة التنفيذ والتقرير المحفوظ في cn.js (يُحمَّل عند أول فتح)؛ teacherCn() القديمة احتياط إن تعذّر تحميله
 // «تقارير المعلمات في الأنشطة اللاصفية» لمعلمة مطّلعة (2026-10-19: سلمى القرني): صفحة رائدة النشاط نفسها (leader.js → LEADER.nr) بطلبات برمز المعلمة
@@ -1379,6 +1381,14 @@ function paPage() {
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
 // «نموذج ٣» (2026-11-12): المعلمة ترفق سجلها الجاهز (PDF أو رابط) فقط — p3.js
+// «المبادرات» (2026-11-12): site/ini.js يُحمَّل عند أول فتح؛ لمن في VIEWERS في tools/ini.js (سالمة العماري)
+let iniLoad = null;
+function iniPage(a) {
+  if (window.INI) return INI.render(a);
+  iniLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'ini.js?v=20261112c'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+    .then(() => route(), () => { iniLoad = null; });
+  return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
+}
 let p3Load = null;
 function p3Page() {
   if (window.P3) return P3.render();
@@ -1395,7 +1405,7 @@ function prPage() {
 let recLoad = null;
 function recPage() {
   if (window.REC) return REC.render();
-  recLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'rec.js?v=20261112f'; /* 2026-11-12 الاستبانة القديمة للمنتهية */   /* 2026-11-12 «انشر للكل»: القصص المحسّنة لكل المعلمات */ s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  recLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'rec.js?v=20261112j'; /* 2026-11-12 تعبئة تلقائية للبطاقة */ /* 2026-11-12 الاستبانة القديمة للمنتهية */   /* 2026-11-12 «انشر للكل»: القصص المحسّنة لكل المعلمات */ s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { recLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
