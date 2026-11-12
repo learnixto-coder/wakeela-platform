@@ -83,12 +83,14 @@
   const I = () => D.ini, FOLD = () => I().folder;
   const YEARS = ['1448', '1447'];
   const AR = s => String(s).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+  // التاريخ يُقرأ من اليمين: اليوم ثم الشهر ثم السنة — علامة RLM (‏) قبل كل «/» حتى لا يُعرض اليوم يسارًا
+  const dmy = (d, m, y) => [d, m, y].map(AR).join('‏/') + 'هـ';
   // تاريخ المبادرة = أقدم تاريخ رفع لملفاتها (d: YYYY-MM-DD من export.js)، بالهجري d/m/y
   const hij = iso => { try { const p = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', { day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(new Date(iso + 'T12:00:00'));
-    const g = t => (p.find(x => x.type === t) || {}).value; return AR(`${g('day')}/${g('month')}/${parseInt(g('year'), 10)}`) + 'هـ'; } catch { return '—'; } };
+    const g = t => (p.find(x => x.type === t) || {}).value; return dmy(g('day'), g('month'), parseInt(g('year'), 10)); } catch { return '—'; } };
   const itDate = it => { const d = it.files.map(f => f.d).filter(Boolean).sort()[0]; return d ? hij(d) : '—'; };
   const hijriToday = () => { try { const p = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', { day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(new Date());
-    const g = t => (p.find(x => x.type === t) || {}).value; return AR(`${g('day')}/${g('month')}/${parseInt(g('year'), 10)}`) + 'هـ'; } catch { return ''; } };
+    const g = t => (p.find(x => x.type === t) || {}).value; return dmy(g('day'), g('month'), parseInt(g('year'), 10)); } catch { return ''; } };
   const yOf = it => it.y || '1448';   // العام غير المذكور = العام الحالي (مرفوع في سجلات ١٤٤٨هـ)
   const itemsOf = (t, y) => t.items.filter(it => yOf(it) === y);
   const gKey = it => it.g || it.n;
