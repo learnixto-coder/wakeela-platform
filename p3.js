@@ -59,10 +59,10 @@
         <a class="b3" href="${esc(link)}" target="_blank" rel="noopener">فتح الرابط</a><button type="button" class="b3 dl" data-p3-del>حذف الرابط</button></div>` : '');
     return `<div class="p3" id="p3Root">
       <div class="p3h"><span class="ic">${I('<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="m9 14 2 2 4-4"/>')}</span>
-        <div><h2>سجل توثيق الأداء الوظيفي، ${prBOn() ? 'نموذج ٣' : 'نموذج ب'}</h2><p>إذا كان سجلك جاهزًا، أرفقيه هنا ملف PDF أو رابطًا، وارجعي له متى شئتِ من هذا الزر.</p></div></div>
-      <div class="p3c"><h3>سجلي الجاهز</h3>${has ? rows : '<p class="p3e">لم تُرفقي سجلك بعد.</p>'}
+        <div><h2>سجل توثيق الأداء الوظيفي، نموذج ب</h2><p>إذا كان سجلك جاهزًا، أرفقيه هنا ملف PDF أو رابطًا، وارجعي له متى شئتِ من هذا الزر.</p></div></div>
+      ${has || UP.length ? `<div class="p3c"><h3>سجلي الجاهز</h3>${rows}
         ${UP.map(f => `<span class="uq">${f.st === 'up' ? '⏳' : f.st === 'ok' ? '✓' : '✗'} ${esc(f.n)}${f.st === 'ok' ? '، يظهر هنا خلال دقائق' : f.err ? '، ' + esc(f.err) : ''}</span>`).join('')}
-        ${box && box.url ? `<div class="p3f" style="margin-top:12px"><a class="b3 gh" href="${esc(box.url)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a></div>` : ''}</div>
+        ${box && box.url ? `<div class="p3f" style="margin-top:12px"><a class="b3 gh" href="${esc(box.url)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a></div>` : ''}</div>` : ''}
       <div class="two">
         <div class="p3c"><h3>إرفاق ملف PDF</h3><p class="p3e" style="margin-bottom:12px">ملف واحد أو أكثر، حتى ٢٠ م.ب للملف.</p>
           ${D.inbox ? `<label class="b3">اختيار ملف PDF<input type="file" accept=".pdf,application/pdf" multiple hidden data-p3-in></label>` : '<p class="p3e">الرفع غير متاح حاليًا.</p>'}</div>

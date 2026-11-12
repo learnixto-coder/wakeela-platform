@@ -26,7 +26,7 @@
     const sc = sessionCode;
     try { const pid = await teacherId(phoneOf(sc)); const r = await rpc('act_record_by_pid', { p_pid: pid }); if (sc !== sessionCode) return; await localFolders(r); PID = pid; R = r; ERR = R ? '' : 'رقمك غير مربوط بسجل الأنشطة بعد، راجعي الوكيلة'; }
     catch (x) { if (sc !== sessionCode) return; ERR = x.message || 'تعذّر الاتصال'; }
-    paint();
+    paint(); oldSrvLoad();
     const waiting = (R?.executions || []).some(x => x.status === 'requested');
     clearTimeout(poll); if (waiting && location.hash.startsWith('#rec')) poll = setTimeout(load, 20000);   // متابعة الطلب حتى يصدر
   }
@@ -126,14 +126,28 @@
   const ICO = { s: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>', u: '<rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5-5-8 8"/>', r: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>' };
   const ico = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[k]}</svg>`;
   /* النشاط الصفي (2026-11-11، نموذج أ «شريط مقسّم»): ٣ تبويبات أعلى الصفحة — الاستبانة · رفع الصور · التقرير، والبيانات تحتها */
+  /* 2026-11-12: الاستبانة القديمة (s/?p=cN) للبرنامج المنتهي الذي عُبّئت استبانته القديمة؛ غير المنتهي أو بلا ردود قديمة = الجديدة (s2) */
+  let OLDN = null;   // {cN: عدد الردود القديمة}
+  async function oldSrvLoad() {
+    if (OLDN || !D.ct?.srv) return;
+    try { if (!D.survey) D.survey = { ...D.ct.srv, progs: [] }; const r = await srvResults(); OLDN = {};
+      Object.entries(r?.programs || {}).forEach(([k, v]) => { if (/^c\d+$/.test(k) && v?.n) OLDN[k] = v.n; }); paint(); } catch (x) {}
+  }
+  function oldSrv(it) {
+    if (!OLDN || !it.to || TODAY <= it.to) return null;
+    const one = clsTarget(it), id = one?.p.srv;
+    return id && OLDN[id] ? { id, n: OLDN[id], one } : null;
+  }
   function classPage(it) {
-    const x = it.ex, s = x?.status, url = SURVEY + '?a=' + it.id;
+    const x = it.ex, s = x?.status, url = SURVEY + '?a=' + it.id, old = oldSrv(it);
     const rs = s === 'issued' && x.legacy ? 'منجز سابقًا' : s === 'issued' ? (x.mine === false ? 'أصدرته زميلتك' : 'صدر') : s === 'requested' ? 'جارٍ الإصدار…' : s === 'failed' ? 'تعذّر الإصدار' : 'لم يصدر';
-    const T = [['s', 'الاستبانة', ar(it.survey) + ' ردًّا'], ['u', 'رفع الصور', ar(it.ev) + ' شاهدًا'], ['r', 'التقرير', rs]];
+    const T = [['s', 'الاستبانة', ar(old ? old.n : it.survey) + ' ردًّا'], ['u', 'رفع الصور', ar(it.ev) + ' شاهدًا'], ['r', 'التقرير', rs]];
     let h = `<div class="card pad"><button class="btn sm ghost" data-rc="back">→ رجوع</button>
       <h2 style="margin:10px 0 4px"><span class="rc-kind">نشاط صفي</span>${e(it.title)}</h2>
       <nav class="rc-seg">${T.map(([k, l, n]) => `<button data-rcp="${k}" aria-pressed="${CT === k}"><span>${ico(k)}${l}</span><small>${n}</small></button>`).join('')}</nav><div class="rc-pane">`;
-    if (CT === 's') h += `<p class="muted" style="margin:0">اعرضي الباركود للطالبات بعد تنفيذ البرنامج، أو انسخي الرابط وأرسليه لهن.</p>
+    if (CT === 's' && old) h += `<p class="muted" style="margin:0">انتهى البرنامج وعُبّئت استبانته السابقة — هذه نتائجها كما هي.</p>`
+      + ctSrvCard(old.id, old.one.p.n, old.one.p.cls || old.one.it.cls, old.one.p.students || old.one.it.students, '', true);
+    else if (CT === 's') h += `<p class="muted" style="margin:0">اعرضي الباركود للطالبات بعد تنفيذ البرنامج، أو انسخي الرابط وأرسليه لهن.</p>
       <div class="rc-srv"><div class="qr" data-qr="${e(url)}"></div><div><p style="margin:0 0 8px">ردود الطالبات: <b>${ar(it.survey)}</b></p>
       <div class="rc-btns" style="margin:0"><a class="btn" href="${e(url)}" target="_blank" rel="noopener">فتح الاستبانة</a><button class="btn ghost" data-rc="copy" data-u="${e(url)}">نسخ الرابط</button></div></div></div>`;
     else if (CT === 'u') h += upBox(it);
@@ -156,7 +170,7 @@
     let h = `<div class="card pad"><button class="btn sm ghost" data-rc="back">→ رجوع</button>
       <h2 style="margin:10px 0 4px"><span class="rc-kind${it.k === 'occasion' ? ' o' : ' n'}">${it.k === 'occasion' ? 'مناسبة' : 'نشاط لاصفي'}</span>${e(it.title)}</h2>
       <div class="rc-meta"><div><small>الفصل</small>${e(it.sub || '—')}</div>${it.k === 'occasion' ? `<div><small>التاريخ</small>${hijri(it.from)}</div>` : `<div><small>البداية</small>${hijri(it.from)}</div><div><small>النهاية</small>${hijri(it.to)}</div>`}
-      <div><small>${it.partners.length > 1 ? 'زميلاتك' : 'زميلتك'}</small>${e(it.partners.join('، ') || '—')}</div><div><small>الشواهد</small>${ar(it.ev)}</div>${it.k === 'class' ? `<div><small>ردود الاستبانة</small>${ar(it.survey)}</div>` : ''}</div>`;
+      <div><small>${it.partners.length > 1 ? 'زميلاتك' : 'زميلتك'}</small>${e(it.partners.join('، ') || '—')}</div><div><small>الشواهد</small>${ar(it.ev)}</div>${it.k === 'class' ? `<div><small>ردود الاستبانة</small>${ar(oldSrv(it)?.n ?? it.survey)}</div>` : ''}</div>`;
     if (it.k === 'nonclass') h += `<div class="rc-pair"><div><b>الاصطفاف الصباحي</b>${e(it.radio || '—')}</div><div><b>الصلاة</b>${e(it.prayer || '—')}</div></div>`;
     h += upBox(it) + (x?.legacy ? '' : oldRepBox(it));
     if (s === 'issued' && x.legacy) h += legacyBox(it);
@@ -436,7 +450,7 @@
       <div class="rc-list">${vis.map(i => `<button class="rc-it ${i.st[0]}" data-rco="${i.k}:${e(i.id)}"><div class="rc-h"><b><span class="rc-kind${i.k === 'class' ? '' : i.k === 'occasion' ? ' o' : ' n'}">${i.k === 'class' ? 'صفية' : i.k === 'occasion' ? 'مناسبة' : 'لاصفية'}</span>${e(i.title)}</b><span class="rc-chip ${i.st[0]}">${i.st[1]}</span></div>
         <div class="rc-d">${i.k === 'occasion' ? hijri(i.from) : hijri(i.from) + ' إلى ' + hijri(i.to)} · ${e(i.sub)} · ${ar(i.ev)} شاهدًا</div></button>`).join('') || (TAB === 'occasion' ? '' : '<p class="muted">لا يوجد شيء في هذا القسم.</p>')}</div>`;
   }
-  function paint() { const el = document.getElementById('rc-root'); if (!el) return; el.innerHTML = body(); if (typeof drawQr === 'function') el.querySelectorAll('[data-qr]').forEach(drawQr); setTimeout(covers, 0); }
+  function paint() { const el = document.getElementById('rc-root'); if (!el) return; el.innerHTML = body(); if (typeof drawQr === 'function') el.querySelectorAll('[data-qr]').forEach(drawQr); if (typeof fillSrv === 'function') el.querySelectorAll('[data-srv]').forEach(fillSrv); setTimeout(covers, 0); }
 
   document.addEventListener('click', async ev => {
     const root = document.getElementById('rc-root'); if (!root || !root.contains(ev.target)) return;
