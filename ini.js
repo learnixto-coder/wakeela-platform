@@ -165,7 +165,7 @@
         <thead><tr><th>م</th><th>المبادرة</th><th>المعلمات المشتركات</th><th>تاريخ الرفع</th></tr></thead>
         <tbody>${G.map((g, k) => `<tr data-q="${esc(g.n + ' ' + g.m.map(x => x.t.name).join(' '))}"><td>${nf(k + 1)}</td><td>${esc(g.n)}</td>
           <td class="tn"><div class="ms">${g.m.map(x => `<span>${nameCell(y, x.t, x.i)}</span>`).join('')}</div></td><td class="nw">${itDate(g)}</td></tr>`).join('') || '<tr><td colspan="4">لا توجد مبادرات مشتركة</td></tr>'}</tbody></table></div>
-      ${Z.length ? `<p class="in-note">معلمات بلا مبادرات مرفوعة لهذا العام: ${esc(Z.map(t => t.name).join('، '))}</p>` : ''}`; })()}</div>`;
+      `; })()}</div>`;
   }
   function teacher(y, i) {
     const t = I().teachers[i], L = itemsOf(t, y);
@@ -238,7 +238,6 @@
       <div class="bar">ثانيًا: المبادرات المشتركة (${AR(G.length)})</div>
       <table><thead><tr><th class="c">م</th><th>المبادرة</th><th>المعلمات المشتركات</th><th>تاريخ الرفع</th></tr></thead><tbody>
       ${G.map((g, k) => `<tr><td class="c">${AR(k + 1)}</td><td>${esc(g.n)}</td><td class="ms">${g.m.map(x => `<div>${esc(x.t.name)}</div>`).join('')}</td><td class="nw">${itDate(g)}</td></tr>`).join('') || '<tr><td colspan="4">لا توجد</td></tr>'}</tbody></table>
-      ${Z.length ? `<div class="bar">ثالثًا: معلمات بلا مبادرات مرفوعة لهذا العام (${AR(Z.length)})</div><p class="zz">${esc(Z.map(t => t.name).join('، '))}</p>` : ''}
       <div class="sig"><div><b>منسقة المبادرات</b><br><br>${D.ro ? '' : esc(D.me || '')}</div><div><b>وكيلة المدرسة</b><br><br>فوزية خبتي الدوسري</div><div><b>مديرة المدرسة</b><br><br>أمينة آل مشيط</div></div></div>`;
   }
   const report = y => `<div class="pg">${docHTML(y)}</div>`;
