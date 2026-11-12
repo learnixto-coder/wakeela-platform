@@ -33,7 +33,9 @@
 
   /* عناصر الصفحة: برامج صفية + أسابيع لاصفية */
   function items() {
-    const ex = R.executions || [], exOf = (k, id) => ex.find(x => x.kind === k && x.target === id);
+    // 2026-11-12: تقرير صدر من النظام السابق = منجز (legacy_reports من القاعدة)، ما لم يصدر تقرير جديد
+    const ex = R.executions || [], lg = R.legacy_reports || [], exOf = (k, id) => ex.find(x => x.kind === k && x.target === id)
+      || (l => l && { status: 'issued', legacy: true, issued_at: l.issued_at })(lg.find(x => x.kind === k && x.target === id));
     const a = (R.assignments || []).map(x => ({ k: 'class', id: x.id, title: x.program, sub: ar(x.class || ''), from: x.from ?? x.start_date, to: x.to ?? x.end_date, partners: x.partners || [], ev: x.evidence || 0, survey: x.responses ?? x.survey ?? 0, ex: exOf('class', x.id) }));
     const w = (R.weeks || []).map(x => ({ k: 'nonclass', id: x.id, week: x.week, title: 'الأسبوع ' + ar(x.week), sub: ar(x.class || ''), from: x.from ?? x.start_date, to: x.to ?? x.end_date, radio: x.radio_title, prayer: x.prayer_title, partners: x.partners || [], ev: x.evidence || 0, ex: exOf('nonclass', x.id) }));
     // مناسبات المعلمة (2026-11-11): خاصة بفصلها، إدخال يدوي، نفس نموذج تقرير المناسبات المعتمد — لا تظهر لرائدة النشاط
@@ -43,6 +45,7 @@
   function stat(it) {
     const s = it.ex?.status;
     if (it.k === 'occasion' && !s) return ['opt', it.ev ? 'بلا تقرير (اختياري)' : 'مفعّلة'];
+    if (s === 'issued' && it.ex.legacy) return ['done', 'منجز سابقًا'];
     if (s === 'issued') return ['done', it.ex.mine === false ? 'أصدرته زميلتك' : 'صدر التقرير'];
     if (s === 'requested') return ['wait', 'جارٍ الإصدار…'];
     if (s === 'failed') return ['fail', 'تعذّر الإصدار'];
@@ -69,6 +72,31 @@
   .rc-seg button span{display:flex;align-items:center;gap:6px}.rc-seg svg{width:20px;height:20px;flex:none}.rc-seg small{font-weight:400;font-size:.74em;opacity:.75}
   .rc-seg button[aria-pressed=true]{background:#6c5ce7;color:#fff;box-shadow:0 4px 12px #6c5ce755}.rc-seg button[aria-pressed=true] small{opacity:.9}
   .rc-pane{padding-top:8px}.rc-srv{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:10px 0}
+  .rc-hero2{background:linear-gradient(135deg,#6c5ce7,#8e7cf8);color:#fff;border-radius:18px;padding:14px;margin-top:10px;display:grid;gap:8px}
+  .rc-hero2 b{font-size:1.02em}.rc-st3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.rc-st3 div{background:#ffffff22;border-radius:12px;padding:6px;text-align:center}.rc-st3 strong{display:block;font-size:1.4em}.rc-st3 span{font-size:.75em;opacity:.92}
+  .rc-bar{height:8px;background:#ffffff33;border-radius:9px;overflow:hidden}.rc-bar i{display:block;height:100%;background:#f5a524;border-radius:9px;transition:width 1.2s ease}
+  .rc-rings{display:flex;gap:12px;overflow-x:auto;padding:12px 2px 6px;scrollbar-width:none}.rc-rings::-webkit-scrollbar{display:none}
+  .rc-ring{flex:none;display:grid;justify-items:center;gap:5px;width:78px;background:none;border:0;font:inherit;color:inherit;cursor:pointer;padding:0}
+  .rc-ring .o{width:70px;height:70px;border-radius:50%;padding:3px;background:conic-gradient(#f5a524,#6c5ce7,#ff7eb3,#f5a524)}.rc-ring.seen .o{background:#d6d2e8}
+  .rc-ring .c{width:100%;height:100%;border-radius:50%;border:3px solid var(--card,#fff);background:#ece9fb center/cover;display:grid;place-items:center;font-weight:700;color:#6c5ce7;font-size:.8em;overflow:hidden}
+  .rc-ring small{font-size:.7em;line-height:1.25;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .rc-st{position:fixed;inset:0;background:#0b0914;z-index:9999;display:grid;place-items:center;direction:rtl}
+  .rc-st-in{position:relative;width:min(440px,100%);height:min(100%,780px);overflow:hidden;background:#000;border-radius:0}
+  @media (min-width:600px){.rc-st-in{border-radius:18px;height:min(92vh,780px)}}
+  .rc-st-in>img{width:100%;height:100%;object-fit:contain;background:#000}.rc-st-bg{position:absolute;inset:0;background:center/cover;filter:blur(24px) brightness(.55);transform:scale(1.2)}
+  .rc-st-in>img{position:relative}
+  .rc-st-p{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));inset-inline:10px;display:flex;gap:3px;z-index:3}.rc-st-p i{flex:1;height:3px;background:#fff5;border-radius:3px;overflow:hidden}.rc-st-p i b{display:block;height:100%;width:0;background:#fff}
+  .rc-st-h{position:absolute;top:calc(22px + env(safe-area-inset-top,0px));inset-inline:12px;color:#fff;z-index:4;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.9em;text-shadow:0 1px 4px #000a}
+  .rc-st-h button{background:#0007;color:#fff;border:0;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;flex:none}
+  .rc-st-f{position:absolute;bottom:0;inset-inline:0;padding:40px 16px calc(18px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,#000c);color:#fff;z-index:4}
+  .rc-cheer{display:inline-block;background:#f5a524;color:#3a2600;font-weight:800;border-radius:99px;padding:4px 12px;margin-bottom:6px;animation:rcpop .4s ease}
+  @keyframes rcpop{from{transform:scale(.6);opacity:0}}
+  .rc-st-tap{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;z-index:2}.rc-st-tap button{background:none;border:0;cursor:pointer}
+  .rc-st-msg{position:absolute;inset:0;display:grid;place-items:center;color:#fff;z-index:1;text-align:center;padding:20px}
+  .rc-st-end{position:absolute;inset:0;z-index:5;display:grid;place-content:center;gap:12px;text-align:center;color:#fff;padding:24px;background:radial-gradient(circle at 50% 30%,#8e7cf8,#2d2363)}
+  .rc-st-end h3{margin:0;font-size:1.5em}.rc-st-end .rc-btns{justify-content:center}
+  .rc-confetti{position:fixed;inset:0;pointer-events:none;z-index:10000}
+  @media (prefers-reduced-motion:reduce){.rc-bar i,.rc-cheer{transition:none;animation:none}}
   @media (max-width:420px){.rc-seg button span{flex-direction:column;gap:2px}}
   @media (prefers-color-scheme:dark){.rc-seg{background:#2a2640}.rc-meta div{background:#2a2640}.rc-chip{background:#3a3456}.rc-form input,.rc-form textarea{background:#1e1b2e;color:#eee;border-color:#3a3456}}
   </style>`;
@@ -94,7 +122,7 @@
   /* النشاط الصفي (2026-11-11، نموذج أ «شريط مقسّم»): ٣ تبويبات أعلى الصفحة — الاستبانة · رفع الصور · التقرير، والبيانات تحتها */
   function classPage(it) {
     const x = it.ex, s = x?.status, url = SURVEY + '?a=' + it.id;
-    const rs = s === 'issued' ? (x.mine === false ? 'أصدرته زميلتك' : 'صدر') : s === 'requested' ? 'جارٍ الإصدار…' : s === 'failed' ? 'تعذّر الإصدار' : 'لم يصدر';
+    const rs = s === 'issued' && x.legacy ? 'منجز سابقًا' : s === 'issued' ? (x.mine === false ? 'أصدرته زميلتك' : 'صدر') : s === 'requested' ? 'جارٍ الإصدار…' : s === 'failed' ? 'تعذّر الإصدار' : 'لم يصدر';
     const T = [['s', 'الاستبانة', ar(it.survey) + ' ردًّا'], ['u', 'رفع الصور', ar(it.ev) + ' شاهدًا'], ['r', 'التقرير', rs]];
     let h = `<div class="card pad"><button class="btn sm ghost" data-rc="back">→ رجوع</button>
       <h2 style="margin:10px 0 4px"><span class="rc-kind">نشاط صفي</span>${e(it.title)}</h2>
@@ -103,12 +131,13 @@
       <div class="rc-srv"><div class="qr" data-qr="${e(url)}"></div><div><p style="margin:0 0 8px">ردود الطالبات: <b>${ar(it.survey)}</b></p>
       <div class="rc-btns" style="margin:0"><a class="btn" href="${e(url)}" target="_blank" rel="noopener">فتح الاستبانة</a><button class="btn ghost" data-rc="copy" data-u="${e(url)}">نسخ الرابط</button></div></div></div>`;
     else if (CT === 'u') h += upBox(it);
+    else if (s === 'issued' && x.legacy) h += legacyBox(it);
     else if (s === 'issued') h += `<div class="ok" style="margin:10px 0">✓ صدر التقرير${x.issued_at ? ' في ' + hijri(x.issued_at.slice(0, 10)) : ''}${x.mine === false ? ' (أصدرته زميلتك ويُحسب لكما معًا)' : ''}.</div>
         <div class="rc-btns">${x.pdf_url ? `<a class="btn" href="${e(x.pdf_url)}" target="_blank" rel="noopener">فتح التقرير PDF</a>` : ''}${x.impact_url ? `<a class="btn ghost" href="${e(x.impact_url)}" target="_blank" rel="noopener">فتح قياس الأثر PDF</a>` : ''}</div>
         <details style="margin-top:12px"><summary>تعديل البيانات وإعادة الإصدار</summary>${form(it)}<div class="rc-btns"><button class="btn ghost" data-rc="issue">إعادة الإصدار</button></div></details>`;
     else if (s === 'requested') h += `<p class="muted">⏳ طلبك وصل، والتقرير وقياس الأثر يُجهَّزان الآن (عادةً خلال دقائق). تتحدث هذه الصفحة تلقائيًا.</p>`;
     else { if (s === 'failed') h += `<p class="rc-err">تعذّر الإصدار: ${e(x.error || '')} — صحّحي البيانات واضغطي مرة ثانية.</p>`;
-      h += `<p class="muted" style="margin:0">اسم البرنامج والتواريخ والفصل والتوقيعات تُعبّأ تلقائيًا. أكملي الباقي ثم أصدري.</p>${form(it)}
+      h += oldRepBox(it) + `<p class="muted" style="margin:0">اسم البرنامج والتواريخ والفصل والتوقيعات تُعبّأ تلقائيًا. أكملي الباقي ثم أصدري.</p>${form(it)}
         <div class="rc-btns"><button class="btn" data-rc="issue"${busy ? ' disabled' : ''}>إصدار التقرير</button><button class="btn ghost" data-rc="issue"${busy ? ' disabled' : ''}>إصدار قياس الأثر</button></div>
         <p class="muted" style="font-size:.85em">تقرير واحد لكل برنامج في الفصل؛ إذا أصدرته زميلتك يظهر هنا لكما معًا.</p>`; }
     return h + `</div><div class="rc-meta"><div><small>الفصل</small>${e(it.sub || '—')}</div><div><small>البداية</small>${hijri(it.from)}</div><div><small>النهاية</small>${hijri(it.to)}</div>
@@ -123,8 +152,9 @@
       <div class="rc-meta"><div><small>الفصل</small>${e(it.sub || '—')}</div>${it.k === 'occasion' ? `<div><small>التاريخ</small>${hijri(it.from)}</div>` : `<div><small>البداية</small>${hijri(it.from)}</div><div><small>النهاية</small>${hijri(it.to)}</div>`}
       <div><small>${it.partners.length > 1 ? 'زميلاتك' : 'زميلتك'}</small>${e(it.partners.join('، ') || '—')}</div><div><small>الشواهد</small>${ar(it.ev)}</div>${it.k === 'class' ? `<div><small>ردود الاستبانة</small>${ar(it.survey)}</div>` : ''}</div>`;
     if (it.k === 'nonclass') h += `<div class="rc-pair"><div><b>الاصطفاف الصباحي</b>${e(it.radio || '—')}</div><div><b>الصلاة</b>${e(it.prayer || '—')}</div></div>`;
-    h += upBox(it);
-    if (s === 'issued') {
+    h += upBox(it) + (x?.legacy ? '' : oldRepBox(it));
+    if (s === 'issued' && x.legacy) h += legacyBox(it);
+    else if (s === 'issued') {
       h += `<div class="ok" style="margin:10px 0">✓ صدر التقرير${x.issued_at ? ' في ' + hijri(x.issued_at.slice(0, 10)) : ''}${x.mine === false ? ' (أصدرته زميلتك ويُحسب لكما معًا)' : ''}.</div>
         <div class="rc-btns">${x.pdf_url ? `<a class="btn" href="${e(x.pdf_url)}" target="_blank" rel="noopener">فتح التقرير PDF</a>` : ''}${x.impact_url ? `<a class="btn ghost" href="${e(x.impact_url)}" target="_blank" rel="noopener">تقرير قياس الأثر PDF</a>` : ''}</div>
         <details style="margin-top:12px"><summary>تعديل البيانات وإعادة الإصدار</summary>${form(it)}<div class="rc-btns"><button class="btn ghost" data-rc="issue">إعادة الإصدار</button></div></details>`;
@@ -154,7 +184,7 @@
     const ok = it.k === 'class' ? !!clsTarget(it) : it.k === 'occasion' ? !!(D.cn?.tok && D.cn?.cls) : nonTargets(it).length > 0;
     const sel = it.k === 'nonclass' ? `<label class="rc-form" style="margin:6px 0"><span>الشاهد عن</span><select id="rc-kind" style="font:inherit;padding:8px;border-radius:10px;border:1px solid #d9d4ee">${nonTargets(it).map((x, i) => `<option value="${i}">${x.kind === 'الصلاة' ? 'الصلاة' : 'الاصطفاف الصباحي (الإذاعة)'}${x.prog ? ': ' + e(x.prog) : ''}</option>`).join('')}</select></label>` : '';
     return `<div class="rc-ev"><h3 style="margin:14px 0 4px">الشواهد</h3>
-      <p class="muted" style="margin:0">${ar(it.ev)} شاهدًا محفوظًا${n ? ' · رفعتِ الآن ' + ar(n) : ''}. ${it.k === 'class' ? 'صور أو فيديو أو PDF (الصور تُصغَّر قبل الرفع، والفيديو حتى ٥٠٠ م.ب).' : 'صور فقط، تصل إلى مجلد الفصل المشترك.'}</p>
+      <p class="muted" style="margin:0">${ar(it.ev)} شاهدًا محفوظًا${n ? ' · رفعتِ الآن ' + ar(n) : ''}. ${it.k === 'class' ? 'صور أو فيديو أو PDF (الصور تُصغَّر قبل الرفع، والفيديو حتى ٥٠٠ م.ب).' : 'صور فقط، تصل إلى مجلد الفصل المشترك.'}</p>${storyBtn(it)}
       ${ok ? sel + `<label class="btn" style="margin-top:8px;display:inline-flex;cursor:pointer">إرفاق الشواهد<input type="file" id="rc-file" multiple accept="${it.k === 'class' ? 'image/*,video/*,application/pdf' : 'image/*'}" hidden></label>`
         : it.k === 'occasion' ? '<p class="rc-err">تعذّر ربط حسابك بمجلد فصلك، راجعي الوكيلة.</p>'
         : '<p class="rc-err">تعذّر ربط هذا البرنامج بمجلد شواهده، ارفعي من زر «' + (it.k === 'class' ? 'الأنشطة الصفية' : 'الأنشطة اللاصفية') + '» مؤقتًا.</p>'}
@@ -220,6 +250,152 @@
           : `<div class="rc-it" style="cursor:default"><div class="rc-h"><b>${e(x.name)}</b><button class="btn sm" data-rc="oon" data-n="${e(x.name)}" data-d="${e(x.date || TODAY)}"${busy ? ' disabled' : ''}>تفعيل</button></div><div class="rc-d">${x.date ? hijri(x.date) : '—'}</div></div>`; }).join('')}</div>
       ${addBox()}`;
   }
+  /* ───── «قصص سريعة» (2026-11-12): صور كل نشاط سابق أو جديد تُعرض كقصة بملء الشاشة + التقرير القديم.
+     تُجلب من مجلداتها بالمسارات القديمة نفسها (صفي: tthumb/tfile، لاصفي: nget/nthumbs/nfile) — لا يُخزَّن شيء في الموقع */
+  const SP = {};   // key → { st: 'load'|'ok'|'err', ph: [{id,n,src}], rep: {...}|null, sid?, err }
+  const imgF = f => /^image\//.test(f.m || '') || /\.(jpe?g|png|webp|heic|gif)$/i.test(f.n || '');
+  const pad2 = n => String(n).padStart(2, '0');
+  const storyable = it => it.k === 'class' ? !!clsTarget(it) : it.k === 'nonclass' ? nonTargets(it).length > 0 : false;
+  function photos(it) {
+    const key = it.k + ':' + it.id; if (SP[key] && SP[key].st !== 'err') return SP[key].p || Promise.resolve(SP[key]);
+    const o = SP[key] = { st: 'load', ph: [], rep: null };
+    o.p = (async () => {
+      try {
+        if (it.k === 'class') {
+          const one = clsTarget(it); o.one = one;
+          o.ph = cpAll(one.p).filter(f => f.id && imgF(f)).sort((a, b) => String(a.t).localeCompare(String(b.t))).map(f => ({ id: f.id, n: f.n }));
+          const r = (one.p.rep || []).find(f => f.id); if (r) o.rep = { k: 'c', id: r.id, n: r.n };
+        } else {
+          const sids = [...new Set(nonTargets(it).map(x => 'w|' + pad2(x.w) + '|' + x.topic))];
+          for (const sid of sids) {
+            const L = await post({ a: 'nget', tok: D.cn.tok, sid }, 120000);
+            (L.files || []).filter(imgF).forEach(f => o.ph.push({ id: f.id, n: f.n, sid, src: f.tb ? 'data:image/jpeg;base64,' + f.tb : '' }));
+            if (!o.rep && L.rec?.pdf?.id) o.rep = { k: 'n', sid, id: L.rec.pdf.id, n: L.rec.pdf.name };
+          }
+        }
+        o.st = 'ok';
+      } catch (x) { o.st = 'err'; o.err = x.message; }
+      delete o.p; return o;
+    })();
+    return o.p;
+  }
+  // صورة بحجم مناسب للشاشة (٩٠٠ بكسل)، تُحفظ في الذاكرة فقط
+  const BIG = {};
+  function bigOf(o, f) {
+    return BIG[f.id] ||= (async () => {
+      if (o.one) { const j = await ctGet(o.one, 'tthumb', f.id, { sz: 900 }); return j.b64 ? `data:${j.m || 'image/jpeg'};base64,${j.b64}` : ''; }
+      const r = await post({ a: 'nthumbs', tok: D.cn.tok, sid: f.sid, ids: [f.id], sz: 900 }, 120000), v = (r.th || {})[f.id];
+      return v ? `data:${v.m || 'image/jpeg'};base64,${v.b64}` : f.src;
+    })().catch(() => { delete BIG[f.id]; return f.src || ''; });
+  }
+  async function openOldRep(o, btn) {
+    const w = window.open('', '_blank'); if (w) w.document.write('<p dir="rtl" style="font-family:sans-serif;padding:20px">جارٍ فتح التقرير…</p>');
+    const t0 = btn && btn.textContent; if (btn) { btn.disabled = true; btn.textContent = 'جارٍ الفتح…'; }
+    try {
+      const j = o.rep.k === 'c' ? await ctGet(o.one, 'tfile', o.rep.id) : await post({ a: 'nfile', tok: D.cn.tok, sid: o.rep.sid, id: o.rep.id }, 120000);
+      const bin = atob(j.b64), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      const url = URL.createObjectURL(new Blob([u8], { type: j.m || 'application/pdf' }));
+      if (w) w.location.href = url; setTimeout(() => URL.revokeObjectURL(url), 180000);
+    } catch (x) { if (w) w.close(); alert('تعذّر فتح التقرير: ' + x.message); }
+    if (btn) { btn.disabled = false; btn.textContent = t0; }
+  }
+  const seenKey = () => 'rc-seen-' + (PID || '');
+  const SEEN = () => { try { return new Set(JSON.parse(localStorage.getItem(seenKey()) || '[]')); } catch (x) { return new Set(); } };
+  const markSeen = k => { try { const s = SEEN(); s.add(k); localStorage.setItem(seenKey(), JSON.stringify([...s])); } catch (x) {} };
+  // عبارات التشجيع (2026-11-12): عربية لكل المعلمات، وإنجليزية لمعلمات اللغة الإنجليزية (طلبها)
+  const CHEER_AR = ["رائع! 👏","إنجاز مميز ✨","طالباتك مبدعات 💜","استمري 🚀","عمل يُفتخر به 🌟","بصمة جميلة 💫","أحسنتِ 👌","مبدعة كعادتك ✨","لمستك واضحة 🎨","فخورون بك 💐","عطاؤك لا يُنسى 💜","تميّزٌ يليق بك 👑","جهد يستحق التقدير 🌷","أنتِ قدوة 🌿","استمري في التألق 💫","طالباتك نجوم 🌟","تفاعل رائع 👏","إبداع طالباتك ملهم 💡","فريق رائع 🤝","حماس يُلهم 🔥","مواهب تتألق 🌟","تعلّمن واستمتعن 😊","لحظة فخر 🥇","أثرك باقٍ 💜","ذكرى جميلة 📸","خطوة نحو التميز 🚀","بصمة تستحق الفخر 🏅","هنا تُصنع الذكريات ✨","نجاح يُروى 📖","يوم من أيام الإنجاز 🗓️","تعليم بروح جميلة 💜","ما شاء الله تبارك الله 🌸","بارك الله في جهدك 🤲","جزاك الله خيرًا 💐","سلمت يداك 🌷","يعطيك العافية 💪","الله يسعدك كما أسعدتِ طالباتك 💜","عمل متقن 👌","إبداع بلا حدود 🌈","روعة! 😍","قمة في التميز 🏔️","أداء استثنائي ⭐","رسالة سامية 🕊️","غرسٌ طيّب 🌱","ثمرة جهدك 🍃","تألّق مستمر 💫","مدرستنا تفخر بك 🏫","وطننا يفخر بكن 💚","جيلٌ واعد 🌟","بناة المستقبل 🚀","عقول مبدعة 🧠","أيادٍ ماهرة ✋","ابتسامات صادقة 😊","بيئة تعلّم ملهمة 💡","شغف واضح ❤️","تعلّم ممتع 🎈","نشاط مثمر 🌿","عمل جماعي رائع 🤝","قيادة واعية 🧭","همّة عالية 🔝","أنتِ تصنعين الفرق ✨","أثر لا يُمحى 💜","صورة تحكي إنجازًا 📸","لحظة تستحق التوثيق 📷","مستوى رائع 📈","تفوّق وتميز 🏆","نجمة اليوم 🌟","بالتوفيق دائمًا 🌷","إلى الأمام 🚀","دمتِ متألقة ✨","كل الشكر لك 💐","عطاء متجدد 🔄","إتقان يُحتذى 👌","روح المبادرة 💡","بصمة معلمة مبدعة 🖋️","نفخر بطالباتك 💜","نجاح مشترك 🤝","ذكرى لا تُنسى 📸"];
+  const CHEER_EN = ["Amazing work! 👏","Well done! 🌟","Outstanding! ✨","Brilliant! 💡","Keep shining! 💫","You inspire us! 💜","Fantastic job! 🎉","Superb! 👌","Proud of you! 💐","Great teaching! 🍎","Your students shine! 🌟","Creative minds at work! 🧠","Learning made fun! 🎈","What a moment! 📸","Making memories! ✨","Excellent effort! 💪","Truly inspiring! 🕊️","Top-notch work! 🏆","You make a difference! 💜","Bravo! 👏","Simply wonderful! 🌷","Impressive! ⭐","Keep it up! 🚀","Star teacher! 🌟","Star students! ⭐","Teamwork at its best! 🤝","Great energy! 🔥","Pure talent! 🎨","A proud moment! 🥇","Knowledge in action! 📚","Future leaders! 🚀","Bright minds! 💡","Excellence in action! 🏅","Beautiful work! 🌸","So creative! 🌈","Nailed it! 🎯","Above and beyond! 🔝","Hard work pays off! 💪","Learning never stops! 📖","Great vibes! 😊","Inspiring teacher! 🍎","Remarkable! ✨","Keep up the great work! 🌟","Making us proud! 💚","Shine on! 💫","Way to go! 🚀","Magnificent! 👑","A job well done! ✅","Engaged and excited! 🎉","Moments that matter! 📷","Leaving a mark! 🖋️","Growing every day! 🌱","You rock! 🎸","Unstoppable! ⚡","Smart and creative! 🧠","Dream big! 🌙","English stars! 🌟","Speaking with confidence! 🗣️","Words that inspire! 📝","Little steps, big wins! 👣","Passion for learning! ❤️","Wow! 😍"];
+  const EN_T = /شريفة|ابتسام|أحلام|احلام/;
+  // كل صورة عبارة: مجموعة مخلوطة عشوائيًا، لا تتكرر عبارة حتى تمر كلها، ثم تُخلط من جديد (طلبها: التنوع، والتكرار مقبول عند كثرة الصور)
+  const DECK = { ar: [], en: [] };
+  const cheer = () => { const en = EN_T.test(R?.teacher?.name || ''), D2 = DECK[en ? 'en' : 'ar'];
+    if (!D2.length) { const L = (en ? CHEER_EN : CHEER_AR).slice(); for (let i = L.length - 1; i > 0; i--) { const r = Math.random() * (i + 1) | 0; [L[i], L[r]] = [L[r], L[i]]; } D2.push(...L); }
+    return `<span class="rc-cheer"${en ? ' dir="ltr"' : ''}>${D2.pop()}</span>`; };
+  // أغلفة الدوائر: أول صورة من كل نشاط، اثنتان في وقت واحد
+  const COVER = {};
+  async function covers() {
+    const q = [...document.querySelectorAll('[data-rcs] .c:not([data-done])')];
+    q.forEach(c => c.dataset.done = 1);
+    const one = async c => {
+      const k = c.closest('[data-rcs]').dataset.rcs, it = items().find(i => i.k + ':' + i.id === k); if (!it) return;
+      try { if (!(k in COVER)) { const o = await photos(it), f = o.ph[o.ph.length - 1]; COVER[k] = f ? (f.src || await bigOf(o, f)) : ''; }
+        if (SP[k]?.st === 'ok' && !SP[k].ph.length) { document.querySelectorAll(`[data-rcs="${k}"]`).forEach(x => x.remove()); return; }
+        document.querySelectorAll(`[data-rcs="${k}"] .c`).forEach(x => { if (COVER[k]) { x.style.backgroundImage = `url("${COVER[k]}")`; x.textContent = ''; } }); } catch (x) {}
+    };
+    await Promise.all([0, 1].map(async () => { while (q.length) await one(q.shift()); }));
+  }
+  function rings(L) {
+    const S = SEEN(), R2 = L.filter(i => i.ev > 0 && storyable(i) && !(SP[i.k + ':' + i.id]?.st === 'ok' && !SP[i.k + ':' + i.id].ph.length)).sort((a, b) => S.has(a.k + ':' + a.id) - S.has(b.k + ':' + b.id));
+    if (!R2.length) return '';
+    return `<div class="rc-rings" role="list" aria-label="قصص أنشطتي">${R2.map(i => { const k = i.k + ':' + i.id;
+      return `<button class="rc-ring${S.has(k) ? ' seen' : ''}" data-rcs="${e(k)}" role="listitem" title="${e(i.title)}"><span class="o"><span class="c">${ar(i.ev)}</span></span><small>${e(i.k === 'nonclass' ? i.title : i.title)}</small></button>`; }).join('')}</div>`;
+  }
+  // عارض القصة: صورة كل ٣٫٥ ثانية، اللمس يسارًا/يمينًا للتنقل، وفي النهاية بطاقة تهنئة + التقرير ثم النشاط التالي
+  let STM = null, SQ = [];   // SQ = ترتيب القصص لحظة فتحها (لا يتغير أثناء المشاهدة)
+  function storyList() { const S = SEEN(); return items().filter(i => i.ev > 0 && storyable(i) && !(SP[i.k + ':' + i.id]?.st === 'ok' && !SP[i.k + ':' + i.id].ph.length)).sort((a, b) => S.has(a.k + ':' + a.id) - S.has(b.k + ':' + b.id)); }
+  async function story(key, j = 0, only) {
+    clearTimeout(STM);
+    const it = items().find(i => i.k + ':' + i.id === key); if (!it) return;
+    let d = document.getElementById('rc-st');
+    if (!d) { d = document.createElement('div'); d.id = 'rc-st'; d.className = 'rc-st'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', 'قصة النشاط'); document.body.append(d); document.body.style.overflow = 'hidden'; }
+    d.dataset.k = key; d.dataset.j = j; d.dataset.only = only ? 1 : '';
+    const head = (n, of) => `<div class="rc-st-h"><span><b>${e(it.title)}</b>${of ? ' · ' + ar(n) + ' من ' + ar(of) : ''}<br><small>${e(it.sub)} · ${hijri(it.from)}</small></span><button data-st="x" aria-label="إغلاق">✕</button></div>`;
+    const o = SP[key]?.st === 'ok' ? SP[key] : null;
+    if (!o) { d.innerHTML = `<div class="rc-st-in">${head()}<div class="rc-st-msg">جارٍ جلب صورك…</div></div>`; const r = await photos(it); if (d.dataset.k !== key || !d.isConnected) return;
+      if (r.st === 'err') { d.innerHTML = `<div class="rc-st-in">${head()}<div class="rc-st-msg">تعذّر جلب الصور: ${e(r.err)}</div></div>`; return; } return story(key, j, only); }
+    markSeen(key);
+    const N = o.ph.length;
+    if (j >= N) {   // القصة صور فقط (طلبها 2026-11-12): بعد آخر صورة ← صور النشاط التالي مباشرة، وبعد الأخير تُغلق
+      if (!only) { const nx = SQ[SQ.indexOf(key) + 1]; if (nx) return story(nx, 0); }
+      return stClose();
+    }
+    const f = o.ph[j];
+    d.innerHTML = `<div class="rc-st-in"><div class="rc-st-bg"></div><div class="rc-st-p">${o.ph.map((_, k) => `<i><b style="width:${k < j ? 100 : 0}%"></b></i>`).join('')}</div>${head(j + 1, N)}
+      <div class="rc-st-msg">…</div><img alt="${e(f.n)}" hidden><div class="rc-st-tap"><button data-st="nx" aria-label="التالية"></button><button data-st="pv" aria-label="السابقة"></button></div>
+      <div class="rc-st-f">${cheer()}</div></div>`;
+    const im = d.querySelector('img'), bar = d.querySelectorAll('.rc-st-p b')[j];
+    if (f.src) { im.src = f.src; im.hidden = false; d.querySelector('.rc-st-bg').style.backgroundImage = `url("${f.src}")`; }
+    const src = await bigOf(o, f); if (d.dataset.k !== key || +d.dataset.j !== j) return;
+    if (src) { im.src = src; im.hidden = false; d.querySelector('.rc-st-bg').style.backgroundImage = `url("${src}")`; d.querySelector('.rc-st-msg').textContent = ''; }
+    else d.querySelector('.rc-st-msg').textContent = 'لا توجد معاينة لهذه الصورة';
+    if (o.ph[j + 1]) bigOf(o, o.ph[j + 1]);   // تجهيز التالية
+    requestAnimationFrame(() => { bar.style.transition = 'width 3.5s linear'; bar.style.width = '100%'; });
+    STM = setTimeout(() => story(key, j + 1, only), 3500);
+  }
+  function stClose() { clearTimeout(STM); document.getElementById('rc-st')?.remove(); document.body.style.overflow = ''; paint(); }
+  function burst() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const c = document.createElement('canvas'); c.className = 'rc-confetti'; c.width = innerWidth; c.height = innerHeight; document.body.append(c); const x = c.getContext('2d');
+    const C = ['#6c5ce7', '#f5a524', '#ff7eb3', '#00b894', '#0984e3'], ps = Array.from({ length: 130 }, () => ({ x: innerWidth / 2, y: innerHeight / 3, vx: (Math.random() - .5) * 13, vy: Math.random() * -11 - 2, c: C[Math.random() * 5 | 0], s: 4 + Math.random() * 5 }));
+    let t = 0; (function f() { x.clearRect(0, 0, c.width, c.height); ps.forEach(p => { p.vy += .35; p.x += p.vx; p.y += p.vy; x.fillStyle = p.c; x.fillRect(p.x, p.y, p.s, p.s * 1.6); }); if (++t < 120) requestAnimationFrame(f); else c.remove(); })();
+  }
+  document.addEventListener('click', ev => {
+    const d = document.getElementById('rc-st'); if (!d || !d.contains(ev.target)) return;
+    const b = ev.target.closest('[data-st]'); if (!b) return;
+    const k = d.dataset.k, j = +d.dataset.j, only = !!d.dataset.only, a = b.dataset.st;
+    if (a === 'x') return stClose();
+    if (a === 'nx') return story(k, j + 1, only);
+    if (a === 'pv') return story(k, Math.max(0, j - 1), only);
+    if (a === 'next') return story(b.dataset.k, 0);
+    if (a === 'rep') return openOldRep(SP[k], b);
+    if (a === 'open') { clearTimeout(STM); d.remove(); document.body.style.overflow = ''; OPEN = k; CT = 'u'; paint(); document.getElementById('rc-root')?.scrollIntoView({ block: 'start' }); }
+  });
+  document.addEventListener('keydown', ev => { const d = document.getElementById('rc-st'); if (!d) return;
+    if (ev.key === 'Escape') stClose(); else if (ev.key === 'ArrowLeft') story(d.dataset.k, +d.dataset.j + 1, !!d.dataset.only); else if (ev.key === 'ArrowRight') story(d.dataset.k, Math.max(0, +d.dataset.j - 1), !!d.dataset.only); });
+  // زر التقرير السابق داخل صفحة النشاط (إن لم يصدر تقرير جديد)
+  // منجز في النظام السابق: يُحسب منجزًا، ويُفتح تقريره القديم، وإصدار تقرير بالنموذج المعتمد اختياري
+  function legacyBox(it) {
+    return `<div class="ok" style="margin:10px 0">✓ هذا النشاط منجز سابقًا — صدر تقريره من النظام السابق${it.ex.issued_at ? ' في ' + hijri(it.ex.issued_at.slice(0, 10)) : ''}، ويُحسب لك.</div>
+      ${oldRepBox(it, true)}<details style="margin-top:12px"><summary>إصدار تقرير جديد بالنموذج المعتمد (اختياري)</summary>${form(it)}<div class="rc-btns"><button class="btn ghost" data-rc="issue"${busy ? ' disabled' : ''}>إصدار التقرير${it.k === 'class' ? ' + قياس الأثر' : ''}</button></div></details>`;
+  }
+  function oldRepBox(it, any) {
+    if ((it.ex?.status === 'issued' && !any) || !storyable(it)) return '';
+    const o = SP[it.k + ':' + it.id];
+    if (!o) { photos(it).then(() => { if (OPEN === it.k + ':' + it.id) paint(); }); return ''; }
+    return o.rep ? `<div class="card pad" style="margin:10px 0;border:1px dashed #b8b2d9"><b>التقرير السابق</b><p class="muted" style="margin:4px 0 8px">صدر من النظام السابق: ${e(String(o.rep.n || '').replace(/\.pdf$/i, ''))}</p><button class="btn sm" data-rc="oldrep">فتح التقرير السابق</button></div>` : '';
+  }
+  const storyBtn = it => it.ev > 0 && storyable(it) ? `<button class="btn sm" data-rc="story" style="margin-top:8px">▶ شاهدي صورك كقصة</button>` : '';
+
   function body() {
     if (ERR) return `<div class="card pad"><p class="rc-err">تعذّر تحميل سجلك: ${e(ERR)}</p><button class="btn sm" data-rc="reload">إعادة المحاولة</button></div>`;
     if (!R) return '<div class="card pad"><p class="muted" style="margin:0">جارٍ تحميل سجلك…</p></div>';
@@ -230,21 +406,28 @@
     const libN = new Set((R.occasion_list || []).map(x => x.name)), mine = L.filter(i => i.k === 'occasion');
     const vis = TAB === 'occasion' ? mine.filter(i => !libN.has(i.title)) : L.filter(i => TAB === 'all' || i.k === TAB);
     return `<div class="card hero th-hero"><div class="grow"><h2>سجل إنجازي</h2><p class="muted">أ. ${e(R.teacher?.name || '')} · الأنشطة الصفية واللاصفية والأيام والمناسبات · الفصل الدراسي الأول ١٤٤٨هـ · ${ar(done)} من ${ar(Q.length)} تقريرًا صدر</p></div></div>
+      ${(() => { const ph = L.reduce((a, i) => a + (i.ev || 0), 0), pct = Q.length ? Math.round(done * 100 / Q.length) : 0;
+        return `<div class="rc-hero2"><b>أحسنتِ يا أ. ${e(String(R.teacher?.name || '').split(' ')[0])}! 🌟 هذا ما أنجزتِه</b><div class="rc-st3"><div><strong>${ar(ph)}</strong><span>صورة وشاهد</span></div><div><strong>${ar(Q.length)}</strong><span>برنامجًا وأسبوعًا</span></div><div><strong>${ar(done)}</strong><span>تقريرًا صدر</span></div></div>
+          <div class="rc-bar"><i style="width:${pct}%"></i></div></div>`; })()}
+      ${rings(L)}
       ${need.length ? `<div class="warn" style="margin-top:10px"><b>يحتاج منك:</b> ${need.map(i => e(i.title)).join('، ')}</div>` : ''}
       <nav class="rc-tabs">${[['all', 'الكل'], ['class', 'الأنشطة الصفية'], ['nonclass', 'الأنشطة اللاصفية'], ['occasion', 'الأيام والمناسبات']].map(([k, l]) => `<button data-rct="${k}" aria-pressed="${TAB === k}">${l}</button>`).join('')}</nav>
       ${TAB === 'occasion' ? occBox(mine) + (vis.length ? '<h3 style="margin:14px 0 6px">مناسبات أضفتِها</h3>' : '') : ''}
       <div class="rc-list">${vis.map(i => `<button class="rc-it ${i.st[0]}" data-rco="${i.k}:${e(i.id)}"><div class="rc-h"><b><span class="rc-kind${i.k === 'class' ? '' : i.k === 'occasion' ? ' o' : ' n'}">${i.k === 'class' ? 'صفية' : i.k === 'occasion' ? 'مناسبة' : 'لاصفية'}</span>${e(i.title)}</b><span class="rc-chip ${i.st[0]}">${i.st[1]}</span></div>
         <div class="rc-d">${i.k === 'occasion' ? hijri(i.from) : hijri(i.from) + ' إلى ' + hijri(i.to)} · ${e(i.sub)} · ${ar(i.ev)} شاهدًا</div></button>`).join('') || (TAB === 'occasion' ? '' : '<p class="muted">لا يوجد شيء في هذا القسم.</p>')}</div>`;
   }
-  function paint() { const el = document.getElementById('rc-root'); if (!el) return; el.innerHTML = body(); if (typeof drawQr === 'function') el.querySelectorAll('[data-qr]').forEach(drawQr); }
+  function paint() { const el = document.getElementById('rc-root'); if (!el) return; el.innerHTML = body(); if (typeof drawQr === 'function') el.querySelectorAll('[data-qr]').forEach(drawQr); setTimeout(covers, 0); }
 
   document.addEventListener('click', async ev => {
     const root = document.getElementById('rc-root'); if (!root || !root.contains(ev.target)) return;
     const t = ev.target.closest('[data-rct]'); if (t) { TAB = t.dataset.rct; return paint(); }
     const p = ev.target.closest('[data-rcp]'); if (p) { CT = p.dataset.rcp; return paint(); }
+    const sr = ev.target.closest('[data-rcs]'); if (sr) { const L = storyList().map(i => i.k + ':' + i.id), k = sr.dataset.rcs; SQ = L.slice(L.indexOf(k)); return story(k, 0); }
     const o = ev.target.closest('[data-rco]'); if (o) { OPEN = o.dataset.rco; CT = 's'; paint(); return root.scrollIntoView({ block: 'start' }); }
     const b = ev.target.closest('[data-rc]'); if (!b) return;
     if (b.dataset.rc === 'back') { OPEN = null; return paint(); }
+    if (b.dataset.rc === 'story' && OPEN) return story(OPEN, 0, true);
+    if (b.dataset.rc === 'oldrep' && OPEN) return openOldRep(SP[OPEN], b);
     if (b.dataset.rc === 'copy') { try { await navigator.clipboard.writeText(b.dataset.u); b.textContent = '✓ نُسخ'; } catch (x) { prompt('انسخي الرابط:', b.dataset.u); } return; }
     if (b.dataset.rc === 'reload') { R = null; paint(); return load(); }
     if (b.dataset.rc === 'oadd') { ADD = true; ADDMSG = ''; return paint(); }
@@ -285,7 +468,7 @@
     if (it) upload(it, files);
   });
 
-  const sync = () => { if (SC !== sessionCode) { SC = sessionCode; R = null; ERR = ''; PID = null; OPEN = null; TAB = 'all'; UPMSG = ''; Object.keys(UP).forEach(k => delete UP[k]); clearTimeout(poll); LP = null; ADD = false; ADDMSG = ''; } };
+  const sync = () => { if (SC !== sessionCode) { SC = sessionCode; R = null; ERR = ''; PID = null; OPEN = null; TAB = 'all'; UPMSG = ''; Object.keys(UP).forEach(k => delete UP[k]); clearTimeout(poll); LP = null; ADD = false; ADDMSG = ''; [SP, BIG, COVER].forEach(o => Object.keys(o).forEach(k => delete o[k])); clearTimeout(STM); document.getElementById('rc-st')?.remove(); } };
   let LP = null;   // تحميل واحد مشترك بين الصفحة و«لوحتي»
   const ensure = () => (R || ERR) ? Promise.resolve() : (LP ||= load().finally(() => { LP = null; }));
   window.REC = { render() { sync(); ensure(); return CSS + '<div id="rc-root">' + body() + '</div>'; },
