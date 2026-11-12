@@ -679,6 +679,7 @@ function route() {
       : v === 'ach' && achOn() ? tTabs('ach') + achPage()
       : v === 'pr' && prOn() ? tTabs('pr') + prPage()
       : v === 'pa' && prOn() ? tTabs('pa') + paPage()
+      : v === 'p3' && prOn() ? tTabs('p3') + p3Page()
       : v === 'rec' && recOn() ? tTabs('rec') + recPage()
       : v === 'share' && D.shareK ? tTabs('share') + sharePage(a)
       : v === 'att' && D.att ? tTabs('att') + attPage(location.hash.slice(5))
@@ -1339,7 +1340,7 @@ function rvCard(p) {
 }
 // the teacher's «الرئيسية»: the same 4 buttons for every teacher (plan-only accounts have no «ملفاتي»)
 // «جودة شواهد البرامج» (rev) disabled 2026-10-17 at the user's request: no button, #rev → الرئيسية; teacherReview() kept unused
-const tList = () => [prOn() && ['pa', 'سجل توثيق الأداء الوظيفي', 'نموذج أ'], prOn() && ['pr', 'سجل توثيق الأداء الوظيفي', 'نموذج ب'], recOn() && ['rec', 'سجل إنجازي — الأنشطة الصفية واللاصفية', 'بيانات البطاقة وإصدار التقرير'], D.shareK && ['share', 'مشاركات الطالبات وأولياء الأمور', 'اليوم الوطني · يوم المعلم · درع الوطن'], D.att && (D.att.mode === 'teacher' ? ['att', 'توثيق حصص التيمز', 'ارفعي ملفات حضور حصصك من Teams'] : D.att.mode === 'view' ? ['att', 'توثيق الحضور في تيمز', 'تقارير حصص المعلمات اليومية: تصفّح وتنزيل'] : ['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات وطباعة تقارير الغياب']), D.att && D.att.mode === 'view' && ['abs', 'حصر الطالبات الغائبات', 'تقرير الغياب على مستوى حصة، والغياب الكامل والجزئي، والحصر التراكمي، وسجل كل طالبة'], false && D.td && ['td', 'لوحتي', 'مستواكِ مقارنة بالجميع وخطتك الزمنية وما يحتاج منكِ'], 
+const tList = () => [prOn() && ['pa', 'سجل توثيق الأداء الوظيفي', 'نموذج أ'], prOn() && ['pr', 'سجل توثيق الأداء الوظيفي', 'نموذج ب'], prOn() && ['p3', 'سجل توثيق الأداء الوظيفي', 'نموذج ٣'], recOn() && ['rec', 'سجل إنجازي — الأنشطة الصفية واللاصفية', 'بيانات البطاقة وإصدار التقرير'], D.shareK && ['share', 'مشاركات الطالبات وأولياء الأمور', 'اليوم الوطني · يوم المعلم · درع الوطن'], D.att && (D.att.mode === 'teacher' ? ['att', 'توثيق حصص التيمز', 'ارفعي ملفات حضور حصصك من Teams'] : D.att.mode === 'view' ? ['att', 'توثيق الحضور في تيمز', 'تقارير حصص المعلمات اليومية: تصفّح وتنزيل'] : ['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات وطباعة تقارير الغياب']), D.att && D.att.mode === 'view' && ['abs', 'حصر الطالبات الغائبات', 'تقرير الغياب على مستوى حصة، والغياب الكامل والجزئي، والحصر التراكمي، وسجل كل طالبة'], false && D.td && ['td', 'لوحتي', 'مستواكِ مقارنة بالجميع وخطتك الزمنية وما يحتاج منكِ'], 
   ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها · تدقيق الجودة'], false && D.ct && ['cp', 'الأنشطة الصفية', 'برامجك في خطة النشاط ورفع صورها'], achOn() && ['ach', 'سجل إنجازي في النشاط', 'برامجك وصورك وأوسمتك وشهاداتك'], false && D.cn && ['cn', 'الأنشطة اللاصفية', 'أسابيع فصلك: بطاقة التنفيذ والشواهد والتقرير'], D.nv && ['lnr', 'تقارير المعلمات في الأنشطة اللاصفية', 'تقارير الأسابيع ومؤشراتها (اطلاع)'], D.ct && ['sig', 'تسجيل توقيعي', 'ارسمي توقيعك مرة واحدة ليظهر في تقارير برامجك'], false && !D.planOnly && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
 // «الأنشطة اللاصفية» (2026-10-19): الأسابيع وبطاقة التنفيذ والتقرير المحفوظ في cn.js (يُحمَّل عند أول فتح)؛ teacherCn() القديمة احتياط إن تعذّر تحميله
 // «تقارير المعلمات في الأنشطة اللاصفية» لمعلمة مطّلعة (2026-10-19: سلمى القرني): صفحة رائدة النشاط نفسها (leader.js → LEADER.nr) بطلبات برمز المعلمة
@@ -1367,6 +1368,14 @@ function paPage() {
   if (window.PA) return PA.render();
   paLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'pa.js?v=20261112f'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { paLoad = null; });
+  return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
+}
+// «نموذج ٣» (2026-11-12): المعلمة ترفق سجلها الجاهز (PDF أو رابط) فقط — p3.js
+let p3Load = null;
+function p3Page() {
+  if (window.P3) return P3.render();
+  p3Load ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'p3.js?v=20261112a'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+    .then(() => route(), () => { p3Load = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
 function prPage() {
@@ -1710,7 +1719,7 @@ function tHub() {
   const progs = !P.length ? 'لا توجد برامج مسندة إليك' : P.length === 1 ? 'برنامج واحد' : P.length === 2 ? 'برنامجان' : `${nf(P.length)} ${P.length <= 10 ? 'برامج' : 'برنامجًا'}`;
   const meta = { qa: P.length && !A.length ? 'لم يبدأ البرنامج · الفصل الدراسي الثاني' : progs,
     rev: !P.length ? progs : !A.length ? 'لم يبدأ البرنامج · الفصل الدراسي الثاني' : avg == null ? 'لم تُقيَّم بعد' : `متوسط التقييم ${nf(avg)} من 100`,
-    plan: !P.length ? progs : A.length ? `${nf(done)} من ${nf(A.length)} أُرفقت شواهدها` : 'تبدأ في الفصل الدراسي الثاني', mine: t ? `الإنجاز ${nf(t.pct)}٪` : '', pr: t ? 'عناصر التقييم الـ11 وشواهدها' : '', pa: t ? `${nf(t.done)} من ${nf(t.exist)} مجلدات مكتملة` : '',
+    plan: !P.length ? progs : A.length ? `${nf(done)} من ${nf(A.length)} أُرفقت شواهدها` : 'تبدأ في الفصل الدراسي الثاني', mine: t ? `الإنجاز ${nf(t.pct)}٪` : '', pr: t ? 'عناصر التقييم الـ11 وشواهدها' : '', p3: t ? 'أرفقي سجلك الجاهز: ملف PDF أو رابط' : '', pa: t ? `${nf(t.done)} من ${nf(t.exist)} مجلدات مكتملة` : '',
     att: D.att ? (D.att.mode === 'teacher' ? 'جدول حصصك اليوم وما أرسلتِه' : 'المعلمات · الحصص الناقصة · التذكير') : '', attr: D.att ? 'لكل فصل: الطالبات × الحصص' : '',
     td: D.td && D.td.me.o != null ? `مؤشرك ${nf(D.td.me.o)} من 100 · متوسط المعلمات ${nf(Math.round(D.td.peers.reduce((s, p) => s + p.o, 0) / Math.max(1, D.td.peers.length)))}` : '',
     cn: D.cn ? `${nf((D.cn.weeks || []).length)} أنشطة لفصلك · ${nf((D.cn.weeks || []).reduce((s, w) => s + w.files.length, 0) + (D.cn.man || 0))} صورة مرفوعة` : '',
