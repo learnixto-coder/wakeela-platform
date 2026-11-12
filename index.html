@@ -9,7 +9,7 @@
 <title>منصة المتوسطة الحادية والعشرون</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   /* palette colorhunt f9f8f6 · efe9e3 · d9cfc7 · c9b59c; brand = a deeper shade of c9b59c for contrast */
@@ -439,9 +439,15 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%
 @media (prefers-color-scheme:dark){:root{--bg:#17142b;--card:#211d3a;--ink:#f1efff;--muted:#bdb7e0;--line:#332d57;--soft:#28234a;--brand:#9d8dff;--brand-2:#b3a7ff;--brand-ink:#17142b;--accent:#fdb409;
   --ok:#5fd39a;--ok-bg:#163a29;--part:#f2c25b;--part-bg:#3b2f12;--none:#ff8a80;--none-bg:#41201d;
   --tile:#2c2650;--tile-ink:#f1efff;--th-0:#9d8dff;--th-1:#fdb409;--th-2:#5fd39a;--th-3:#6dcbff;--shadow:none}}
-body{font-family:"Rubik","IBM Plex Sans Arabic",system-ui,"Segoe UI",Tahoma,sans-serif;background:linear-gradient(180deg,#f3f0ff 0,var(--bg) 420px) no-repeat,var(--bg)}
+/* خط ثمانية لكامل المنصة (2026-11-12): fonts/*.woff2؛ IBM Plex احتياط إن تأخر التحميل */
+@font-face{font-family:"Thmanyah Sans";src:url(fonts/thmanyahsans-Regular.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Thmanyah Sans";src:url(fonts/thmanyahsans-Medium.woff2) format("woff2");font-weight:500;font-display:swap}
+@font-face{font-family:"Thmanyah Sans";src:url(fonts/thmanyahsans-Bold.woff2) format("woff2");font-weight:600 700;font-display:swap}
+@font-face{font-family:"Thmanyah Serif Display";src:url(fonts/thmanyahserifdisplay-Bold.woff2) format("woff2");font-weight:500 800;font-display:swap}
+button,input,select,textarea{font-family:inherit}
+body{font-family:"Thmanyah Sans","IBM Plex Sans Arabic",system-ui,"Segoe UI",Tahoma,sans-serif;background:linear-gradient(180deg,#f3f0ff 0,var(--bg) 420px) no-repeat,var(--bg)}
 @media (prefers-color-scheme:dark){body{background:linear-gradient(180deg,#221c45 0,var(--bg) 420px) no-repeat,var(--bg)}}
-h1,h2,h3,h4,.th-t,.hub-t,.kpi b,.homebar b,.lock h1{font-family:"Rubik","IBM Plex Sans Arabic",sans-serif;letter-spacing:0}
+h1,h2,h3,h4,.th-t,.hub-t,.kpi b,.homebar b,.lock h1{font-family:"Thmanyah Serif Display","Thmanyah Sans","IBM Plex Sans Arabic",serif;letter-spacing:0}
 h2{font-weight:600;color:var(--ink)}
 
 /* header: white bar, purple logo text, like the Saasto nav */
@@ -1340,8 +1346,8 @@ function rvCard(p) {
 }
 // the teacher's «الرئيسية»: the same 4 buttons for every teacher (plan-only accounts have no «ملفاتي»)
 // «جودة شواهد البرامج» (rev) disabled 2026-10-17 at the user's request: no button, #rev → الرئيسية; teacherReview() kept unused
-const tList = () => [prOn() && ['pa', 'سجل توثيق الأداء الوظيفي', 'نموذج أ'], prBOn() && ['pr', 'سجل توثيق الأداء الوظيفي', 'نموذج ب'],   /* 2026-11-12: لابتسام الشهري فقط (prBOn) */ prOn() && ['p3', 'سجل توثيق الأداء الوظيفي', 'نموذج ٣'], recOn() && ['rec', 'سجل إنجازي — الأنشطة الصفية واللاصفية', 'بيانات البطاقة وإصدار التقرير'], D.shareK && ['share', 'مشاركات الطالبات وأولياء الأمور', 'اليوم الوطني · يوم المعلم · درع الوطن'], D.att && (D.att.mode === 'teacher' ? ['att', 'توثيق حصص التيمز', 'ارفعي ملفات حضور حصصك من Teams'] : D.att.mode === 'view' ? ['att', 'توثيق الحضور في تيمز', 'تقارير حصص المعلمات اليومية: تصفّح وتنزيل'] : ['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات وطباعة تقارير الغياب']), D.att && D.att.mode === 'view' && ['abs', 'حصر الطالبات الغائبات', 'تقرير الغياب على مستوى حصة، والغياب الكامل والجزئي، والحصر التراكمي، وسجل كل طالبة'], false && D.td && ['td', 'لوحتي', 'مستواكِ مقارنة بالجميع وخطتك الزمنية وما يحتاج منكِ'], 
-  ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها · تدقيق الجودة'], false && D.ct && ['cp', 'الأنشطة الصفية', 'برامجك في خطة النشاط ورفع صورها'], achOn() && ['ach', 'سجل إنجازي في النشاط', 'برامجك وصورك وأوسمتك وشهاداتك'], false && D.cn && ['cn', 'الأنشطة اللاصفية', 'أسابيع فصلك: بطاقة التنفيذ والشواهد والتقرير'], D.nv && ['lnr', 'تقارير المعلمات في الأنشطة اللاصفية', 'تقارير الأسابيع ومؤشراتها (اطلاع)'], D.ct && ['sig', 'تسجيل توقيعي', 'ارسمي توقيعك مرة واحدة ليظهر في تقارير برامجك'], false && !D.planOnly && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
+const tList = () => [prOn() && ['pa', 'سجل توثيق الأداء الوظيفي', 'نموذج أ'], prBOn() && ['pr', 'سجل توثيق الأداء الوظيفي', 'نموذج ب'],   /* 2026-11-12: لابتسام الشهري فقط (prBOn) */ prOn() && ['p3', 'سجل توثيق الأداء الوظيفي', prBOn() ? 'نموذج ٣' : 'نموذج ب'],   /* 2026-11-12: اسمه «نموذج ب» عند من لا يرى نموذج ب الأصلي */ recOn() && ['rec', 'سجل إنجازي — الأنشطة الصفية واللاصفية', 'بيانات البطاقة وإصدار التقرير'], D.shareK && ['share', 'مشاركات الطالبات وأولياء الأمور', 'اليوم الوطني · يوم المعلم · درع الوطن'], D.att && (D.att.mode === 'teacher' ? ['att', 'توثيق حصص التيمز', 'ارفعي ملفات حضور حصصك من Teams'] : D.att.mode === 'view' ? ['att', 'توثيق الحضور في تيمز', 'تقارير حصص المعلمات اليومية: تصفّح وتنزيل'] : ['att', 'حضور حصص التيمز', 'متابعة رفع المعلمات وطباعة تقارير الغياب']), D.att && D.att.mode === 'view' && ['abs', 'حصر الطالبات الغائبات', 'تقرير الغياب على مستوى حصة، والغياب الكامل والجزئي، والحصر التراكمي، وسجل كل طالبة'], false && D.td && ['td', 'لوحتي', 'مستواكِ مقارنة بالجميع وخطتك الزمنية وما يحتاج منكِ'], 
+  ['plan', 'برامج الخطة التشغيلية', 'برامجك وإرفاق شواهدها · تدقيق الجودة'], false && D.ct && ['cp', 'الأنشطة الصفية', 'برامجك في خطة النشاط ورفع صورها'], achOn() && ['ach', 'سجل إنجازي في النشاط', 'برامجك وصورك وأوسمتك وشهاداتك'], false && D.cn && ['cn', 'الأنشطة اللاصفية', 'أسابيع فصلك: بطاقة التنفيذ والشواهد والتقرير'], D.nv && ['lnr', 'تقارير المعلمات في الأنشطة اللاصفية', 'تقارير الأسابيع ومؤشراتها (اطلاع)'], D.ct && ['sig', 'تسجيل توقيعي', 'ارسمي توقيعك مرة واحدة ليظهر في تقارير برامجك'], !D.planOnly && ['mine', 'ملفاتي (سجلات الإنجاز)', 'مجلداتك ونسبة إنجازها']].filter(Boolean);
 // «الأنشطة اللاصفية» (2026-10-19): الأسابيع وبطاقة التنفيذ والتقرير المحفوظ في cn.js (يُحمَّل عند أول فتح)؛ teacherCn() القديمة احتياط إن تعذّر تحميله
 // «تقارير المعلمات في الأنشطة اللاصفية» لمعلمة مطّلعة (2026-10-19: سلمى القرني): صفحة رائدة النشاط نفسها (leader.js → LEADER.nr) بطلبات برمز المعلمة
 let nvLoad = null;
@@ -1368,7 +1374,7 @@ const prBOn = () => prOn() && /ابتسام.*الشهري/.test(D.teachers[0]?.n
 let prLoad = null, paLoad = null;
 function paPage() {
   if (window.PA) return PA.render();
-  paLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'pa.js?v=20261112f'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  paLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'pa.js?v=20261112g'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { paLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
@@ -1376,13 +1382,13 @@ function paPage() {
 let p3Load = null;
 function p3Page() {
   if (window.P3) return P3.render();
-  p3Load ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'p3.js?v=20261112a'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  p3Load ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'p3.js?v=20261112c'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { p3Load = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }
 function prPage() {
   if (window.PR) return PR.render();
-  prLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'pr.js?v=20261112f'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
+  prLoad ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'pr.js?v=20261112g'; s.onload = ok; s.onerror = no; document.head.appendChild(s); })
     .then(() => route(), () => { prLoad = null; });
   return '<div class="card pad"><p class="muted" style="margin:0">جارٍ التحميل…</p></div>';
 }

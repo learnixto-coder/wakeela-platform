@@ -1,4 +1,4 @@
-// «سجل توثيق الأداء الوظيفي — نموذج أ» (2026-11-12): ترتيب سجل أ. هدى بالضبط (الغلاف، ثم صف لكل مجموعة: عنوان ووصف وعدّاد + لوحة بطاقات،
+﻿// «سجل توثيق الأداء الوظيفي — نموذج أ» (2026-11-12): ترتيب سجل أ. هدى بالضبط (الغلاف، ثم صف لكل مجموعة: عنوان ووصف وعدّاد + لوحة بطاقات،
 // خط فاصل قبل الصف الثالث، ثم التذييل، والمجلد يفتح في نافذة سفلية) بتنسيق قالب «Flowers X» (أسود/وردي/رمادي، خط وردي قصير فوق العناوين)
 // وبخط ثمانية (Thmanyah Serif Display للعناوين، Thmanyah Sans للنص؛ fonts/*.woff2). طلب المستخدمة: «ترتيبه مثل سجل هدى، الخط خط ثمانية»،
 // و«الصور الكثيرة مشتتة وليس متجر ورد» → صورة واحدة فقط في الغلاف. صفحات «التعريف بالمعلمة» هي نفسها في نموذج ب (pr.js → PR.profile).
@@ -158,7 +158,7 @@
   function openProfile(k) {
     const skin = () => document.querySelector('.pr-sh')?.classList.add('pa-skin');   // نفس الصفحة بألوان نموذج أ وخطه
     if (window.PR && PR.profile) return PR.profile(k).then(skin);
-    prLoading ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'pr.js?v=20261112f'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+    prLoading ||= new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'pr.js?v=20261112g'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
     prLoading.then(() => PR.profile(k).then(skin), () => { prLoading = null; });
   }
 

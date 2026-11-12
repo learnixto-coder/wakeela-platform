@@ -1,6 +1,6 @@
 // «سجل توثيق الأداء الوظيفي — نموذج ٣» (2026-11-12): المعلمة التي عندها سجل جاهز ترفقه فقط: ملف PDF أو رابط.
-// الملف: D.inbox بالمفتاح "pf:11.0" → tools/inbox.js يحفظه في <المعلمة>\سجل الأداء الوظيفي\12 - السجل الجاهز (نموذج ٣)\ (ينشئ المجلد)،
-// وexport.js (pfInfo) يرجعه في t.pf[11]. الرابط: Supabase pf_save_by_pid في PF.p3 = {url, at} (نفس سجل «التعريف بالمعلمة»).
+// الملف: D.inbox بالمفتاح "rr" → tools/inbox.js يحفظه في <المعلمة>\سجل توثيق الأداء الوظيفي (السجل الجاهز)\ (ينشئ المجلد)،
+// وexport.js (rrInfo) يرجعه في t.rr. الرابط: Supabase pf_save_by_pid في PF.p3 = {url, at} (نفس سجل «التعريف بالمعلمة»).
 // يعتمد على دوال index.html: D، esc، nf، sealUpload، wFileUrl، teacherId، phoneOf، sessionCode، UP_MAX.
 (function () {
   'use strict';
@@ -8,7 +8,7 @@
 .p3{--pri:#6c5ce7;--pri-s:#efecff;--ink:#24252c;--mut:#6e6a7c;--ln:#ebe8f2;--ok:#1d8a4a;--bad:#c0392b;color:var(--ink);max-width:760px;margin:0 auto;display:grid;gap:14px}
 .p3 .p3h{background:linear-gradient(135deg,#6c5ce7,#8e7cf3);color:#fff;border-radius:20px;padding:22px 20px;display:flex;gap:14px;align-items:center}
 .p3 .p3h .ic{flex:none;width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.18);display:grid;place-items:center}
-.p3 .p3h h2{margin:0;font-size:1.25rem}.p3 .p3h p{margin:4px 0 0;opacity:.9;font-size:.92rem;line-height:1.7}
+.p3 .p3h h2{margin:0;font-size:1.25rem;color:#fff}.p3 .p3h p{margin:4px 0 0;opacity:.9;font-size:.92rem;line-height:1.7}
 .p3 .p3c{background:#fff;border:1px solid var(--ln);border-radius:18px;padding:16px}
 .p3 .p3c h3{margin:0 0 10px;font-size:1.05rem}
 .p3 .p3e{color:var(--mut);margin:0;font-size:.95rem}
@@ -27,7 +27,7 @@
 @media (max-width:620px){.p3 .two{grid-template-columns:1fr}.p3 .p3r{flex-wrap:wrap}.p3 .p3r .nm{flex:1 1 calc(100% - 60px)}.p3 .p3r .b3{flex:1}}
 </style>`);
 
-  const K = 11, KEY = 'pf:11.0';   // العنصر ١٢ في PF_EL (tools/inbox.js) = «12 - السجل الجاهز (نموذج ٣)»
+  const KEY = 'rr';   // tools/inbox.js → <المعلمة>\سجل توثيق الأداء الوظيفي (السجل الجاهز)\
   const AR = n => String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
   const SB = 'https://bynymxmjzaeoyikuuwen.supabase.co';
   const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5bnlteG1qemFlb3lpa3V1d2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4MzMyNzEsImV4cCI6MjEwNzQwOTI3MX0.lL2cNc0Q_rGOaSy8rtSLPSOU9dZ57Yw1C4MoMmd9jjo';
@@ -49,7 +49,7 @@
 
   function render() {
     if (!PF || PFS !== sessionCode) setTimeout(pfLoad);
-    const t = me(), box = (t.pf || {})[K], files = box ? box.files : [], link = PF && PF.p3 && PF.p3.url;
+    const t = me(), box = t.rr, files = box ? box.files : [], link = PF && PF.p3 && PF.p3.url;
     const has = files.length || link;
     const rows = files.map(f => `<div class="p3r"><span class="fi">${esc((f.x || 'ملف').toUpperCase())}</span>
         <span class="nm"><b>${esc(f.n.split(' / ').pop().replace(/^م\s*\d+\s*-\s*/, ''))}</b><small>${f.d ? 'أُرفق ' + fmtD(f.d) : ''}</small></span>
@@ -59,7 +59,7 @@
         <a class="b3" href="${esc(link)}" target="_blank" rel="noopener">فتح الرابط</a><button type="button" class="b3 dl" data-p3-del>حذف الرابط</button></div>` : '');
     return `<div class="p3" id="p3Root">
       <div class="p3h"><span class="ic">${I('<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="m9 14 2 2 4-4"/>')}</span>
-        <div><h2>سجل توثيق الأداء الوظيفي، نموذج ٣</h2><p>إذا كان سجلك جاهزًا، أرفقيه هنا ملف PDF أو رابطًا، وارجعي له متى شئتِ من هذا الزر.</p></div></div>
+        <div><h2>سجل توثيق الأداء الوظيفي، ${prBOn() ? 'نموذج ٣' : 'نموذج ب'}</h2><p>إذا كان سجلك جاهزًا، أرفقيه هنا ملف PDF أو رابطًا، وارجعي له متى شئتِ من هذا الزر.</p></div></div>
       <div class="p3c"><h3>سجلي الجاهز</h3>${has ? rows : '<p class="p3e">لم تُرفقي سجلك بعد.</p>'}
         ${UP.map(f => `<span class="uq">${f.st === 'up' ? '⏳' : f.st === 'ok' ? '✓' : '✗'} ${esc(f.n)}${f.st === 'ok' ? '، يظهر هنا خلال دقائق' : f.err ? '، ' + esc(f.err) : ''}</span>`).join('')}
         ${box && box.url ? `<div class="p3f" style="margin-top:12px"><a class="b3 gh" href="${esc(box.url)}" target="_blank" rel="noopener">فتح المجلد في OneDrive</a></div>` : ''}</div>

@@ -5,13 +5,13 @@
 // يعتمد على دوال index.html: D، esc، wFileUrl، thumbsFill، upOn، uploadCard، bind.
 (function () {
   'use strict';
-  if (!document.getElementById('pr-font')) document.head.insertAdjacentHTML('beforeend',
+  if (false) document.head.insertAdjacentHTML("beforeend",   // Readex Pro: replaced by Thmanyah (index.html @font-face)
     '<link id="pr-font" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;600;700&display=swap">');
   document.head.insertAdjacentHTML('beforeend', `<style id="pr-css">
 .pr{--pri:#5f33e1;--pri-d:#4a22c4;--pri-soft:#eee9ff;--ink:#24252c;--mut:#6e6a7c;--ln:#eeeaf0;--wh:#fff;
   --t1:#ffe4f2;--t1i:#d6418f;--t2:#ede4ff;--t2i:#7a45e8;--t3:#ffe6d4;--t3i:#e0701c;--t4:#e7f3ff;--t4i:#0072d6;--ok:#e3f6ea;--oki:#1d8a4a;
   position:relative;overflow:hidden;isolation:isolate;background:var(--wh);border-radius:28px;border:1px solid var(--ln);padding:22px 24px 28px;color:var(--ink);
-  font-family:"Readex Pro","IBM Plex Sans Arabic",system-ui,sans-serif;line-height:1.6}
+  font-family:"Thmanyah Sans","IBM Plex Sans Arabic",system-ui,sans-serif;line-height:1.6}
 /* 2026-11-12 «بالضبط مثل التصميم» (artifact JP7k1LqSQ1domCoJwXQ5Ek): الضبابات الثلاث كما في التصميم، لكن خلف المحتوى (z-index:-1) حتى لا تبهت البطاقات */
 .pr::before,.pr::after,.pr .bl{content:"";position:absolute;z-index:-1;border-radius:50%;filter:blur(60px);pointer-events:none}
 .pr::before{width:320px;height:320px;top:-80px;left:-60px;background:#e6defe}
@@ -118,7 +118,7 @@
 .pr .upw .up{border-radius:20px}
 .pr-bd{position:fixed;inset:0;z-index:29;background:rgba(36,37,44,.35)}
 .pr-sh{position:fixed;z-index:30;left:0;right:0;bottom:0;margin:auto;width:min(620px,100%);max-height:90vh;display:flex;flex-direction:column;background:#fff;color:#24252c;
-  border-radius:28px 28px 0 0;box-shadow:0 -10px 40px rgba(36,37,44,.18);font-family:"Readex Pro","IBM Plex Sans Arabic",system-ui,sans-serif;padding-bottom:env(safe-area-inset-bottom,0px)}
+  border-radius:28px 28px 0 0;box-shadow:0 -10px 40px rgba(36,37,44,.18);font-family:"Thmanyah Sans","IBM Plex Sans Arabic",system-ui,sans-serif;padding-bottom:env(safe-area-inset-bottom,0px)}
 .pr-sh .grab{width:44px;height:5px;border-radius:3px;background:#eeeaf0;margin:10px auto 2px;flex:none}
 .pr-sh .sh-h{display:flex;align-items:center;gap:12px;padding:10px 20px 12px}
 .pr-sh h2{margin:0;font-size:18px;font-weight:600;font-family:inherit}
