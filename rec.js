@@ -217,8 +217,8 @@
     const ok = it.k === 'class' ? !!clsTarget(it) : it.k === 'occasion' ? !!(D.cn?.tok && D.cn?.cls) : nonTargets(it).length > 0;
     const sel = it.k === 'nonclass' ? `<label class="rc-form" style="margin:6px 0"><span>الشاهد عن</span><select id="rc-kind" style="font:inherit;padding:8px;border-radius:10px;border:1px solid #d9d4ee">${nonTargets(it).map((x, i) => `<option value="${i}">${x.kind === 'الصلاة' ? 'الصلاة' : 'الاصطفاف الصباحي (الإذاعة)'}${x.prog ? ': ' + e(x.prog) : ''}</option>`).join('')}</select></label>` : '';
     return `<div class="rc-ev"><h3 style="margin:14px 0 4px">الشواهد</h3>
-      <p class="muted" style="margin:0">${ar(it.ev)} شاهدًا محفوظًا${n ? ' · رفعتِ الآن ' + ar(n) : ''}. ${it.k === 'class' ? 'صور أو فيديو أو PDF (الصور تُصغَّر قبل الرفع، والفيديو حتى ٥٠٠ م.ب).' : 'صور فقط، تصل إلى مجلد الفصل المشترك.'}</p>${storyBtn(it)}
-      ${ok ? sel + `<label class="btn" style="margin-top:8px;display:inline-flex;cursor:pointer">إرفاق الشواهد<input type="file" id="rc-file" multiple accept="${it.k === 'class' ? 'image/*,video/*,application/pdf' : 'image/*'}" hidden></label>`
+      <p class="muted" style="margin:0">${ar(it.ev)} شاهدًا محفوظًا${n ? ' · رفعتِ الآن ' + ar(n) : ''}. صور أو فيديو أو أي ملف، حتى ٥٠٠ م.ب للملف (الصور تُصغَّر قبل الرفع).</p>${storyBtn(it)}
+      ${ok ? sel + `<label class="btn" style="margin-top:8px;display:inline-flex;cursor:pointer">إرفاق الشواهد<input type="file" id="rc-file" multiple hidden></label>`
         : it.k === 'occasion' ? '<p class="rc-err">تعذّر ربط حسابك بمجلد فصلك، راجعي الوكيلة.</p>'
         : '<p class="rc-err">تعذّر ربط هذا البرنامج بمجلد شواهده، ارفعي من زر «' + (it.k === 'class' ? 'الأنشطة الصفية' : 'الأنشطة اللاصفية') + '» مؤقتًا.</p>'}
       <div id="rc-upmsg" class="muted" style="margin-top:6px">${e(UPMSG)}</div>${galBox(it)}</div>`;
@@ -251,8 +251,20 @@
       const t = await r.text(); if (t[0] !== '{') throw new Error('رد غير متوقع'); const x = JSON.parse(t); if (!x.ok) { last = x.error; if (/غير مصرح|غير معروف|ليس من|فقط|أكبر/.test(x.error)) break; throw new Error(x.error); } return x; }
       catch (er) { last = er.message; await new Promise(o => setTimeout(o, 900)); } }
     throw new Error(last); }
+  // 2026-11-18 طلبها: «المعلمة ترفع ما أرادت وبشكل مفتوح» — أي نوع ملف، حتى ٥٠٠ م.ب، والكبير (> ٢٠ م.ب) على أجزاء ٨ م.ب
+  async function prep(f0) { const f = /^image\//.test(f0.type) ? await shrinkImage(f0) : f0; if (f.size > 500 * 1048576) throw new Error('الملف أكبر من ٥٠٠ م.ب'); return f; }
+  async function bigUp(q, f, prog) {
+    const { sid } = await post(Object.assign({ a: 'tustart', name: f.name, mime: f.type || 'application/octet-stream', size: f.size }, q), 240000), C = 8 * 1048576;
+    for (let off = 0; off < f.size; off += C) {
+      const part = new Uint8Array(await f.slice(off, Math.min(f.size, off + C)).arrayBuffer());
+      const x = await post({ a: 'tuchunk', tok: q.tok, sid, off, b64: toB64(part) }, 240000); prog(Math.round(Math.min(f.size, off + C) / f.size * 100));
+      if (x.done) return x.file;
+    }
+    throw new Error('لم يكتمل الرفع');
+  }
   async function upload(it, files) {
     const k = it.k + ':' + it.id, msg = t => { UPMSG = t; const m = document.getElementById('rc-upmsg'); if (m) m.textContent = t; };
+    const pr = i => p => msg(`جارٍ رفع ${ar(i + 1)} من ${ar(files.length)}… ${ar(p)}٪`);
     let ok = 0, err = '';
     for (const [i, f0] of files.entries()) {
       msg(`جارٍ رفع ${ar(i + 1)} من ${ar(files.length)}…`);
@@ -260,22 +272,21 @@
         const uid = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + i;
         if (it.k === 'class') {
           const one = clsTarget(it);
-          if (!/^(image|video)\/|^application\/pdf$/.test(f0.type)) throw new Error('يُقبل الصور والفيديو وملفات PDF فقط');
           const f = /^image\//.test(f0.type) ? await shrinkImage(f0) : f0;
           if (f.size > 500 * 1048576) throw new Error('الملف أكبر من ٥٠٠ م.ب');
           const fl = f.size > 20 * 1048576 ? await cpBig(one, f, p => msg(`جارٍ رفع ${ar(i + 1)} من ${ar(files.length)}… ${ar(p)}٪`))
             : (await post({ a: 'tupload', uid, tok: one.it.tok, key: one.p.key, name: f.name, mime: f.type || 'image/jpeg', b64: await b64of(f) }, f.size > 3e6 ? 240000 : 45000)).file;
           one.p.files && one.p.files.push(fl);
         } else if (it.k === 'occasion') {
-          if (!/^image\//.test(f0.type)) throw new Error('تُقبل الصور فقط');
-          const f = await shrinkImage(f0); if (f.size > 25 * 1048576) throw new Error('الصورة أكبر من ٢٥ م.ب');
-          const x = await post({ a: 'oupload', uid, tok: D.cn.tok, cls: D.cn.cls, occ: it.title, name: f.name, mime: f.type || 'image/jpeg', b64: await b64of(f) }, 45000);
+          const f = await prep(f0), q = { tok: D.cn.tok, cls: D.cn.cls, occ: it.title };
+          const x = f.size > 20 * 1048576 ? { file: await bigUp(Object.assign({ dest: 'o' }, q), f, pr(i)) }
+            : await post(Object.assign({ a: 'oupload', uid, name: f.name, mime: f.type || 'application/octet-stream', b64: await b64of(f) }, q), f.size > 3e6 ? 240000 : 45000);
           await rpc('act_add_occasion_evidence_by_pid', { p_pid: PID, p_event: it.id, p_drive_id: x.file.id, p_name: x.file.n, p_mime: x.file.m || f.type, p_size: x.file.s || f.size, p_folder_id: x.file.folder || null });
         } else {
           const w = nonTargets(it)[+(document.getElementById('rc-kind')?.value || 0)];
-          if (!/^image\//.test(f0.type)) throw new Error('تُقبل الصور فقط');
-          const f = await shrinkImage(f0); if (f.size > 25 * 1048576) throw new Error('الصورة أكبر من ٢٥ م.ب');
-          const x = await post({ a: 'nupload', uid, tok: D.cn.tok, cls: D.cn.cls, w: w.w, kind: w.kind, prog: w.prog, from: w.from, to: w.to, topic: w.topic, name: f.name, mime: f.type || 'image/jpeg', b64: await b64of(f) }, 45000);
+          const f = await prep(f0), q = { tok: D.cn.tok, cls: D.cn.cls, w: w.w, kind: w.kind, prog: w.prog, from: w.from, to: w.to, topic: w.topic };
+          const x = f.size > 20 * 1048576 ? { file: await bigUp(Object.assign({ dest: 'n' }, q), f, pr(i)) }
+            : await post(Object.assign({ a: 'nupload', uid, name: f.name, mime: f.type || 'application/octet-stream', b64: await b64of(f) }, q), f.size > 3e6 ? 240000 : 45000);
           w.files && w.files.push({ n: x.file.n, t: x.file.t, id: x.file.id });
         }
         ok++; UP[k] = (UP[k] || 0) + 1;
