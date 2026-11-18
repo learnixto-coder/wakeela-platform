@@ -408,6 +408,7 @@
     <div class="ld-hub">
       ${D.shareK ? hubBtn('share', 'مشاركات الطالبات وأولياء الأمور', 'اليوم الوطني · يوم المعلم · درع الوطن', '#2A7F9E') : ''}   ${/* «مشاركات الطالبات وأولياء الأمور» (2026-11-09) أول زر */ ''}
       ${hubBtn('lg', 'الأنشطة الصفية', `لوحة الحالات · ${ar(D.recs.filter(r => r.s === 'run').length)} جارٍ · ${ar(D.recs.filter(r => r.s === 'done' && !recFiles(r).length).length)} انتهى بلا شواهد`, '#0f6b63')}
+      ${hubBtn('lct', 'تقرير الأنشطة الصفية', `${ar(D.recs.filter(r => r.s === 'run' || r.s === 'done').length)} برنامجًا جاريًا ومنتهيًا · بالتواريخ · طباعة`, '#1d7a4f')}   ${/* 2026-11-18 طلبها */ ''}
       ${hubBtn('lts', 'المعلمات', `${ar(D.cls.length)} فصول · نسبة إنجاز كل ثنائي`, '#2f6fb0')}
       ${hubBtn('lm', 'لوحة المؤشرات', 'الأرقام الرئيسية والإنجاز حسب المجال', '#8a6f52')}
       ${/* «ملف إنجاز النشاط الطلابي» (2026-11-15 طلبها): زر واحد بدل «كل التقارير الصادرة» + «التقارير»، يضم كل التقارير بلا تكرار */ ''}
@@ -1077,6 +1078,46 @@
     ${R.length ? `<div class="card ld-tw"><table class="ld-t cd-t"><thead><tr><th>البرنامج</th><th>الفصل والمعلمات</th><th>المجالات</th><th>أولياء الأمور</th><th>ذوات الإعاقة</th><th>الشراكات</th><th>الحالة</th><th>التقرير</th></tr></thead><tbody>${R.map(row).join('')}</tbody></table></div>` : '<p class="ld-empty">لا بطاقات.</p>'}`;
   }
   document.addEventListener('change', ev => { if (ev.target.id === 'cdC') location.hash = 'lcd' + (ev.target.value ? '/' + encodeURIComponent(ev.target.value) : ''); });
+  // ───── «تقرير الأنشطة الصفية» (2026-11-18 طلبها): جدول كل البرامج الصفية الجارية والمنتهية بتواريخها + طباعة ─────
+  const ctWords = s => String(s || '').replace(/برنامج/g, ' ').split(/[^ء-ي]+/).filter(w => w.length > 2).map(w => w.slice(0, 4));
+  const ctPdf = (D, r) => { const V = (D.v2 || []).filter(v => v.t === 'class' && v.cls === r.cls && (v.pdf || v.drive)); if (!V.length) return null;
+    const A = ctWords(r.n); return V.find(v => v.n === r.n) || V.find(v => { const B = new Set(ctWords(v.n)), k = A.filter(w => B.has(w)).length; return k >= 2 || (k && k === A.length); }) || null; };
+  const ctDt = x => x ? `${esc(x.d)} ${hd(x.h)}` : '—';
+  const ctWho = r => r.T.map(t => t.name).sort((x, y) => x.localeCompare(y, 'ar')).join(' و ');   // 2026-11-18: الترتيب بأسماء المعلمات (الثنائي مرة واحدة)
+  const ctRows = (D, f) => D.recs.filter(r => (r.s === 'run' || r.s === 'done') && (!f || r.s === f))
+    .sort((a, b) => ctWho(a).localeCompare(ctWho(b), 'ar') || (a.s === b.s ? 0 : a.s === 'run' ? -1 : 1) || String(a.from && a.from.g || '').localeCompare(String(b.from && b.from.g || '')) || v2G(a.cls) - v2G(b.cls) || a.n.localeCompare(b.n, 'ar'));
+  function ctRep(D, f) {
+    f = f === 'run' || f === 'done' ? f : ''; const R = ctRows(D, f), A = ctRows(D, ''), pdfN = R.filter(r => ctPdf(D, r)).length;
+    return nav(['lct', 'تقرير الأنشطة الصفية']) + `<div class="card ld-h"><h2>تقرير الأنشطة الصفية الجارية والمنتهية</h2><p>كل برنامج مرة واحدة لكل فصل · من تاريخ البداية إلى تاريخ النهاية حسب سجل خطة النشاط · ${hijri(new Date().toISOString())}</p></div>
+    <div class="ld-k">${[[A.length, 'برنامجًا جاريًا أو منتهيًا'], [A.filter(r => r.s === 'run').length, 'جارٍ الآن'], [A.filter(r => r.s === 'done').length, 'انتهى'], [pdfN, 'تقريرًا صادرًا في المعروض']].map(([n, l]) => `<div class="card"><b>${ar(n)}</b><span>${l}</span></div>`).join('')}</div>
+    <div class="cd-f"><label>الحالة <select id="ctF"><option value="">الجارية والمنتهية</option><option value="run"${f === 'run' ? ' selected' : ''}>جارٍ الآن</option><option value="done"${f === 'done' ? ' selected' : ''}>انتهى</option></select></label>
+      <button class="btn sm" data-act="ctprint"${R.length ? '' : ' disabled'}>طباعة التقرير (${ar(R.length)})</button></div>
+    ${R.length ? `<div class="card ld-tw"><table class="ld-t"><thead><tr><th>م</th><th>البرنامج</th><th>الفصل والمعلمات</th><th>من</th><th>إلى</th><th>الحصص</th><th>الحالة</th><th>الشواهد</th><th>التقرير</th></tr></thead><tbody>${R.map((r, i) => { const v = ctPdf(D, r), n = recFiles(r).length; return `<tr>
+      <td>${ar(i + 1)}</td><td class="ld-p" style="--c:${DOM[r.dom] || 'var(--line)'}"><button class="ld-pg" data-go="lb/${r.i}">${esc(r.n)}</button><span class="ld-d">${esc(r.dom)}</span></td>
+      <td>${esc(r.cls.replace(/\d+$/, ar))}<span class="ld-d">${r.T.map(t => esc(t.name)).join(' و ')}</span></td>
+      <td class="ld-w">${when(r.from)}</td><td class="ld-w">${when(r.to)}</td><td>${ar(r.need || 0)}</td>
+      <td><span class="chip s-${ST[r.s][1]}">${ST[r.s][0]}</span></td><td>${upChip(n)}</td>
+      <td>${v && v.pdf ? `<a class="btn sm" href="${esc(v.pdf)}" target="_blank" rel="noopener">PDF</a>` : v && v.drive ? `<a class="btn sm ghost" href="https://drive.google.com/file/d/${esc(v.drive)}/view" target="_blank" rel="noopener">السابق</a>` : '<span class="chip s-na">لم يصدر</span>'}${v && v.imp ? ` <a class="btn sm ghost" href="${esc(v.imp)}" target="_blank" rel="noopener">الأثر</a>` : ''}</td></tr>`; }).join('')}</tbody></table></div>` : '<p class="ld-empty">لا برامج في هذا العرض.</p>'}`;
+  }
+  function ctPrint(f) {
+    const D = D_(), R = ctRows(D, f), w = window.open('', '_blank'); if (!w) return;
+    w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير الأنشطة الصفية</title>
+      <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+      <style>body{font:13px/1.7 "IBM Plex Sans Arabic",Tahoma,sans-serif;color:#222;margin:20px}header{display:flex;align-items:center;gap:14px;border-bottom:3px solid #0f6b63;padding-bottom:10px;margin-bottom:14px}
+      header img{height:60px}h1{margin:0;font-size:19px;color:#0f6b63}header small{display:block;color:#555}table{width:100%;border-collapse:collapse}th,td{border:1px solid #b9c7c2;padding:5px 7px;text-align:right;vertical-align:top}
+      th{background:#e6f0ed;color:#0f6b63}tr{break-inside:avoid}td small{display:block;color:#666;font-size:11.5px}tr.g td{background:#f3f7f5;color:#0f6b63;font-weight:700;font-size:14px;border-top:2px solid #0f6b63}.run{color:#9a6a00;font-weight:700}.done{color:#0f6b63;font-weight:700}
+      @page{size:A4 landscape;margin:10mm}@media print{body{margin:0}}</style></head><body>
+      <header><img src="${esc(new URL('moe-logo.png', location.href.split('#')[0]).href)}" alt=""><div><h1>تقرير الأنشطة الصفية ${f === 'run' ? 'الجارية' : f === 'done' ? 'المنتهية' : 'الجارية والمنتهية'}</h1><small>المتوسطة الحادية والعشرون · النشاط الطلابي · الفصل الدراسي الأول ١٤٤٨هـ · ${ar(R.length)} برنامجًا · ${hijri(new Date().toISOString())}</small></div></header>
+      <table><thead><tr><th>م</th><th>البرنامج</th><th>المجال</th><th>الفصل</th><th>المعلمات</th><th>من</th><th>إلى</th><th>الحصص</th><th>الحالة</th><th>الشواهد</th><th>التقرير</th></tr></thead><tbody>
+      ${R.map((r, i) => `${!i || ctWho(R[i - 1]) !== ctWho(r) ? `<tr class="g"><td colspan="11">${r.T.slice().sort((x, y) => x.name.localeCompare(y.name, 'ar')).map(t => 'أ. ' + esc(t.name)).join(' و ')}</td></tr>` : ''}<tr><td>${ar(i + 1)}</td><td>${esc(r.n)}</td><td>${esc(r.dom)}</td><td>${esc(r.cls.replace(/\d+$/, ar))}</td><td>${r.T.map(t => esc(t.name)).join('<br>')}</td><td>${ctDt(r.from)}</td><td>${ctDt(r.to)}</td><td>${ar(r.need || 0)}</td>
+        <td class="${r.s}">${ST[r.s][0]}</td><td>${ar(recFiles(r).length)}</td><td>${ctPdf(D, r) ? 'صدر' : 'لم يصدر'}</td></tr>`).join('')}</tbody></table>
+      <p style="margin-top:22px">رائد النشاط: منى العمري</p>
+      <script>window.onload=()=>setTimeout(()=>print(),400)<\/script></body></html>`);
+    w.document.close();
+  }
+  document.addEventListener('change', ev => { if (ev.target.id === 'ctF') location.hash = 'lct' + (ev.target.value ? '/' + ev.target.value : ''); });
+  document.addEventListener('click', ev => { const b = ev.target.closest('[data-act="ctprint"]'); if (b) { const s = document.getElementById('ctF'); ctPrint(s ? s.value : ''); } });
+
   // ───── «كل التقارير الصادرة» (2026-11-15): كل تقارير النظام الجديد (صفية + لاصفية + مناسبات) من D.v2 (tools/leader.js) ─────
   const V2T = { class: 'الأنشطة الصفية', nonclass: 'الأنشطة اللاصفية', occasion: 'الأيام والمناسبات' };
   const v2St = r => r.pdf ? ['صدر', 'ok'] : r.st === 'requested' ? ['جارٍ الإصدار', 'run'] : r.drive ? ['تقرير سابق', 'ok'] : r.st === 'failed' ? ['تعذّر الإصدار', 'bad'] : ['لم يصدر', 'wait'];
@@ -1208,7 +1249,7 @@
   window.LEADER = {
     nr: nrView,
     render(D, v, a) { style(); events(); ocEvents(); window.__LD = D; prep(D); const tt = document.getElementById('title'); if (tt) tt.textContent = this.title;
-      return v === 'lcal' ? calPage(D, a) : v === 'lo' ? occasions(D, a) : v === 'lk' ? (a === undefined || a === '' ? compsPage(D) : comp(D, +a)) : v === 'lnr' ? nrPage(D, a) : v === 'lt' ? teacher(D, +a) : v === 'ltc' ? teacherClass(D, +a) : v === 'ltn' ? teacherNon(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? (D.v2 ? v2Page(D, a) : reportsPage(D)) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : v === 'la' ? alerts(D) : v === 'lcd' ? cardsPage(D, a) : v === 'lall' ? v2Page(D, a) : home(D); },
+      return v === 'lcal' ? calPage(D, a) : v === 'lo' ? occasions(D, a) : v === 'lk' ? (a === undefined || a === '' ? compsPage(D) : comp(D, +a)) : v === 'lnr' ? nrPage(D, a) : v === 'lt' ? teacher(D, +a) : v === 'ltc' ? teacherClass(D, +a) : v === 'ltn' ? teacherNon(D, +a) : v === 'ld' ? (a === undefined || a === '' ? domainsPage(D) : domain(D, +a)) : v === 'lg' ? (a === undefined || a === '' ? classHub(D) : grade(D, +a)) : v === 'ln' ? nonClass(D) : v === 'lts' ? teachersPage(D) : v === 'lf' ? foldersPage(D) : v === 'lr' ? (D.v2 ? v2Page(D, a) : reportsPage(D)) : v === 'lc' ? klass(D, +a) : v === 'lb' ? (a === undefined || a === '' ? programs(D) : record(D, +a)) : v === 'lm' ? metrics(D) : v === 'lp' ? all(D) : v === 'la' ? alerts(D) : v === 'lcd' ? cardsPage(D, a) : v === 'lall' ? v2Page(D, a) : v === 'lct' ? ctRep(D, a) : home(D); },
     title: 'صفحة رائد النشاط : منى العمري',
   };
 })();
