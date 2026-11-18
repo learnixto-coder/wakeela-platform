@@ -1103,15 +1103,14 @@
     const D = D_(), R = ctRows(D, f), w = window.open('', '_blank'); if (!w) return;
     w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير الأنشطة الصفية</title>
       <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
-      <style>body{font:13px/1.7 "IBM Plex Sans Arabic",Tahoma,sans-serif;color:#222;margin:20px}header{display:flex;align-items:center;gap:14px;border-bottom:3px solid #0f6b63;padding-bottom:10px;margin-bottom:14px}
-      header img{height:60px}h1{margin:0;font-size:19px;color:#0f6b63}header small{display:block;color:#555}table{width:100%;border-collapse:collapse}th,td{border:1px solid #b9c7c2;padding:5px 7px;text-align:right;vertical-align:top}
-      th{background:#e6f0ed;color:#0f6b63}tr{break-inside:avoid}td small{display:block;color:#666;font-size:11.5px}tr.g td{background:#f3f7f5;color:#0f6b63;font-weight:700;font-size:14px;border-top:2px solid #0f6b63}.run{color:#9a6a00;font-weight:700}.done{color:#0f6b63;font-weight:700}
+      <style>body{font:12.5px/1.45 "IBM Plex Sans Arabic",Tahoma,sans-serif;color:#222;margin:20px}header{display:flex;align-items:center;gap:14px;border-bottom:3px solid #0f6b63;padding-bottom:10px;margin-bottom:14px}
+      header img{height:60px}h1{margin:0;font-size:19px;color:#0f6b63}header small{display:block;color:#555}table{width:100%;border-collapse:collapse}th,td{border:1px solid #b9c7c2;padding:3px 6px;text-align:right;vertical-align:top}
+      th{background:#e6f0ed;color:#0f6b63}tr{break-inside:avoid}td small{display:block;color:#666;font-size:11.5px}tbody.k{break-inside:avoid;page-break-inside:avoid}thead{display:table-header-group}tr.sg td{border:0;padding-top:20px}tr.g td{background:#f3f7f5;color:#0f6b63;font-weight:700;font-size:14px;border-top:2px solid #0f6b63}.run{color:#9a6a00;font-weight:700}.done{color:#0f6b63;font-weight:700}
       @page{size:A4 landscape;margin:10mm}@media print{body{margin:0}}</style></head><body>
       <header><img src="${esc(new URL('moe-logo.png', location.href.split('#')[0]).href)}" alt=""><div><h1>تقرير الأنشطة الصفية ${f === 'run' ? 'الجارية' : f === 'done' ? 'المنتهية' : 'الجارية والمنتهية'}</h1><small>المتوسطة الحادية والعشرون · النشاط الطلابي · الفصل الدراسي الأول ١٤٤٨هـ · ${ar(R.length)} برنامجًا · ${hijri(new Date().toISOString())}</small></div></header>
-      <table><thead><tr><th>م</th><th>البرنامج</th><th>المجال</th><th>الفصل</th><th>المعلمات</th><th>من</th><th>إلى</th><th>الحصص</th><th>الحالة</th><th>الشواهد</th><th>التقرير</th></tr></thead><tbody>
-      ${R.map((r, i) => `${!i || ctWho(R[i - 1]) !== ctWho(r) ? `<tr class="g"><td colspan="11">${r.T.slice().sort((x, y) => x.name.localeCompare(y.name, 'ar')).map(t => 'أ. ' + esc(t.name)).join(' و ')}</td></tr>` : ''}<tr><td>${ar(i + 1)}</td><td>${esc(r.n)}</td><td>${esc(r.dom)}</td><td>${esc(r.cls.replace(/\d+$/, ar))}</td><td>${r.T.map(t => esc(t.name)).join('<br>')}</td><td>${ctDt(r.from)}</td><td>${ctDt(r.to)}</td><td>${ar(r.need || 0)}</td>
-        <td class="${r.s}">${ST[r.s][0]}</td><td>${ar(recFiles(r).length)}</td><td>${ctPdf(D, r) ? 'صدر' : 'لم يصدر'}</td></tr>`).join('')}</tbody></table>
-      <p style="margin-top:22px">رائد النشاط: منى العمري</p>
+      <table><thead><tr><th>م</th><th>البرنامج</th><th>المجال</th><th>الفصل</th><th>المعلمات</th><th>من</th><th>إلى</th><th>الحصص</th><th>الحالة</th><th>الشواهد</th><th>التقرير</th></tr></thead>
+      ${R.map((r, i) => `${!i || ctWho(R[i - 1]) !== ctWho(r) ? `${i ? "</tbody>" : ""}<tbody class="k"><tr class="g"><td colspan="11">${r.T.slice().sort((x, y) => x.name.localeCompare(y.name, 'ar')).map(t => 'أ. ' + esc(t.name)).join(' و ')}</td></tr>` : ''}<tr><td>${ar(i + 1)}</td><td>${esc(r.n)}</td><td>${esc(r.dom)}</td><td>${esc(r.cls.replace(/\d+$/, ar))}</td><td>${r.T.map(t => esc(t.name)).join('<br>')}</td><td>${ctDt(r.from)}</td><td>${ctDt(r.to)}</td><td>${ar(r.need || 0)}</td>
+        <td class="${r.s}">${ST[r.s][0]}</td><td>${ar(recFiles(r).length)}</td><td>${ctPdf(D, r) ? 'صدر' : 'لم يصدر'}</td></tr>`).join('')}<tr class="sg"><td colspan="11">رائد النشاط: منى العمري</td></tr></tbody></table>
       <script>window.onload=()=>setTimeout(()=>print(),400)<\/script></body></html>`);
     w.document.close();
   }
