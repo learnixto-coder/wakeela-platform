@@ -1083,6 +1083,10 @@
   const ctPdf = (D, r) => { const V = (D.v2 || []).filter(v => v.t === 'class' && v.cls === r.cls && (v.pdf || v.drive)); if (!V.length) return null;
     const A = ctWords(r.n); return V.find(v => v.n === r.n) || V.find(v => { const B = new Set(ctWords(v.n)), k = A.filter(w => B.has(w)).length; return k >= 2 || (k && k === A.length); }) || null; };
   const ctDt = x => x ? `${esc(x.d)} ${hd(x.h)}` : '—';
+  // اتفاقها 2026-11-09: البرنامج الصفي يبدأ يوم الثلاثاء وينتهي يوم الثلاثاء (رقم الأسبوع نفسه في السجل، واليوم يُحوَّل إلى ثلاثاء ذلك الأسبوع)
+  const ctTue = x => { if (!x || !x.g) return x; const [y, m, d] = x.g.split('/').map(Number), t = new Date(Date.UTC(y, m - 1, d)); t.setUTCDate(t.getUTCDate() - t.getUTCDay() + 2);
+    const f = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', { day: 'numeric', month: 'numeric', year: 'numeric', timeZone: 'UTC' }).formatToParts(t), p = k => String(parseInt((f.find(z => z.type === k) || {}).value, 10)).padStart(2, '0');
+    return Object.assign({}, x, { d: 'الثلاثاء', h: `${p('year')}/${p('month')}/${p('day')}`, g: `${t.getUTCFullYear()}/${String(t.getUTCMonth() + 1).padStart(2, '0')}/${String(t.getUTCDate()).padStart(2, '0')}` }); };
   const ctWho = r => r.T.map(t => t.name).sort((x, y) => x.localeCompare(y, 'ar')).join(' و ');   // 2026-11-18: الترتيب بأسماء المعلمات (الثنائي مرة واحدة)
   const ctRows = (D, f) => D.recs.filter(r => (r.s === 'run' || r.s === 'done') && (!f || r.s === f))
     .sort((a, b) => ctWho(a).localeCompare(ctWho(b), 'ar') || (a.s === b.s ? 0 : a.s === 'run' ? -1 : 1) || String(a.from && a.from.g || '').localeCompare(String(b.from && b.from.g || '')) || v2G(a.cls) - v2G(b.cls) || a.n.localeCompare(b.n, 'ar'));
@@ -1095,7 +1099,7 @@
     ${R.length ? `<div class="card ld-tw"><table class="ld-t"><thead><tr><th>م</th><th>البرنامج</th><th>الفصل والمعلمات</th><th>من</th><th>إلى</th><th>الحصص</th><th>الحالة</th><th>الشواهد</th><th>التقرير</th></tr></thead><tbody>${R.map((r, i) => { const v = ctPdf(D, r), n = recFiles(r).length; return `<tr>
       <td>${ar(i + 1)}</td><td class="ld-p" style="--c:${DOM[r.dom] || 'var(--line)'}"><button class="ld-pg" data-go="lb/${r.i}">${esc(r.n)}</button><span class="ld-d">${esc(r.dom)}</span></td>
       <td>${esc(r.cls.replace(/\d+$/, ar))}<span class="ld-d">${r.T.map(t => esc(t.name)).join(' و ')}</span></td>
-      <td class="ld-w">${when(r.from)}</td><td class="ld-w">${when(r.to)}</td><td>${ar(r.need || 0)}</td>
+      <td class="ld-w">${when(ctTue(r.from))}</td><td class="ld-w">${when(ctTue(r.to))}</td><td>${ar(r.need || 0)}</td>
       <td><span class="chip s-${ST[r.s][1]}">${ST[r.s][0]}</span></td><td>${upChip(n)}</td>
       <td>${v && v.pdf ? `<a class="btn sm" href="${esc(v.pdf)}" target="_blank" rel="noopener">PDF</a>` : v && v.drive ? `<a class="btn sm ghost" href="https://drive.google.com/file/d/${esc(v.drive)}/view" target="_blank" rel="noopener">السابق</a>` : '<span class="chip s-na">لم يصدر</span>'}${v && v.imp ? ` <a class="btn sm ghost" href="${esc(v.imp)}" target="_blank" rel="noopener">الأثر</a>` : ''}</td></tr>`; }).join('')}</tbody></table></div>` : '<p class="ld-empty">لا برامج في هذا العرض.</p>'}`;
   }
@@ -1109,7 +1113,7 @@
       @page{size:A4 landscape;margin:10mm}@media print{body{margin:0}}</style></head><body>
       <header><img src="${esc(new URL('moe-logo.png', location.href.split('#')[0]).href)}" alt=""><div><h1>تقرير الأنشطة الصفية ${f === 'run' ? 'الجارية' : f === 'done' ? 'المنتهية' : 'الجارية والمنتهية'}</h1><small>المتوسطة الحادية والعشرون · النشاط الطلابي · الفصل الدراسي الأول ١٤٤٨هـ · ${ar(R.length)} برنامجًا · ${hijri(new Date().toISOString())}</small></div></header>
       <table><thead><tr><th>م</th><th>البرنامج</th><th>المجال</th><th>الفصل</th><th>المعلمات</th><th>من</th><th>إلى</th><th>الحصص</th><th>الحالة</th><th>الشواهد</th><th>التقرير</th></tr></thead>
-      ${R.map((r, i) => `${!i || ctWho(R[i - 1]) !== ctWho(r) ? `${i ? "</tbody>" : ""}<tbody class="k"><tr class="g"><td colspan="11">${r.T.slice().sort((x, y) => x.name.localeCompare(y.name, 'ar')).map(t => 'أ. ' + esc(t.name)).join(' و ')}</td></tr>` : ''}<tr><td>${ar(i + 1)}</td><td>${esc(r.n)}</td><td>${esc(r.dom)}</td><td>${esc(r.cls.replace(/\d+$/, ar))}</td><td>${r.T.map(t => esc(t.name)).join('<br>')}</td><td>${ctDt(r.from)}</td><td>${ctDt(r.to)}</td><td>${ar(r.need || 0)}</td>
+      ${R.map((r, i) => `${!i || ctWho(R[i - 1]) !== ctWho(r) ? `${i ? "</tbody>" : ""}<tbody class="k"><tr class="g"><td colspan="11">${r.T.slice().sort((x, y) => x.name.localeCompare(y.name, 'ar')).map(t => 'أ. ' + esc(t.name)).join(' و ')}</td></tr>` : ''}<tr><td>${ar(i + 1)}</td><td>${esc(r.n)}</td><td>${esc(r.dom)}</td><td>${esc(r.cls.replace(/\d+$/, ar))}</td><td>${r.T.map(t => esc(t.name)).join('<br>')}</td><td>${ctDt(ctTue(r.from))}</td><td>${ctDt(ctTue(r.to))}</td><td>${ar(r.need || 0)}</td>
         <td class="${r.s}">${ST[r.s][0]}</td><td>${ar(recFiles(r).length)}</td><td>${ctPdf(D, r) ? 'صدر' : 'لم يصدر'}</td></tr>`).join('')}<tr class="sg"><td colspan="11">رائد النشاط: منى العمري</td></tr></tbody></table>
       <script>window.onload=()=>setTimeout(()=>print(),400)<\/script></body></html>`);
     w.document.close();
