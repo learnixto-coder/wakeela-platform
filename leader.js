@@ -1096,7 +1096,8 @@
     return nav(['lct', 'تقرير الأنشطة الصفية']) + `<div class="card ld-h"><h2>تقرير الأنشطة الصفية الجارية والمنتهية</h2><p>كل برنامج مرة واحدة لكل فصل · من تاريخ البداية إلى تاريخ النهاية حسب سجل خطة النشاط · ${hijri(new Date().toISOString())}</p></div>
     <div class="ld-k">${[[A.length, 'برنامجًا جاريًا أو منتهيًا'], [A.filter(r => ctS(r) === 'run').length, 'جارٍ الآن'], [A.filter(r => ctS(r) === 'done').length, 'انتهى'], [pdfN, 'تقريرًا صادرًا في المعروض']].map(([n, l]) => `<div class="card"><b>${ar(n)}</b><span>${l}</span></div>`).join('')}</div>
     <div class="cd-f"><label>الحالة <select id="ctF"><option value="">الجارية والمنتهية</option><option value="run"${f === 'run' ? ' selected' : ''}>جارٍ الآن</option><option value="done"${f === 'done' ? ' selected' : ''}>انتهى</option></select></label>
-      <button class="btn sm" data-act="ctprint"${R.length ? '' : ' disabled'}>طباعة التقرير (${ar(R.length)})</button></div>
+      <button class="btn sm" data-act="ctprint"${R.length ? '' : ' disabled'}>طباعة التقرير (${ar(R.length)})</button>
+      ${D.call && D.call.url ? `<a class="btn sm" style="background:#5b4bd6;border-color:#5b4bd6;color:#fff" href="${esc(D.call.url)}" target="_blank" rel="noopener">بطاقات التنفيذ — ملف واحد PDF (${ar(D.call.n)})</a>` : ''}</div>
     ${R.length ? `<div class="card ld-tw"><table class="ld-t"><thead><tr><th>م</th><th>البرنامج</th><th>الفصل والمعلمات</th><th>من</th><th>إلى</th><th>الحصص</th><th>الحالة</th><th>الشواهد</th><th>التقرير</th></tr></thead><tbody>${R.map((r, i) => { const v = ctPdf(D, r), n = recFiles(r).length; return `<tr>
       <td>${ar(i + 1)}</td><td class="ld-p" style="--c:${DOM[r.dom] || 'var(--line)'}"><button class="ld-pg" data-go="lb/${r.i}">${esc(r.n)}</button><span class="ld-d">${esc(r.dom)}</span></td>
       <td>${esc(r.cls.replace(/\d+$/, ar))}<span class="ld-d">${r.T.map(t => esc(t.name)).join(' و ')}</span></td>
