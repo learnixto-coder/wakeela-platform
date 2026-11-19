@@ -64,14 +64,15 @@
   const today = () => isoOf(new Date());
   const hm = d => d ? `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}` : '';
   // أوقات الحصص عن بعد (من المستخدمة 2026-10-26): ٤٠ دقيقة وبينها ٥ دقائق، ح١ ٧:٠٠ … ح٧ ١١:٣٠–١٢:١٠
-  const BELL = ['7:00', '7:45', '8:30', '9:15', '10:00', '10:45', '11:30'], BELL_END = ['7:40', '8:25', '9:10', '9:55', '10:40', '11:25', '12:10'],
+  // 2026-11-19 (المستخدمة): تغيّر وقت الحصص هذا الأسبوع ← الحصة السابعة حتى ١:٣٠، وتُقبل اجتماعاتها حتى ٢:٣٠
+  const BELL = ['7:00', '7:45', '8:30', '9:15', '10:00', '10:45', '11:30'], BELL_END = ['7:40', '8:25', '9:10', '9:55', '10:40', '11:25', '13:30'],
     pics = n => n === 1 ? 'صورة واحدة' : n === 2 ? 'صورتان' : `${ad(n)} ${n > 2 && n < 11 ? 'صور' : 'صورة'}`,
     slot = p => `${ad(BELL[p - 1])}‏ – ‏${ad(BELL_END[p - 1])}`,   // RLM: البداية في اليمين
     mins = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
   // الحصة من منتصف الاجتماع (المستخدمة 2026-10-26: «خلك في النصف» — بدء متأخر ٤ دقائق أو تجاوز ٥ لا يغيّرها):
   // أقرب حصة منتصفُها لمنتصف الاجتماع، من ٦:٤٥ حتى ١٣:٣٠
   const MID = BELL.map((b, i) => (mins(b) + mins(BELL_END[i])) / 2);
-  const periodAt = d => { const t = d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60; if (t < mins(BELL[0]) - 15 || t > mins('13:30')) return 0;
+  const periodAt = d => { const t = d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60; if (t < mins(BELL[0]) - 15 || t > mins('14:30')) return 0;
     let p = 1; MID.forEach((m, i) => { if (Math.abs(t - m) < Math.abs(t - MID[p - 1])) p = i + 1; }); return p; };
   const wa = (phone, text) => `https://wa.me/966${String(phone).replace(/\D/g, '').replace(/^0/, '')}?text=${encodeURIComponent(text)}`;
   const chipOf = (ok, txt) => `<span class="chip s-${ok ? 'ok' : 'none'}">${txt}</span>`;
@@ -167,7 +168,8 @@
     const R = { ...r, start: r.start && new Date(r.start), end: r.end && new Date(r.end), students: (r.students || []).map(x => ({ ...x, first: x.first && new Date(x.first) })) };
     const C = TEAMS.classify(R), iso = R.start ? isoOf(R.start) : '';
     let best = null; for (const k of Object.keys(A.roster)) { const m = matcher(A.roster[k]), n = C.filter(x => m(x.name)).length; if (!best || n > best.n) best = { k, n }; }
-    const [g, s] = best && best.n >= Math.min(3, C.length) && best.n > 0 ? best.k.split('-').map(Number) : [0, 0];
+    // ٢ من الأسماء تكفي (2026-11-19: ح٧ حضرتها طالبتان + المديرة فلم يُعرف الفصل)
+    const [g, s] = best && best.n >= Math.min(2, C.length) && best.n > 0 ? best.k.split('-').map(Number) : [0, 0];
     const tm = R.start ? (R.end && R.end > R.start ? (+R.start + +R.end) / 2 : +R.start + 20 * 60000) : 0, p = tm ? periodAt(new Date(tm)) : 0;
     return { iso, p, p0: p, t0: R.start ? R.start.getTime() : 0, tm, g, s, subj: R.title || '', file, start: hm(R.start), end: hm(R.end),
       present: C.filter(x => x.kind === 'present').map(x => x.name), late: C.filter(x => x.kind === 'late').map(x => ({ n: x.name, t: hm(x.first) })),
@@ -622,6 +624,7 @@
     return `<div class="card hero th-hero"><div class="grow"><h2>توثيق حصص التيمز — ${DAYS[wday(iso)]} ${hij(iso)}</h2>
         <p class="muted">${nP ? (r.sent ? `أرسلتِ ${ad(r.sent)} من ${ad(nP)} ${word(nP)}` : `لم ترسلي بعد · ${nP === 1 ? 'حصة واحدة' : nP === 2 ? 'حصتان' : ad(nP) + ' ' + word(nP)} اليوم`) : 'لا توجد لكِ حصص في هذا اليوم حسب الجدول'}</p></div>
         <div>${nP ? (r.sent === nP ? chipOf(1, 'أرسلتِ كل حصصك') : chipOf(0, `باقي ${ad(nP - r.sent)}`)) : ''}</div></div>
+      <div class="at-act" style="justify-content:center;margin:10px 0"><button class="btn" data-atthand="${iso}" style="font-size:16px;padding:10px 22px">✍️ تحضير يدوي للحصص</button></div>
       ${dayNav(days, iso)}
       ${pdfCard(A, iso)}
       <div class="card pad at-act"><div><b>إرفاق ملفات الحضور</b><div class="muted" style="font-size:13px">نزّلي «تقرير الحضور» من Teams لكل حصة (أو «قائمة الحضور» من المشاركين أثناء الاجتماع، وتُنسب لليوم المفتوح هنا)، واختاري الملفات كلها مرة واحدة، أو مجلدًا كاملًا بمجلدات أيامه (في الكمبيوتر)؛ تُوزَّع على أيامها وحصصها تلقائيًا.
@@ -711,7 +714,8 @@
   function synth(iso, p, title, who, kids, fname) {
     const [y, mo, d] = iso.split('-').map(Number), at = hh => { let [H, M] = hh.split(':').map(Number); const ap = H < 12 ? 'AM' : 'PM'; H = H % 12 || 12;
       return `${mo}/${d}/${String(y).slice(2)}, ${H}:${String(M).padStart(2, '0')}:00 ${ap}`; };
-    const b = at(BELL[p - 1]), e = at(BELL_END[p - 1]);
+    // ٤٠ دقيقة من بداية الحصة دائمًا (ح٧ صارت حتى ١:٣٠ — ملف أطول قد يُحسب حصتين)
+    const e40 = mins(BELL[p - 1]) + 40, b = at(BELL[p - 1]), e = at(`${Math.floor(e40 / 60)}:${String(e40 % 60).padStart(2, '0')}`);
     const txt = ['1. الملخص', `عنوان الاجتماع\t${title}`, `وقت البدء\t${b}`, `وقت الانتهاء\t${e}`, '',
       '2. المشاركون', 'الاسم\tوقت الانضمام الأول\tوقت المغادرة الأخير\tمدة الاجتماع\tالبريد الإلكتروني\tالدور',
       ...who.map(n => `${n}\t${b}\t${e}\t40 د\t\tالمنظم`), ...kids.map(n => `${n}\t${b}\t${e}\t40 د\t\tالحضور`)].join('\r\n');
@@ -781,7 +785,19 @@
     if (!unk && L.filter(n => !seen.has(n)).length <= gr) L.forEach(n => seen.add(n));
     Object.assign(G, { st, seen, unk });
   }
-  const iPeriods = (A, G) => { const exp = me(A).days[wday(G.iso)] || []; return exp.map((c, i) => c && c.g === G.g && c.s === G.s ? i + 1 : 0).filter(Boolean); };
+  // التحضير اليدوي: إن لم يكن الفصل في جدولها ذلك اليوم تُعرض الحصص السبع كلها (تغيّر الجدول، المستخدمة 2026-11-19)
+  const iPeriods = (A, G) => { const exp = me(A).days[wday(G.iso)] || [], L = exp.map((c, i) => c && c.g === G.g && c.s === G.s ? i + 1 : 0).filter(Boolean);
+    return G.man && !L.length ? [1, 2, 3, 4, 5, 6, 7] : L; };
+  // «تحضير يدوي للحصص» (المستخدمة 2026-11-19): بلا ملف ولا صور — أول حصة لم تُرفق في جدولها، وكل الطالبات حاضرات حتى تضغط الغائبة
+  const MTITLE = 'تحضير يدوي';
+  const manAll = (A, G) => { const N = A.roster[ck(G.g, G.s)] || []; G.st = {}; N.forEach(n => G.st[n] = 'h'); G.seen = new Set(N); G.unk = 0; };
+  function manNew(iso) {
+    const A = D.att, exp = me(A).days[wday(iso)] || [], tk = iTaken(A, iso);
+    let i = exp.findIndex((c, j) => c && !tk.has(c.g + '-' + c.s + '-' + (j + 1))); if (i < 0) i = exp.findIndex(Boolean);
+    const [g, s] = i >= 0 ? [exp[i].g, exp[i].s] : Object.keys(A.roster).sort()[0].split('-').map(Number);
+    const G = { iso, imgs: [], rows: [], man: 1, g, s, p: i >= 0 ? i + 1 : 0 }; manAll(A, G); if (!G.p) iPick(A, G);
+    IMG.push(G); route();
+  }
   const iTaken = (A, iso) => new Set([...PEND.filter(x => x.f && x.iso === iso).map(x => x.f), ...(A.days?.[iso]?.[me(A).name] || [])].flatMap(expand).map(f => f.g + '-' + f.s + '-' + f.p));
   function iPick(A, G) { const ps = iPeriods(A, G), tk = iTaken(A, G.iso); G.p = ps.includes(G.ph) ? G.ph : ps.find(x => !tk.has(G.g + '-' + G.s + '-' + x)) || ps[0] || 0; }
   async function readImgs(files) {
@@ -803,8 +819,10 @@
   function imgCard(A, iso) {
     const L = IMG.filter(G => G.iso === iso); if (!L.length) return '';
     const opt = (v, cur, t) => `<option value="${v}"${v === cur ? ' selected' : ''}>${t}</option>`;
-    return `<div class="card pad"><b>صور الحضور من منصة مدرستي</b>
-      <div class="muted" style="font-size:13px">قرأتُ الأسماء من الصور؛ تأكدي منها قبل الاعتماد: اضغطي اسم الطالبة لتبديلها بين حاضرة وغائبة. الاسم الأصفر لم يظهر في الصور.</div>
+    const onlyMan = L.every(G => G.man);
+    return `<div class="card pad"><b>${onlyMan ? '✍️ تحضير يدوي للحصص' : 'صور الحضور من منصة مدرستي'}</b>
+      <div class="muted" style="font-size:13px">${onlyMan ? 'اختاري الحصة والفصل، ثم اضغطي اسم كل طالبة غائبة (يتحول إلى أحمر «غائبة»)، ثم «اعتماد الحصة» و«إرسال».'
+        : 'قرأتُ الأسماء من الصور؛ تأكدي منها قبل الاعتماد: اضغطي اسم الطالبة لتبديلها بين حاضرة وغائبة. الاسم الأصفر لم يظهر في الصور.'}</div>
       ${L.map(G => { const i = IMG.indexOf(G), th = `<div class="at-evs">${G.imgs.map(x => `<div class="at-ev"><img src="${x.url}" alt="صورة الحضور"></div>`).join('')}</div>`;
         if (G.busy) return `<div class="at-im">${th}<p class="muted">${G.msg || 'جارٍ قراءة الصور…'} (أول مرة قد تأخذ دقيقة)</p></div>`;
         if (G.err) return `<div class="at-im">${th}<p style="color:#b91c1c">${esc(G.err)}</p><button class="btn sm ghost" data-attimx="${i}">إزالة</button></div>`;
@@ -819,9 +837,9 @@
   }
   function imgOk(i) {
     const A = D.att, G = IMG[i]; if (!G || !G.p) return;
-    const N = A.roster[ck(G.g, G.s)] || [], name = `حضور مدرستي ح${G.p} ${cls(G.g, G.s)}.csv`;
+    const N = A.roster[ck(G.g, G.s)] || [], name = `${G.man ? 'تحضير يدوي' : 'حضور مدرستي'} ح${G.p} ${cls(G.g, G.s)}.csv`;
     if (iTaken(A, G.iso).has(G.g + '-' + G.s + '-' + G.p) && !confirm(`ح${ad(G.p)} مُرفقة من قبل. أُضيفها مرة ثانية؟`)) return;
-    const { buf, file } = synth(G.iso, G.p, ITITLE, [me(A).name], N.filter(n => G.st[n] !== 'a'), name), r = TEAMS.parse(buf);
+    const { buf, file } = synth(G.iso, G.p, G.man ? MTITLE : ITITLE, [me(A).name], N.filter(n => G.st[n] !== 'a'), name), r = TEAMS.parse(buf);
     PEND.push({ iso: G.iso, file, f: lessonOf(A, r, file.name) }); IMG.splice(i, 1); G.imgs.forEach(x => URL.revokeObjectURL(x.url)); route();
   }
   // dir = اختيار مجلد كامل (مجلدات الأيام): ما ليس تقرير حضور أو أُرسل من قبل يُتخطّى بصمت (المستخدمة 2026-10-29)
@@ -878,7 +896,7 @@
     document.addEventListener('change', e => { const t = e.target;
       if (t.matches && t.matches('[data-attf]') && t.files.length) readFiles([...t.files]);
       if (t.matches && t.matches('[data-attdir]') && t.files.length) readFiles([...t.files], 1);
-      if (t.matches && t.matches('[data-attimg]')) { const G = IMG[+t.dataset.attimg]; if (G) { [G.g, G.s] = t.value.split('-').map(Number); matchRows(D.att, G); iPick(D.att, G); route(); } }
+      if (t.matches && t.matches('[data-attimg]')) { const G = IMG[+t.dataset.attimg]; if (G) { [G.g, G.s] = t.value.split('-').map(Number); if (G.man) manAll(D.att, G); else matchRows(D.att, G); iPick(D.att, G); route(); } }
       if (t.matches && t.matches('[data-attimp]')) { const G = IMG[+t.dataset.attimp]; if (G) G.p = +t.value; }
       if (t.matches && t.matches('[data-attday]')) location.hash = (t.dataset.attday || 'att/d/') + t.value;
       if (t.matches && t.matches('[data-atti]') && t.files.length) { const iso = t.dataset.atti, bad = [];
@@ -886,6 +904,7 @@
         if (bad.length && typeof toast === 'function') toast('تُقبل الصور فقط'); route(); } });
     document.addEventListener('click', e => { const t = e.target.closest ? e.target : null; if (!t) return;
       const is = t.closest('[data-attims]'); if (is) { const [i, ...n] = is.dataset.attims.split('|'), G = IMG[+i], k = n.join('|'); if (G) { G.st[k] = G.st[k] === 'a' ? 'h' : 'a'; route(); } return; }
+      const mn = t.closest('[data-atthand]'); if (mn) { manNew(mn.dataset.atthand); return; }
       const io = t.closest('[data-attimok]'); if (io) { imgOk(+io.dataset.attimok); return; }
       const ix = t.closest('[data-attimx]'); if (ix) { const G = IMG.splice(+ix.dataset.attimx, 1)[0]; G && G.imgs.forEach(x => URL.revokeObjectURL(x.url)); route(); return; }
       const dr = t.closest('[data-attdrop]'); if (dr) { PEND.splice(+dr.dataset.attdrop, 1); route(); return; }
